@@ -1,26 +1,27 @@
-#include <osgDB\ReadFile>
-#include <osg\Group>
-#include <osg\ShapeDrawable>
-#include <osgViewer\Viewer>
+#include <osgDB/ReadFile>
+#include <osg/Group>
+#include <osg/ShapeDrawable>
+#include <osgViewer/Viewer>
+#include <CEGUI/CEGUI.h>
 #include <chrono>
 
-#include <iostream>
+#include "CEGUIDrawable.h"
 
 int main()
 {
+    // setup CEGUI as OSG drawable
     osgViewer::Viewer viewer;
 
     osg::ref_ptr<osg::Group> root = new osg::Group;
 
-    osg::ref_ptr<osg::Geode> cubeNode = new osg::Geode;
-    osg::ref_ptr<osg::ShapeDrawable> cubeDrawable = new osg::ShapeDrawable(new osg::Box(osg::Vec3(), 10));
-    cubeDrawable->setColor(osg::Vec4(1,0,0,1));
-    cubeNode->addDrawable(cubeDrawable);
-    root->addChild(cubeNode);
-
     osg::ref_ptr <osg::Node> cessnaNode = osgDB::readNodeFile("cessna.osg");
+    osg::ref_ptr<osg::Geode> ceguiNode = new osg::Geode;
+    ceguiNode->addDrawable(new CeguiDrawable);
 
-    viewer.setSceneData(cessnaNode.get());
+    root->addChild(cessnaNode);
+    root->addChild(ceguiNode);
+
+    viewer.setSceneData(root.get());
 
     return viewer.run();
 }

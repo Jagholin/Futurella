@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 project(Futurella)
 
@@ -7,6 +8,7 @@ find_package(osg REQUIRED)
 find_package(osgDB REQUIRED)
 find_package(osgUtil REQUIRED)
 find_package(osgViewer REQUIRED)
+find_package(CEGUI REQUIRED)
 
 if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE "Release")
@@ -24,7 +26,9 @@ macro(add_lib PROJNAME LIBNAME)
     target_link_libraries( ${PROJNAME} ${${LIBNAME}_LIBRARIES} )
 endmacro()
 
-add_executable(Futurella 
+add_executable(Futurella
+	src/CEGUIDrawable.h
+	src/CEGUIDrawable.cpp
     src/main.cpp)
 
 add_lib(Futurella OPENTHREADS)
@@ -32,3 +36,4 @@ add_lib(Futurella OSG)
 add_lib(Futurella OSGDB)
 add_lib(Futurella OSGUTIL)
 add_lib(Futurella OSGVIEWER)
+add_lib(Futurella CEGUI)
