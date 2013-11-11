@@ -10,6 +10,8 @@ find_package(osgUtil REQUIRED)
 find_package(osgViewer REQUIRED)
 find_package(CEGUI REQUIRED)
 
+find_package(BOOST 1.54.0 REQUIRED COMPONENTS system asio)
+
 if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE "Release")
 endif()
@@ -26,7 +28,13 @@ macro(add_lib PROJNAME LIBNAME)
     target_link_libraries( ${PROJNAME} ${${LIBNAME}_LIBRARIES} )
 endmacro()
 
+link_directories(${Boost_LIBRARY_DIRS}) # for Boost dynamic linking
+
 add_executable(Futurella
+	src/networking/networking.cpp
+	src/networking/networking.h
+	src/networking/messages.cpp
+	src/networking/messages.h
 	src/CEGUIDrawable.h
 	src/CEGUIDrawable.cpp
     src/main.cpp)
@@ -37,3 +45,4 @@ add_lib(Futurella OSGDB)
 add_lib(Futurella OSGUTIL)
 add_lib(Futurella OSGVIEWER)
 add_lib(Futurella CEGUI)
+add_lib(Futurella Boost)
