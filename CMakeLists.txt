@@ -35,6 +35,8 @@ add_executable(Futurella
 	src/networking/networking.h
 	src/networking/messages.cpp
 	src/networking/messages.h
+	src/networking/peermanager.h
+	src/networking/peermanager.cpp
 	src/CEGUIDrawable.h
 	src/CEGUIDrawable.cpp
     src/main.cpp)

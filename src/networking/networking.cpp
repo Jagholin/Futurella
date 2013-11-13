@@ -6,17 +6,15 @@
 
 #include "networking.h"
 #ifdef _WIN32
-#include <winsock2.h>
-#ifdef _MSC_VER
-// Visual Studio doesn't recognize *_t types
-typedef unsigned __int16 uint16_t;
-typedef unsigned __int32 uint32_t;
-#define BOOST_DATE_TIME_NO_LIB
-#define BOOST_REGEX_NO_LIB
-#endif
+#	include <winsock2.h>
+#	ifdef _MSC_VER
+#		define BOOST_DATE_TIME_NO_LIB
+#		define BOOST_REGEX_NO_LIB
+#	endif
 #else
-#include <netinet/in.h>
+#	include <netinet/in.h>
 #endif
+
 #include <algorithm> // for min, max
 #include <boost/asio.hpp>
 #include <boost/lexical_cast.hpp>
@@ -183,7 +181,7 @@ bool NetConnImpl::connect(std::string addr, uint16_t port)
 	{
 		NetworkError err;
 		err.str = boost::str(boost::format("Host not found: %s") % addr);
-		if (buddy) buddy->onNetworkError(err);
+		if (buddy && buddy->onNetworkError) buddy->onNetworkError(err);
 	}
 	return true;
 }
@@ -210,7 +208,7 @@ void NetConnImpl::onConnect(const boost::system::error_code& code)
 						std::placeholders::_1, //asio::placeholders::error,
 						std::placeholders::_2, //asio::placeholders::bytes_transferred,
 						header));
-		if(buddy) buddy->onConnected(/*buddy->myId*/);
+		if(buddy && buddy->onConnected) buddy->onConnected(/*buddy->myId*/);
 	}
 	else
 	{
@@ -227,7 +225,7 @@ void NetConnImpl::onConnect(const boost::system::error_code& code)
 		{
 			NetworkError err;
 			err.str = code.message().data();
-			if (buddy) buddy->onNetworkError(err);
+			if (buddy && buddy->onNetworkError) buddy->onNetworkError(err);
 		}
 	}
 }
@@ -296,14 +294,14 @@ void NetConnImpl::onMsgSent(const boost::system::error_code& code, size_t /*byte
 							std::placeholders::_1, //asio::placeholders::error,
 							std::placeholders::_2 //asio::placeholders::bytes_transferred
 							));
-		if (buddy) buddy->onMessageSent(/*buddy->myId,*/ frontMsg++);
+		if (buddy && buddy->onMessageSent) buddy->onMessageSent(/*buddy->myId,*/ frontMsg++);
 	}
 	else
 	{
 		sending = false; connected = false;
 		NetworkError err;
 		err.str = code.message().c_str();
-		if (buddy) buddy->onNetworkError(err);
+		if (buddy && buddy->onNetworkError) buddy->onNetworkError(err);
 	}
 }
 
@@ -327,7 +325,7 @@ void NetConnImpl::onHeadReceived(const boost::system::error_code& code, size_t /
 		NetworkError err;
 		delete size;
 		err.str = code.message().c_str();
-		if (buddy) buddy->onNetworkError(err);
+		if (buddy && buddy->onNetworkError) buddy->onNetworkError(err);
 	}
 }
 
@@ -347,14 +345,14 @@ void NetConnImpl::onBodyReceived(const boost::system::error_code& code, size_t /
 						std::placeholders::_1, //asio::placeholders::error,
 						std::placeholders::_2, //asio::placeholders::bytes_transferred,
 						header));
-		if (buddy) buddy->onMessageReceived(/*buddy->myId,*/ msg);
+		if (buddy && buddy->onMessageReceived) buddy->onMessageReceived(/*buddy->myId,*/ msg);
 	}
 	else
 	{
 		sending = false; connected = false;
 		NetworkError err;
 		err.str = code.message().c_str();
-		if (buddy) buddy->onNetworkError(err);
+		if (buddy && buddy->onNetworkError) buddy->onNetworkError(err);
 	}
 }
 
@@ -413,7 +411,8 @@ void NetConnection::close()
 void NetConnection::onNetworkError(const NetworkError& err)
 {
 	close();
-	onDisconnect(/*myId,*/ err.str);
+	if (onDisconnect)
+		onDisconnect(/*myId,*/ err.str);
 }
 
 void NetConnection::scheduleDeletion()
@@ -465,7 +464,7 @@ void NetServerImpl::doListen()
 	{
 		started = false;
 		//qDebug() << "Server stopped: " << QString::fromStdString(ec.message());
-		if (buddy) buddy->onStop();
+		if (buddy && buddy->onStop) buddy->onStop();
 		return;
 	}
 	mAccept.async_accept(*mSocket,
@@ -482,14 +481,14 @@ void NetServerImpl::onAccept(const boost::system::error_code& code)
 		NetConnection* newCon = new NetConnection();
 		newCon->privData->setSocket(mSocket);
 		mSocket.reset(new socket::element_type(mserv));
-		if (buddy) buddy->onConnection(newCon);
+		if (buddy && buddy->onConnection) buddy->onConnection(newCon);
 		doListen();
 	}
 	else
 	{
 		started = false;
 		//qDebug() << "Server stopped: " << QString::fromStdString(code.message());
-		if (buddy) buddy->onStop();
+		if (buddy && buddy->onStop) buddy->onStop();
 	}
 }
 
@@ -516,7 +515,8 @@ bool NetServer::listen(unsigned int port, std::string& errMsg)
 	if (ec)
 	{
 		errMsg = ec.message();
-		onStop();
+		if (onStop)	
+			onStop();
 		return false;
 	}
 	return true;

@@ -26,10 +26,10 @@ struct NetworkError
 class NetConnectionListener
 {
 public:
-	virtual void onMessageSent(/*unsigned int,*/ unsigned int);
-	virtual void onMessageReceived(/*unsigned int,*/ RawMessage::pointer);
-	virtual void onConnected(/*unsigned int*/);
-	virtual void onDisconnect(/*unsigned int,*/ std::string);
+	virtual void onMessageSent(/*unsigned int,*/ unsigned int)=0;
+	virtual void onMessageReceived(/*unsigned int,*/ RawMessage::pointer)=0;
+	virtual void onConnected(/*unsigned int*/)=0;
+	virtual void onDisconnect(/*unsigned int,*/ const std::string&)=0;
 };
 
 class NetConnection;
