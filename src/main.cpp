@@ -6,21 +6,26 @@
 
 #include <iostream>
 
+#include "Level.h"
+
 int main()
 {
-    osgViewer::Viewer viewer;
+	Level level(1000, 0.5f, 0.5f);
 
     osg::ref_ptr<osg::Group> root = new osg::Group;
+	
+	osg::ref_ptr<osg::Geode> asteroids = new osg::Geode;
+	for (int i = 0; i < level.getAsteroidLength(); i++)
+	{
+		osg::ref_ptr<osg::Shape> sphere = new osg::Sphere(level.getAsteroid(i).position, level.getAsteroid(i).radius);
+		osg::ref_ptr<osg::ShapeDrawable> ast = new osg::ShapeDrawable(sphere);
+		ast->setColor(osg::Vec4(0.7f, 0.4f, 0.1f, 1));
+		asteroids->addDrawable(ast);
+	}
 
-    osg::ref_ptr<osg::Geode> cubeNode = new osg::Geode;
-    osg::ref_ptr<osg::ShapeDrawable> cubeDrawable = new osg::ShapeDrawable(new osg::Box(osg::Vec3(), 10));
-    cubeDrawable->setColor(osg::Vec4(1,0,0,1));
-    cubeNode->addDrawable(cubeDrawable);
-    root->addChild(cubeNode);
-
-    osg::ref_ptr <osg::Node> cessnaNode = osgDB::readNodeFile("cessna.osg");
-
-    viewer.setSceneData(cessnaNode.get());
-
+	root->addChild(asteroids);
+	
+	osgViewer::Viewer viewer;
+	viewer.setSceneData(root.get());
     return viewer.run();
 }
