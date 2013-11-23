@@ -25,7 +25,9 @@ macro(add_lib PROJNAME LIBNAME)
 endmacro()
 
 add_executable(Futurella 
-    src/main.cpp)
+    src/main.cpp
+    src/Level.h
+    src/Level.cpp)
 
 add_lib(Futurella OPENTHREADS)
 add_lib(Futurella OSG)
