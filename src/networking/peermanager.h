@@ -9,6 +9,7 @@ Copyright (C) 2009 - 2014 Belskiy Pavel, github.com/Jagholin
 #include <functional>
 
 #include <osg/Referenced>
+#include "sigslot.h"
 class NetHalloMessage;
 class NetConnection;
 
@@ -16,24 +17,26 @@ class FuturellaPeer: public MessagePeer, public NetConnectionListener, public os
 {
 protected:
 	typedef std::function<void (NetMessage::const_pointer, FuturellaPeer*)> msgFunc;
-	NetConnection* myConnect;
-	std::deque<msgFunc> receivers;
-	std::deque<NetMessage::const_pointer> activationWaitingQueue;
-	bool activated;
-	mutable unsigned int halloStatus;
-	std::string buddyName, myName;
-	uint32_t peerIdentityKey;
-	//QStandardItem* peerDataItem;
+
+	NetConnection* m_connectLine;
+	std::deque<msgFunc> m_receivers;
+	std::deque<NetMessage::const_pointer> m_activationWaitingQueue;
+	std::deque<osg::observer_ptr<FuturellaPeer> > m_dependencyList;
+	bool m_active;
+	mutable unsigned int m_halloStatus;
+	std::string m_buddyName, m_myName;
+	uint32_t m_peerIdentityKey;
+
 	virtual bool translateMessage(const NetMessage::const_pointer&, MessagePeer*);
-	// This constructor should be called only from TunnelingFuturellaPeer class
 	FuturellaPeer();
+
 public:
 	enum {protokoll_version = 1002};
 	enum PeerStatus {MP_CONNECTING = 0, MP_ACTIVE, MP_SERVER, MP_DISCONNECTED};
+
 	FuturellaPeer(NetConnection*, bool serverSide);
 	virtual ~FuturellaPeer();
 
-	void regReceiver(const msgFunc&);
 	virtual bool sendMessage(const NetMessage::const_pointer&);
 	PeerStatus getStatus()const;
 	std::string getRemoteName()const;
@@ -45,10 +48,13 @@ public:
 
 	typedef osg::ref_ptr<FuturellaPeer> pointer;
 
-	void onPeerDestruction(const std::function<void()> &callBack) { m_tobeDestroyed = callBack; }
-	void onError(const std::function<void(std::string)> &callBack) { m_errorSignal = callBack; }
-	void onActivation(const std::function<void()> &callBack) { m_onActivated = callBack; }
-	void onStatusChange(const std::function<void()> &callBack) { m_statusChanged = callBack; }
+	void onPeerDestruction(const std::function<void()> &callBack, osg::Referenced *closure) { m_tobeDestroyed.connect(callBack, closure); }
+	void onError(const std::function<void(std::string)> &callBack, osg::Referenced *closure) { m_errorSignal.connect(callBack, closure); }
+	void onActivation(const std::function<void()> &callBack, osg::Referenced *closure) { m_onActivated.connect(callBack, closure); }
+	void onStatusChange(const std::function<void()> &callBack, osg::Referenced *closure) { m_statusChanged.connect(callBack, closure); }
+	void onMessage(const msgFunc &callBack);
+
+	void addDependablePeer(FuturellaPeer* child);
 
 protected:
 	virtual void onMessageReceived(RawMessage::pointer);
@@ -56,17 +62,17 @@ protected:
 	virtual void onConnected();
 	virtual void onMessageSent(unsigned int) {}
 
-	std::function<void ()> m_tobeDestroyed;
-	std::function<void (std::string)> m_errorSignal;
-	std::function<void ()> m_onActivated;
-	std::function<void ()> m_statusChanged;
-protected:
+	addstd::signal <void()> m_tobeDestroyed;
+	addstd::signal <void (std::string)> m_errorSignal;
+	addstd::signal <void ()> m_onActivated;
+	addstd::signal <void ()> m_statusChanged;
+
 	void halloProceed(const std::shared_ptr<const NetHalloMessage>& hallo);
 	NetMessage::pointer createHalloMsg()const;
-	PeerStatus ourStatus;
+	PeerStatus m_status;
 };
 
-class PeersManager
+class PeersManager : public osg::Referenced
 {
 protected:
 	static PeersManager* mSingleton;
@@ -94,19 +100,19 @@ public:
 	std::string getMyName()const;
 	//FuturellaPeer::pointer peerFromIndex(QModelIndex index);
 
-	void onNewPeerRegistration(const std::function<void(FuturellaPeer::pointer)> &callBack)
+	void onNewPeerRegistration(const std::function<void(FuturellaPeer::pointer)> &callBack, osg::Referenced* closure)
 	{
-		m_peerRegistred = callBack;
+		m_peerRegistred.connect(callBack, closure);
 	}
 
 	friend class FuturellaPeer;
 	friend class TunnelingFuturellaPeer;
 protected:
-	std::function<void(FuturellaPeer::pointer)> m_peerRegistred;
+	addstd::signal<void(FuturellaPeer::pointer)> m_peerRegistred;
 public:
 	void sendChatMessage(const std::string&);
 protected:
-	void onPeerActivated();
+	void onPeerActivated(const FuturellaPeer::pointer& sender);
 };
 
 BEGIN_DECLNETMESSAGE(Chat, 100)

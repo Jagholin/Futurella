@@ -1,11 +1,12 @@
 /*
-Copyright (C) 2009 - 2014 Belskiy Pavel, github.com/Jagholin
+	Copyright (C) 2009 - 2014 Belskiy Pavel, github.com/Jagholin
 */
 #include "peermanager.h"
 #include <cstdlib>
 #include <cassert>
 #include <algorithm>
 #include <set>
+#include <chrono>
 
 #ifdef _WIN32
 #	include <winsock2.h>
@@ -56,20 +57,22 @@ protected:
 TunnelingFuturellaPeer::TunnelingFuturellaPeer(FuturellaPeer::pointer tunnel, const NetAvailablePeerMessage* msg):
 	mTunnel(tunnel)
 {
-	peerIdentityKey = msg->peerId;
-	buddyName = msg->buddyName;
-	if (PeersManager::getManager()->registerPeerId(peerIdentityKey, this) == false)
-		this->deleteLater();
+	m_peerIdentityKey = msg->peerId;
+	m_buddyName = msg->buddyName;
+	if (PeersManager::getManager()->registerPeerId(m_peerIdentityKey, this) == false)
+		// this->deleteLater(); TODO: think over owner strategy
+		;
 	PeersManager::getManager()->regFuturellaPeer(this);
 }
 
 TunnelingFuturellaPeer::TunnelingFuturellaPeer(FuturellaPeer::pointer tunnel, uint32_t peerId):
-FuturellaPeer(tunnel), mTunnel(tunnel)
+mTunnel(tunnel)
 {
-	peerIdentityKey = peerId;
-	buddyName = std::string("[Unknown Source]");
-	assert(PeersManager::getManager()->registerPeerId(peerIdentityKey, this));
+	m_peerIdentityKey = peerId;
+	m_buddyName = std::string("[Unknown Source]");
+	assert(PeersManager::getManager()->registerPeerId(m_peerIdentityKey, this));
 	PeersManager::getManager()->regFuturellaPeer(this);
+	tunnel->addDependablePeer(this);
 }
 
 TunnelingFuturellaPeer::~TunnelingFuturellaPeer()
@@ -78,12 +81,12 @@ TunnelingFuturellaPeer::~TunnelingFuturellaPeer()
 
 bool TunnelingFuturellaPeer::sendMessage(const NetMessage::const_pointer& msg)
 {
-	if (!activated)
+	if (!m_active)
 		return false;
 	if (msg->gettype() == NetTunneledMessage::type)
 		return mTunnel->sendMessage(msg);
 	NetTunneledMessage* message = new NetTunneledMessage;
-	message->peerIdWhom = peerIdentityKey;
+	message->peerIdWhom = m_peerIdentityKey;
 	message->peerIdFrom = PeersManager::getManager()->myPeerId;
 	message->msgType = msg->gettype();
 	RawMessage::const_pointer toSend = msg->toRaw();
@@ -93,21 +96,21 @@ bool TunnelingFuturellaPeer::sendMessage(const NetMessage::const_pointer& msg)
 }
 
 FuturellaPeer::FuturellaPeer():
-	activated(true)
+	m_active(true)
 {
-	myConnect = 0;
-	halloStatus = 0;
-	ourStatus = MP_ACTIVE;
-	myName = PeersManager::getManager()->peerName;
+	m_connectLine = nullptr;
+	m_halloStatus = 0;
+	m_status = MP_ACTIVE;
+	m_myName = PeersManager::getManager()->peerName;
 }
 
 FuturellaPeer::FuturellaPeer(NetConnection* con, bool serverSide) :
-	activated(false), halloStatus(1), buddyName("[Broken Connection]")
+	m_active(false), m_halloStatus(1), m_buddyName("[Broken Connection]")
 {
-	peerIdentityKey = 0;
-	myConnect = con;
-	ourStatus = MP_CONNECTING;
-	myName = PeersManager::getManager()->peerName;
+	m_peerIdentityKey = 0;
+	m_connectLine = con;
+	m_status = MP_CONNECTING;
+	m_myName = PeersManager::getManager()->peerName;
 	assert(con);
 	bool runHallo = false;
 	if (con)
@@ -124,23 +127,23 @@ FuturellaPeer::FuturellaPeer(NetConnection* con, bool serverSide) :
 
 FuturellaPeer::~FuturellaPeer()
 {
-	if (m_tobeDestroyed) m_tobeDestroyed();
+	m_tobeDestroyed();
 	PeersManager::getManager()->unregisterPeer(this);
-	if (activated && myConnect != 0)
+	if (m_active && m_connectLine != 0)
 	{
 		NetPeerUnavailableMessage* msg = new NetPeerUnavailableMessage;
-		msg->peerId = peerIdentityKey;
+		msg->peerId = m_peerIdentityKey;
 		PeersManager::getManager()->broadcast(NetMessage::const_pointer(msg), this);
 	}
-	if (peerIdentityKey)
-		PeersManager::getManager()->unregisterPeerId(peerIdentityKey);
-	if (myConnect)
-		myConnect->scheduleDeletion();
+	if (m_peerIdentityKey)
+		PeersManager::getManager()->unregisterPeerId(m_peerIdentityKey);
+	if (m_connectLine)
+		m_connectLine->scheduleDeletion();
 }
 
-void FuturellaPeer::regReceiver(const msgFunc& f)
+void FuturellaPeer::onMessage(const msgFunc &f)
 {
-	receivers.push_back(f);
+	m_receivers.push_back(f);
 }
 
 bool FuturellaPeer::translateMessage(const NetMessage::const_pointer& msg,
@@ -152,13 +155,13 @@ bool FuturellaPeer::translateMessage(const NetMessage::const_pointer& msg,
 bool FuturellaPeer::sendMessage(const NetMessage::const_pointer& msg)
 {
 	// We can't send any messages till we are ready with greetings procedure
-	if (ourStatus == MP_DISCONNECTED)
+	if (m_status == MP_DISCONNECTED)
 		return false;
-	if (activated)
-		myConnect->sendMessage(msg->toRaw());
+	if (m_active)
+		m_connectLine->sendMessage(msg->toRaw());
 	else
-		activationWaitingQueue.push_back(msg);
-	return activated;
+		m_activationWaitingQueue.push_back(msg);
+	return m_active;
 }
 
 void FuturellaPeer::onMessageReceived(RawMessage::pointer msg)
@@ -167,7 +170,7 @@ void FuturellaPeer::onMessageReceived(RawMessage::pointer msg)
 	{
 		NetMessage::const_pointer realMsg = MsgFactory::create(*msg);
 		// If we are not ready, only greetings messages are allowed
-		if (activated)
+		if (m_active)
 		{
 			if (realMsg->gettype() == NetAvailablePeerMessage::type)
 			{
@@ -215,11 +218,16 @@ void FuturellaPeer::onMessageReceived(RawMessage::pointer msg)
 				const NetPeerUnavailableMessage* tunnelMsg = static_cast<const NetPeerUnavailableMessage*>(realMsg.get());
 				FuturellaPeer::pointer deletedPeer = PeersManager::getManager()->peerFromId(tunnelMsg->peerId);
 				if (deletedPeer && deletedPeer->isDirect() == false)
-					deletedPeer->deleteLater();
+					//deletedPeer->deleteLater();
+					;
 			}
 			else
 			{
-				std::for_each(receivers.begin(), receivers.end(), std::bind(&msgFunc::operator(), std::placeholders::_1, realMsg, this));
+				//std::for_each(m_receivers.begin(), m_receivers.end(), std::bind(&msgFunc::operator(), std::placeholders::_1, realMsg, this));
+				for (auto callBack : m_receivers)
+				{
+					callBack(realMsg, this);
+				}
 				assert(transPointers.size() <= 1);
 				sendMessageToAll(realMsg);
 			}
@@ -236,78 +244,80 @@ void FuturellaPeer::onMessageReceived(RawMessage::pointer msg)
 	catch(std::bad_cast)
 	{
 		// Wrong or unsupported packet received. Terminate the connection.
-		myConnect->close();
-		if (m_errorSignal)
-			m_errorSignal("Wrong or unsupported packet received. Terminating the connection...");
+		m_connectLine->close();
+		
+		m_errorSignal("Wrong or unsupported packet received. Terminating the connection...");
 	}
 }
 
 void FuturellaPeer::onDisconnect(const std::string&)
 {
-	ourStatus = MP_DISCONNECTED;
-	if (m_statusChanged) m_statusChanged();
-	this->deleteLater();
+	m_status = MP_DISCONNECTED;
+	m_statusChanged();
+	// this->deleteLater();
 }
 
 void FuturellaPeer::onConnected()
 {
-	--halloStatus;
-	myConnect->sendMessage(createHalloMsg()->toRaw());
+	--m_halloStatus;
+	m_connectLine->sendMessage(createHalloMsg()->toRaw());
 }
 
 void FuturellaPeer::halloProceed(const std::shared_ptr<const NetHalloMessage>& hallo)
 {
-	if (hallo->version != protokoll_version || hallo->halloStat != halloStatus)
+	if (hallo->version != protokoll_version || hallo->halloStat != m_halloStatus)
 	{
 		// Wrong hallo packet, break it down
-		myConnect->close();
-		Q_EMIT onErrorMessage(tr("Wrong or unsupported packet received. Terminating the connection..."));
+		m_connectLine->close();
+		
+		m_errorSignal("Wrong or unsupported packet received. Terminating the connection...");
 		return;
 	}
-	if (peerIdentityKey == 0)
+	if (m_peerIdentityKey == 0)
 	{
-		peerIdentityKey = hallo->peerId;
-		if (PeersManager::getManager()->registerPeerId(peerIdentityKey, this) == false)
+		m_peerIdentityKey = hallo->peerId;
+		if (PeersManager::getManager()->registerPeerId(m_peerIdentityKey, this) == false)
 		{
-			peerIdentityKey = 0;
-			myConnect->close();
-			Q_EMIT onErrorMessage(tr("Already registered peer connected again. Disconnecting..."));
+			m_peerIdentityKey = 0;
+			m_connectLine->close();
+			
+			m_errorSignal("Already registered peer connected again. Disconnecting...");
 			return;
 		}
 	}
-	buddyName = hallo->buddyName;
-	if (halloStatus != 3)
-		myConnect->sendMessage(createHalloMsg()->toRaw());
-	if (halloStatus >= 2)
+	m_buddyName = hallo->buddyName;
+	if (m_halloStatus != 3)
+		m_connectLine->sendMessage(createHalloMsg()->toRaw());
+	if (m_halloStatus >= 2)
 	{
-		activated = true;
-		if (halloStatus == 4)
-			ourStatus = MP_SERVER;
+		m_active = true;
+		if (m_halloStatus == 4)
+			m_status = MP_SERVER;
 		else
-			ourStatus = MP_ACTIVE;
+			m_status = MP_ACTIVE;
 		// sending all messages from the waiting queue
-		while(!activationWaitingQueue.empty())
+		while(!m_activationWaitingQueue.empty())
 		{
-			sendMessage(activationWaitingQueue.front());
-			activationWaitingQueue.pop_front();
+			sendMessage(m_activationWaitingQueue.front());
+			m_activationWaitingQueue.pop_front();
 		}
 		// Send a message to other peers about the new peer
 		NetAvailablePeerMessage* msg = new NetAvailablePeerMessage;
-		msg->buddyName = buddyName;
-		msg->peerId = peerIdentityKey;
+		msg->buddyName = m_buddyName;
+		msg->peerId = m_peerIdentityKey;
 		PeersManager::getManager()->broadcast(NetMessage::const_pointer(msg), this);
 
-		Q_EMIT statusChanged();
-		Q_EMIT onActivated();
+		m_statusChanged();
+		m_onActivated();
 	}
 }
 
 NetMessage::pointer FuturellaPeer::createHalloMsg() const
 {
 	NetHalloMessage* myMsg = new NetHalloMessage;
-	myMsg->buddyName = myName;
-	myMsg->halloStat = ++halloStatus;
-	++halloStatus;
+	myMsg->buddyName = m_myName;
+	myMsg->halloStat = ++m_halloStatus;
+	++m_halloStatus;
 	myMsg->version = protokoll_version;
 	myMsg->peerId = PeersManager::getManager()->myPeerId;
 	return NetMessage::pointer(myMsg);
@@ -315,17 +325,16 @@ NetMessage::pointer FuturellaPeer::createHalloMsg() const
 
 FuturellaPeer::PeerStatus FuturellaPeer::getStatus() const
 {
-	return ourStatus;
+	return m_status;
 }
 
 std::string FuturellaPeer::getRemoteName() const
 {
-	return buddyName;
+	return m_buddyName;
 }
 
 PeersManager::PeersManager()
 {
-	mPeersModel = new QStandardItemModel(this);
 	myPeerId = rand();
 }
 
@@ -336,26 +345,23 @@ PeersManager* PeersManager::getManager()
 	return mSingleton;
 }
 
-void PeersManager::regFuturellaPeer(FuturellaPeer::pointer ptr, QStandardItem*& peerItem)
+void PeersManager::regFuturellaPeer(FuturellaPeer::pointer ptr)
 {
 	msgPeers.push_back(ptr);
-	mPeersModel->appendRow(peerItem);
-	connect(ptr, SIGNAL(onActivated()), SLOT(onPeerActivated()));
-	Q_EMIT peerRegistred(ptr);
+	ptr->onActivation(std::bind(&PeersManager::onPeerActivated, this, ptr), this);
+	m_peerRegistred(ptr);
 }
 
 void PeersManager::unregisterPeer(FuturellaPeer::pointer peer)
 {
-	QList<FuturellaPeer::pointer>::iterator it = std::find(msgPeers.begin(),
+	std::deque<FuturellaPeer::pointer>::iterator it = std::find(msgPeers.begin(),
 		msgPeers.end(), peer);
-	Q_ASSERT(it != msgPeers.end());
+	assert(it != msgPeers.end());
 	msgPeers.erase(it);
-	mPeersModel->removeRow(peer->getModelIndex().row());
 }
 
 bool PeersManager::registerPeerId(uint32_t id, FuturellaPeer::pointer peer)
 {
-	qDebug() << "Attempt register peer " << id;
 	return id == myPeerId ? false : registeredPeerIds.insert(std::make_pair(id, peer)).second;
 }
 
@@ -389,43 +395,25 @@ bool PeersManager::isAnyoneConnected() const
 	return msgPeers.empty() == false;
 }
 
-QStandardItemModel* PeersManager::getPeersModel() const
-{
-	return mPeersModel;
-}
-
-FuturellaPeer::pointer PeersManager::peerFromIndex(QModelIndex index)
-{
-	foreach (FuturellaPeer::pointer ptr, msgPeers)
-	{
-		if (ptr->getModelIndex() == index)
-			return ptr;
-	}
-	return FuturellaPeer::pointer(0);
-}
-
-void PeersManager::sendChatMessage(std::string msg)
+void PeersManager::sendChatMessage(const std::string &msg)
 {
 	NetChatMessage* myMsg = new NetChatMessage;
 	myMsg->message = msg;
-	myMsg->sentTime = QDateTime::currentDateTime();
+	myMsg->sentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 	broadcast(NetMessage::const_pointer(myMsg));
 }
 
 void PeersManager::broadcast(NetMessage::const_pointer msg, FuturellaPeer::pointer exclude)
 {
-	foreach(FuturellaPeer::pointer peer, msgPeers)
+	for(FuturellaPeer::pointer peer: msgPeers)
 	{
 		if (peer != exclude)
 			peer->sendMessage(msg);
 	}
 }
 
-void PeersManager::onPeerActivated()
+void PeersManager::onPeerActivated(const FuturellaPeer::pointer& sendPeer)
 {
-	FuturellaPeer* sendPeer = qobject_cast<FuturellaPeer*>(sender());
-	if (sendPeer == 0) return;
-
 	// Send the peer all info about other peers available
 	for(std::map<uint32_t, FuturellaPeer::pointer>::const_iterator it = registeredPeerIds.begin();
 		it != registeredPeerIds.end();
@@ -452,7 +440,7 @@ ourStr >> temp->message >> temp->sentTime;
 END_RAWTONETMESSAGE_QCONVERT()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(Hallo)
-ourStr << buddyName << halloStat << peerId << version;
+outStr << buddyName << halloStat << peerId << version;
 END_NETTORAWMESSAGE_QCONVERT()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(Hallo)
@@ -460,7 +448,7 @@ ourStr >> temp->buddyName >> temp->halloStat >> temp->peerId >> temp->version;
 END_RAWTONETMESSAGE_QCONVERT()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(AvailablePeer)
-ourStr << buddyName << peerId;
+outStr << buddyName << peerId;
 END_NETTORAWMESSAGE_QCONVERT()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(AvailablePeer)
@@ -468,7 +456,7 @@ ourStr >> temp->buddyName >> temp->peerId;
 END_RAWTONETMESSAGE_QCONVERT()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(Tunneled)
-ourStr << peerIdWhom << peerIdFrom << msgType << msgData;
+outStr << peerIdWhom << peerIdFrom << msgType << msgData;
 END_NETTORAWMESSAGE_QCONVERT()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(Tunneled)
@@ -476,7 +464,7 @@ ourStr >> temp->peerIdWhom >> temp->peerIdFrom >> temp->msgType >> temp->msgData
 END_RAWTONETMESSAGE_QCONVERT()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(PeerUnavailable)
-ourStr << peerId;
+outStr << peerId;
 END_NETTORAWMESSAGE_QCONVERT()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(PeerUnavailable)

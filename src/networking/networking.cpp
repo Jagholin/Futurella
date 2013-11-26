@@ -27,43 +27,6 @@ using std::shared_ptr;
 using std::auto_ptr;
 namespace asio=boost::asio;
 
-class CService
-{
-protected:
-	static asio::io_service myService;
-	//static asio::io_service::work* myWork;
-	static volatile bool isRunning;
-public:
-	static asio::io_service& getService()
-	{
-		return myService;
-	}
-	static bool getRunning()
-	{
-		return isRunning;
-	}
-	static void run()
-	{
-		if (!isRunning)
-		{
-			//myWork = new asio::io_service::work(myService);
-			isRunning = true;
-			myService.run();
-			myService.reset();
-			isRunning = false;
-		}
-	}
-	static void stop()
-	{
-		myService.stop();
-		isRunning = false;
-		//delete myWork;
-	}
-};
-//asio::io_service::work* CService::myWork = 0;
-asio::io_service CService::myService;
-volatile bool CService::isRunning = false;
-
 class NetConnImpl : public std::enable_shared_from_this<NetConnImpl>, public boost::noncopyable
 {
 public:
@@ -72,9 +35,9 @@ public:
 	typedef std::deque<vector<char> > sendList;
 
 	//static pointer Create(QString address);
-	static pointer Create(NetConnection* b)
+	static pointer Create(NetConnection* b, boost::asio::io_service& s)
 	{
-		return pointer(new NetConnImpl(CService::getService(), b));
+		return pointer(new NetConnImpl(s, b));
 	}
 	bool connect(std::string addr, uint16_t port);
 	unsigned int write(RawMessage::const_pointer toSend);
@@ -126,9 +89,9 @@ public:
 	typedef auto_ptr<asio::ip::tcp::socket> socket;
 	typedef asio::ip::tcp::acceptor acceptor;
 
-	static pointer Create(NetServer* buddy)
+	static pointer Create(NetServer* buddy, boost::asio::io_service& s)
 	{
-		return pointer(new NetServerImpl(CService::getService(), buddy));
+		return pointer(new NetServerImpl(s, buddy));
 	}
 	boost::system::error_code beginListen(uint16_t port);
 	void stop();
@@ -181,7 +144,7 @@ bool NetConnImpl::connect(std::string addr, uint16_t port)
 	{
 		NetworkError err;
 		err.str = boost::str(boost::format("Host not found: %s") % addr);
-		if (buddy && buddy->onNetworkError) buddy->onNetworkError(err);
+		if (buddy) buddy->onNetworkError(err);
 	}
 	return true;
 }
@@ -225,7 +188,7 @@ void NetConnImpl::onConnect(const boost::system::error_code& code)
 		{
 			NetworkError err;
 			err.str = code.message().data();
-			if (buddy && buddy->onNetworkError) buddy->onNetworkError(err);
+			if (buddy) buddy->onNetworkError(err);
 		}
 	}
 }
@@ -301,7 +264,7 @@ void NetConnImpl::onMsgSent(const boost::system::error_code& code, size_t /*byte
 		sending = false; connected = false;
 		NetworkError err;
 		err.str = code.message().c_str();
-		if (buddy && buddy->onNetworkError) buddy->onNetworkError(err);
+		if (buddy) buddy->onNetworkError(err);
 	}
 }
 
@@ -325,7 +288,7 @@ void NetConnImpl::onHeadReceived(const boost::system::error_code& code, size_t /
 		NetworkError err;
 		delete size;
 		err.str = code.message().c_str();
-		if (buddy && buddy->onNetworkError) buddy->onNetworkError(err);
+		if (buddy) buddy->onNetworkError(err);
 	}
 }
 
@@ -352,7 +315,7 @@ void NetConnImpl::onBodyReceived(const boost::system::error_code& code, size_t /
 		sending = false; connected = false;
 		NetworkError err;
 		err.str = code.message().c_str();
-		if (buddy && buddy->onNetworkError) buddy->onNetworkError(err);
+		if (buddy) buddy->onNetworkError(err);
 	}
 }
 
@@ -366,8 +329,9 @@ void NetConnImpl::close()
 	sending = false; connected = false;
 }
 
-NetConnection::NetConnection():
-	privData(NetConnImpl::Create(this))
+NetConnection::NetConnection(boost::asio::io_service &s):
+	privData(NetConnImpl::Create(this, s)),
+	m_service(s)
 {
 	//qDebug() << "Net connection class constructor...";
 }
@@ -420,8 +384,8 @@ void NetConnection::scheduleDeletion()
 	// TODO: This code will schedule the deletion to the service if it is still running.
 	// However, it doesn't guarantee that the delete procedures will be fulfilled, in case when the service is stopped.
 	// (use shared pointers to this? Not to make use of stop() function? Something else?)
-	if (CService::getRunning())
-		CService::getService().post(std::bind(&NetConnection::deleteNow, this));
+	if (!m_service.stopped())
+		m_service.post(std::bind(&NetConnection::deleteNow, this));
 	else
 		// The service isn't running any more, so destroying the object directly.
 		deleteNow();
@@ -478,7 +442,7 @@ void NetServerImpl::onAccept(const boost::system::error_code& code)
 {
 	if (!code)
 	{
-		NetConnection* newCon = new NetConnection();
+		NetConnection* newCon = new NetConnection(mserv);
 		newCon->privData->setSocket(mSocket);
 		mSocket.reset(new socket::element_type(mserv));
 		if (buddy && buddy->onConnection) buddy->onConnection(newCon);
@@ -497,8 +461,8 @@ void NetServerImpl::stop()
 	mAccept.close();
 }
 
-NetServer::NetServer():
-	privData(NetServerImpl::Create(this))
+NetServer::NetServer(boost::asio::io_service &s):
+	privData(NetServerImpl::Create(this, s))
 {
 	//qDebug() << "Net server class constructor...";
 }

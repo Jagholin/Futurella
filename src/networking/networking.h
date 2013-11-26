@@ -8,6 +8,8 @@
 #include <memory>
 #include <string>
 #include <functional>
+#include <algorithm>
+#include <boost/asio/io_service.hpp>
 
 using std::vector;
 struct RawMessage
@@ -47,7 +49,7 @@ private:
 	std::shared_ptr<NetConnImpl> privData;
 	//unsigned int myId;
 public:
-	NetConnection();
+	NetConnection(boost::asio::io_service& s);
 	~NetConnection();
 
 	void connectTo(std::string addr, unsigned int port);
@@ -78,6 +80,8 @@ protected:
 	std::function<void (/*unsigned int,*/ RawMessage::pointer)> onMessageReceived;
 	std::function<void (/*unsigned int*/)> onConnected;
 	std::function<void (/*unsigned int,*/ std::string)> onDisconnect;
+
+	boost::asio::io_service& m_service;
 };
 
 class NetServerImpl;
@@ -86,7 +90,7 @@ class NetServer
 private:
 	std::shared_ptr<NetServerImpl> privData;
 public:
-	NetServer();
+	NetServer(boost::asio::io_service& s);
 	~NetServer();
 
 	bool listen(unsigned int port, std::string& errMsg);
@@ -101,4 +105,6 @@ public:
 protected:
 	std::function<void (NetConnection*)> onConnection;
 	std::function<void ()> onStop;
+
+	//boost::asio::io_service& m_service;
 };
