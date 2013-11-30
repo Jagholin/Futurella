@@ -1,13 +1,12 @@
-#ifndef level_h_included
-#define level_h_included
+#ifndef hLevel_included
+#define hLevel_included
 
-#include <osg\Vec3>
+#include <list>
+#include <vector>
 
-struct Asteroid
-{
-	osg::Vec3f position;
-	float radius;
-};
+class AsteroidField;
+
+class Asteroid;
 
 class Level //level information
 {
@@ -16,12 +15,16 @@ public:
 	~Level();
 
 	int getAsteroidLength();
-	Asteroid getAsteroid(int asteroidId);
+	Asteroid* getAsteroid(int asteroidId);
+	//void setActiveField(char dr);
 
 private:
-	int asteroidsLength;
-	Asteroid* asteroids;
-
+	const float astMinSize = 0.2f, astMaxSize = 1.0f;
+	float asteroidSpaceCubeSidelength;
+	AsteroidField *asteroids;
+	//AsteroidField *scatteredAsteroids; //debug!
+	//AsteroidField *movedAsteroids; //debug!
+	
 };
 
-#endif // !levelgenerator_h_included
+#endif//hLevel_included ndef

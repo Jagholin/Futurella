@@ -25,7 +25,15 @@ macro(add_lib PROJNAME LIBNAME)
 endmacro()
 
 add_executable(Futurella 
-    src/main.cpp)
+src/main.cpp
+src/Asteroid.cpp
+src/Asteroid.h
+src/AsteroidField.cpp
+src/AsteroidField.h
+src/Level.cpp
+src/Level.h
+src/Node.cpp
+src/Node.h)
 
 add_lib(Futurella OPENTHREADS)
 add_lib(Futurella OSG)
