@@ -1,4 +1,4 @@
 
 call _configure.bat
 
-"../FuturellaBuild/Futurella.sln"
+"../FuturellaBuild13/Futurella.sln"

@@ -14,7 +14,7 @@
 #	include <netinet/in.h>
 #endif
 
-PeersManager* PeersManager::mSingleton = 0;
+RemotePeersManager* RemotePeersManager::mSingleton = 0;
 
 BEGIN_DECLNETMESSAGE(Hallo, 1000)
 std::string buddyName;
@@ -39,39 +39,44 @@ BEGIN_DECLNETMESSAGE(PeerUnavailable, 1003)
 uint32_t peerId;
 END_DECLNETMESSAGE()
 
-class TunnelingFuturellaPeer: public FuturellaPeer
+class TunnelingFuturellaPeer: public RemoteMessagePeer
 {
 public:
-	TunnelingFuturellaPeer(FuturellaPeer::pointer tunnel, const NetAvailablePeerMessage* msg);
-	TunnelingFuturellaPeer(FuturellaPeer::pointer tunnel, uint32_t peerId);
+	TunnelingFuturellaPeer(RemoteMessagePeer::pointer tunnel, const NetAvailablePeerMessage* msg);
+	TunnelingFuturellaPeer(RemoteMessagePeer::pointer tunnel, uint32_t peerId);
 	~TunnelingFuturellaPeer();
-	virtual bool sendMessage(const NetMessage::const_pointer& msg);
-	bool isDirect()const
+	bool isTunnel()const
 	{
-		return false;
+		return true;
 	}
 protected:
-	FuturellaPeer::pointer mTunnel;
+	virtual bool takeMessage(const NetMessage::const_pointer& msg, MessagePeer* sender);
+	RemoteMessagePeer::pointer mTunnel;
 };
 
-TunnelingFuturellaPeer::TunnelingFuturellaPeer(FuturellaPeer::pointer tunnel, const NetAvailablePeerMessage* msg):
-	mTunnel(tunnel)
+TunnelingFuturellaPeer::TunnelingFuturellaPeer(RemoteMessagePeer::pointer tunnel, const NetAvailablePeerMessage* msg):
+	RemoteMessagePeer(tunnel->m_netService), mTunnel(tunnel)
 {
+    bool failedBorn = false;
 	m_peerIdentityKey = msg->peerId;
 	m_buddyName = msg->buddyName;
-	if (PeersManager::getManager()->registerPeerId(m_peerIdentityKey, this) == false)
-		// this->deleteLater(); TODO: think over owner strategy
-		;
-	PeersManager::getManager()->regFuturellaPeer(this);
+    if (RemotePeersManager::getManager()->registerPeerId(m_peerIdentityKey, this) == false)
+        failedBorn = true;
+	RemotePeersManager::getManager()->regFuturellaPeer(this);
+
+    if (failedBorn)
+        m_netService.post([this](){
+        delete this;
+    });
 }
 
-TunnelingFuturellaPeer::TunnelingFuturellaPeer(FuturellaPeer::pointer tunnel, uint32_t peerId):
-mTunnel(tunnel)
+TunnelingFuturellaPeer::TunnelingFuturellaPeer(RemoteMessagePeer::pointer tunnel, uint32_t peerId):
+	RemoteMessagePeer(tunnel->m_netService), mTunnel(tunnel)
 {
 	m_peerIdentityKey = peerId;
 	m_buddyName = std::string("[Unknown Source]");
-	assert(PeersManager::getManager()->registerPeerId(m_peerIdentityKey, this));
-	PeersManager::getManager()->regFuturellaPeer(this);
+	assert(RemotePeersManager::getManager()->registerPeerId(m_peerIdentityKey, this));
+	RemotePeersManager::getManager()->regFuturellaPeer(this);
 	tunnel->addDependablePeer(this);
 }
 
@@ -79,80 +84,72 @@ TunnelingFuturellaPeer::~TunnelingFuturellaPeer()
 {
 }
 
-bool TunnelingFuturellaPeer::sendMessage(const NetMessage::const_pointer& msg)
+bool TunnelingFuturellaPeer::takeMessage(const NetMessage::const_pointer& msg, MessagePeer*)
 {
 	if (!m_active)
 		return false;
 	if (msg->gettype() == NetTunneledMessage::type)
-		return mTunnel->sendMessage(msg);
+		return mTunnel->send(msg);
 	NetTunneledMessage* message = new NetTunneledMessage;
 	message->peerIdWhom = m_peerIdentityKey;
-	message->peerIdFrom = PeersManager::getManager()->myPeerId;
+	message->peerIdFrom = RemotePeersManager::getManager()->myPeerId;
 	message->msgType = msg->gettype();
 	RawMessage::const_pointer toSend = msg->toRaw();
 	if (!toSend->msgBytes.empty())
 		message->msgData = toSend->msgBytes;
-	return mTunnel->sendMessage(NetMessage::const_pointer(message));
+	return mTunnel->send(NetMessage::const_pointer(message));
 }
 
-FuturellaPeer::FuturellaPeer():
-	m_active(true)
+RemoteMessagePeer::RemoteMessagePeer(boost::asio::io_service &networkThread):
+	m_active(true), m_netService(networkThread)
 {
 	m_connectLine = nullptr;
 	m_halloStatus = 0;
 	m_status = MP_ACTIVE;
-	m_myName = PeersManager::getManager()->peerName;
+	m_myName = RemotePeersManager::getManager()->peerName;
 }
 
-FuturellaPeer::FuturellaPeer(NetConnection* con, bool serverSide) :
-	m_active(false), m_halloStatus(1), m_buddyName("[Broken Connection]")
+RemoteMessagePeer::RemoteMessagePeer(NetConnection* con, bool serverSide, boost::asio::io_service& networkService) :
+	m_active(false), m_halloStatus(1), m_buddyName("[Broken Connection]"), m_netService(networkService)
 {
 	m_peerIdentityKey = 0;
 	m_connectLine = con;
 	m_status = MP_CONNECTING;
-	m_myName = PeersManager::getManager()->peerName;
+	m_myName = RemotePeersManager::getManager()->peerName;
 	assert(con);
 	bool runHallo = false;
 	if (con)
 	{
 		if (con->isActive())
 			runHallo = true;
-		else
-			con->setNetworkListener(this);
+		//else
+        con->onConnected(std::bind(&RemoteMessagePeer::netConnected, this), m_tobeDestroyed);
+        con->onDisconnected(std::bind(&RemoteMessagePeer::netDisconnected, this, std::placeholders::_1), m_tobeDestroyed);
+        con->onMessageReceived(std::bind(&RemoteMessagePeer::netMessageReceived, this, std::placeholders::_1), m_tobeDestroyed);
 	}
-	PeersManager::getManager()->regFuturellaPeer(this);
+	RemotePeersManager::getManager()->regFuturellaPeer(this);
 	if (runHallo && !serverSide)
-		onConnected();
+		netConnected();
 }
 
-FuturellaPeer::~FuturellaPeer()
+RemoteMessagePeer::~RemoteMessagePeer()
 {
 	m_tobeDestroyed();
-	PeersManager::getManager()->unregisterPeer(this);
+	RemotePeersManager::getManager()->unregisterPeer(this);
 	if (m_active && m_connectLine != 0)
 	{
 		NetPeerUnavailableMessage* msg = new NetPeerUnavailableMessage;
 		msg->peerId = m_peerIdentityKey;
-		PeersManager::getManager()->broadcast(NetMessage::const_pointer(msg), this);
+		RemotePeersManager::getManager()->broadcast(NetMessage::const_pointer(msg), this);
 	}
 	if (m_peerIdentityKey)
-		PeersManager::getManager()->unregisterPeerId(m_peerIdentityKey);
+		RemotePeersManager::getManager()->unregisterPeerId(m_peerIdentityKey);
 	if (m_connectLine)
 		m_connectLine->scheduleDeletion();
 }
 
-void FuturellaPeer::onMessage(const msgFunc &f)
-{
-	m_receivers.push_back(f);
-}
-
-bool FuturellaPeer::translateMessage(const NetMessage::const_pointer& msg,
+bool RemoteMessagePeer::takeMessage(const NetMessage::const_pointer& msg,
 								   MessagePeer*)
-{
-	return sendMessage(msg);
-}
-
-bool FuturellaPeer::sendMessage(const NetMessage::const_pointer& msg)
 {
 	// We can't send any messages till we are ready with greetings procedure
 	if (m_status == MP_DISCONNECTED)
@@ -164,7 +161,7 @@ bool FuturellaPeer::sendMessage(const NetMessage::const_pointer& msg)
 	return m_active;
 }
 
-void FuturellaPeer::onMessageReceived(RawMessage::pointer msg)
+void RemoteMessagePeer::netMessageReceived(RawMessage::pointer msg)
 {
 	try
 	{
@@ -181,10 +178,10 @@ void FuturellaPeer::onMessageReceived(RawMessage::pointer msg)
 			else if (realMsg->gettype() == NetTunneledMessage::type)
 			{
 				const NetTunneledMessage* tunnelMsg = static_cast<const NetTunneledMessage*>(realMsg.get());
-				if (tunnelMsg->peerIdWhom == PeersManager::getManager()->myPeerId)
+				if (tunnelMsg->peerIdWhom == RemotePeersManager::getManager()->myPeerId)
 				{
 					RawMessage::pointer innerMsg(new RawMessage);
-					FuturellaPeer::pointer tunneledPeer = PeersManager::getManager()->peerFromId(tunnelMsg->peerIdFrom);
+					RemoteMessagePeer::pointer tunneledPeer = RemotePeersManager::getManager()->peerFromId(tunnelMsg->peerIdFrom);
 					if (tunneledPeer == 0)
 					{
 						// It shouldn't happen, but it's still possible to create a new TunnelingFuturellaPeer object
@@ -193,43 +190,35 @@ void FuturellaPeer::onMessageReceived(RawMessage::pointer msg)
 					}
 					innerMsg->msgType = tunnelMsg->msgType;
 					innerMsg->msgBytes.assign(tunnelMsg->msgData.data(), tunnelMsg->msgData.data() + tunnelMsg->msgData.size());
-					tunneledPeer->onMessageReceived(innerMsg);
+					tunneledPeer->netMessageReceived(innerMsg);
 					return;
 				}
 				// The message isn't ours,
 				// send it further
-				FuturellaPeer::pointer destinPeer = PeersManager::getManager()->peerFromId(tunnelMsg->peerIdWhom);
+				RemoteMessagePeer::pointer destinPeer = RemotePeersManager::getManager()->peerFromId(tunnelMsg->peerIdWhom);
 				if (destinPeer)
-					destinPeer->sendMessage(realMsg);
+					destinPeer->send(realMsg);
 				else
-				{
-					// We must tell the sender that the receiver doesn't exist any more
-					NetPeerUnavailableMessage* unavailableMsg = new NetPeerUnavailableMessage;
+                {
+                    // We must tell the sender that the receiver doesn't exist any more
+                    NetPeerUnavailableMessage::pointer unavailableMsg{ new NetPeerUnavailableMessage };
 					unavailableMsg->peerId = tunnelMsg->peerIdWhom;
-					destinPeer = PeersManager::getManager()->peerFromId(tunnelMsg->peerIdFrom);
+					destinPeer = RemotePeersManager::getManager()->peerFromId(tunnelMsg->peerIdFrom);
 					if (destinPeer)
-						destinPeer->sendMessage(NetMessage::const_pointer(unavailableMsg));
-					else
-						delete unavailableMsg;
+						destinPeer->send(NetMessage::const_pointer(unavailableMsg));
 				}
 			}
 			else if (realMsg->gettype() == NetPeerUnavailableMessage::type)
 			{
 				const NetPeerUnavailableMessage* tunnelMsg = static_cast<const NetPeerUnavailableMessage*>(realMsg.get());
-				FuturellaPeer::pointer deletedPeer = PeersManager::getManager()->peerFromId(tunnelMsg->peerId);
-				if (deletedPeer && deletedPeer->isDirect() == false)
-					//deletedPeer->deleteLater();
-					;
+				RemoteMessagePeer::pointer deletedPeer = RemotePeersManager::getManager()->peerFromId(tunnelMsg->peerId);
+                if (deletedPeer && deletedPeer->isTunnel())
+                    m_netService.post([=](){ delete deletedPeer; });
 			}
 			else
 			{
-				//std::for_each(m_receivers.begin(), m_receivers.end(), std::bind(&msgFunc::operator(), std::placeholders::_1, realMsg, this));
-				for (auto callBack : m_receivers)
-				{
-					callBack(realMsg, this);
-				}
-				assert(transPointers.size() <= 1);
-				sendMessageToAll(realMsg);
+                m_messageReceived(realMsg, this);
+				broadcastLocally(realMsg);
 			}
 		}
 		else
@@ -250,20 +239,24 @@ void FuturellaPeer::onMessageReceived(RawMessage::pointer msg)
 	}
 }
 
-void FuturellaPeer::onDisconnect(const std::string&)
+void RemoteMessagePeer::netDisconnected(const std::string& err)
 {
+    if (!err.empty())
+        m_errorSignal(err);
 	m_status = MP_DISCONNECTED;
 	m_statusChanged();
-	// this->deleteLater();
+	m_netService.post([this](){
+		delete this;
+	});
 }
 
-void FuturellaPeer::onConnected()
+void RemoteMessagePeer::netConnected()
 {
 	--m_halloStatus;
 	m_connectLine->sendMessage(createHalloMsg()->toRaw());
 }
 
-void FuturellaPeer::halloProceed(const std::shared_ptr<const NetHalloMessage>& hallo)
+void RemoteMessagePeer::halloProceed(const std::shared_ptr<const NetHalloMessage>& hallo)
 {
 	if (hallo->version != protokoll_version || hallo->halloStat != m_halloStatus)
 	{
@@ -276,7 +269,7 @@ void FuturellaPeer::halloProceed(const std::shared_ptr<const NetHalloMessage>& h
 	if (m_peerIdentityKey == 0)
 	{
 		m_peerIdentityKey = hallo->peerId;
-		if (PeersManager::getManager()->registerPeerId(m_peerIdentityKey, this) == false)
+		if (RemotePeersManager::getManager()->registerPeerId(m_peerIdentityKey, this) == false)
 		{
 			m_peerIdentityKey = 0;
 			m_connectLine->close();
@@ -298,104 +291,116 @@ void FuturellaPeer::halloProceed(const std::shared_ptr<const NetHalloMessage>& h
 		// sending all messages from the waiting queue
 		while(!m_activationWaitingQueue.empty())
 		{
-			sendMessage(m_activationWaitingQueue.front());
+			send(m_activationWaitingQueue.front());
 			m_activationWaitingQueue.pop_front();
 		}
 		// Send a message to other peers about the new peer
 		NetAvailablePeerMessage* msg = new NetAvailablePeerMessage;
 		msg->buddyName = m_buddyName;
 		msg->peerId = m_peerIdentityKey;
-		PeersManager::getManager()->broadcast(NetMessage::const_pointer(msg), this);
+		RemotePeersManager::getManager()->broadcast(NetMessage::const_pointer(msg), this);
 
 		m_statusChanged();
 		m_onActivated();
 	}
 }
 
-NetMessage::pointer FuturellaPeer::createHalloMsg() const
+NetMessage::pointer RemoteMessagePeer::createHalloMsg() const
 {
 	NetHalloMessage* myMsg = new NetHalloMessage;
 	myMsg->buddyName = m_myName;
 	myMsg->halloStat = ++m_halloStatus;
 	++m_halloStatus;
 	myMsg->version = protokoll_version;
-	myMsg->peerId = PeersManager::getManager()->myPeerId;
+	myMsg->peerId = RemotePeersManager::getManager()->myPeerId;
 	return NetMessage::pointer(myMsg);
 }
 
-FuturellaPeer::PeerStatus FuturellaPeer::getStatus() const
+RemoteMessagePeer::PeerStatus RemoteMessagePeer::getStatus() const
 {
 	return m_status;
 }
 
-std::string FuturellaPeer::getRemoteName() const
+std::string RemoteMessagePeer::getRemoteName() const
 {
 	return m_buddyName;
 }
 
-PeersManager::PeersManager()
+void RemoteMessagePeer::addDependablePeer(RemoteMessagePeer* child)
+{
+	/*m_tobeDestroyed.connect([child](){
+		delete child;
+	}, child);*/
+}
+
+bool RemoteMessagePeer::isTunnel() const
+{
+    return false;
+}
+
+RemotePeersManager::RemotePeersManager()
 {
 	myPeerId = rand();
 }
 
-PeersManager* PeersManager::getManager()
+RemotePeersManager* RemotePeersManager::getManager()
 {
 	if (!mSingleton)
-		mSingleton = new PeersManager();
+		mSingleton = new RemotePeersManager();
 	return mSingleton;
 }
 
-void PeersManager::regFuturellaPeer(FuturellaPeer::pointer ptr)
+void RemotePeersManager::regFuturellaPeer(RemoteMessagePeer::pointer ptr)
 {
 	msgPeers.push_back(ptr);
-	ptr->onActivation(std::bind(&PeersManager::onPeerActivated, this, ptr), this);
+	ptr->onActivation(std::bind(&RemotePeersManager::onPeerActivated, this, ptr));
 	m_peerRegistred(ptr);
 }
 
-void PeersManager::unregisterPeer(FuturellaPeer::pointer peer)
+void RemotePeersManager::unregisterPeer(RemoteMessagePeer* peer)
 {
-	std::deque<FuturellaPeer::pointer>::iterator it = std::find(msgPeers.begin(),
+	std::deque<RemoteMessagePeer::pointer>::iterator it = std::find(msgPeers.begin(),
 		msgPeers.end(), peer);
 	assert(it != msgPeers.end());
 	msgPeers.erase(it);
 }
 
-bool PeersManager::registerPeerId(uint32_t id, FuturellaPeer::pointer peer)
+bool RemotePeersManager::registerPeerId(uint32_t id, RemoteMessagePeer::pointer peer)
 {
 	return id == myPeerId ? false : registeredPeerIds.insert(std::make_pair(id, peer)).second;
 }
 
-void PeersManager::unregisterPeerId(uint32_t id)
+void RemotePeersManager::unregisterPeerId(uint32_t id)
 {
-	std::map<uint32_t, FuturellaPeer::pointer>::iterator test = registeredPeerIds.find(id);
+	std::map<uint32_t, RemoteMessagePeer::pointer>::iterator test = registeredPeerIds.find(id);
 	if (test != registeredPeerIds.end())
 		registeredPeerIds.erase(test);
 }
 
-FuturellaPeer::pointer PeersManager::peerFromId(uint32_t id)const
+RemoteMessagePeer::pointer RemotePeersManager::peerFromId(uint32_t id)const
 {
-	std::map<uint32_t, FuturellaPeer::pointer>::const_iterator peer = registeredPeerIds.find(id);
+	std::map<uint32_t, RemoteMessagePeer::pointer>::const_iterator peer = registeredPeerIds.find(id);
 	if (peer != registeredPeerIds.end())
 		return peer->second;
-	return FuturellaPeer::pointer(0);
+	return RemoteMessagePeer::pointer(0);
 }
 
-void PeersManager::setMyName(std::string name)
+void RemotePeersManager::setMyName(std::string name)
 {
 	peerName = name;
 }
 
-std::string PeersManager::getMyName() const
+std::string RemotePeersManager::getMyName() const
 {
 	return peerName;
 }
 
-bool PeersManager::isAnyoneConnected() const
+bool RemotePeersManager::isAnyoneConnected() const
 {
 	return msgPeers.empty() == false;
 }
 
-void PeersManager::sendChatMessage(const std::string &msg)
+void RemotePeersManager::sendChatMessage(const std::string &msg)
 {
 	NetChatMessage* myMsg = new NetChatMessage;
 	myMsg->message = msg;
@@ -403,19 +408,19 @@ void PeersManager::sendChatMessage(const std::string &msg)
 	broadcast(NetMessage::const_pointer(myMsg));
 }
 
-void PeersManager::broadcast(NetMessage::const_pointer msg, FuturellaPeer::pointer exclude)
+void RemotePeersManager::broadcast(NetMessage::const_pointer msg, RemoteMessagePeer::pointer exclude)
 {
-	for(FuturellaPeer::pointer peer: msgPeers)
+	for(RemoteMessagePeer::pointer peer: msgPeers)
 	{
 		if (peer != exclude)
-			peer->sendMessage(msg);
+			peer->send(msg);
 	}
 }
 
-void PeersManager::onPeerActivated(const FuturellaPeer::pointer& sendPeer)
+void RemotePeersManager::onPeerActivated(const RemoteMessagePeer::pointer& sendPeer)
 {
 	// Send the peer all info about other peers available
-	for(std::map<uint32_t, FuturellaPeer::pointer>::const_iterator it = registeredPeerIds.begin();
+	for(std::map<uint32_t, RemoteMessagePeer::pointer>::const_iterator it = registeredPeerIds.begin();
 		it != registeredPeerIds.end();
 		++it)
 	{
@@ -423,20 +428,16 @@ void PeersManager::onPeerActivated(const FuturellaPeer::pointer& sendPeer)
 		NetAvailablePeerMessage* msg = new NetAvailablePeerMessage;
 		msg->buddyName = it->second->getRemoteName();
 		msg->peerId = it->first;
-		sendPeer->sendMessage(NetMessage::const_pointer(msg));
+		sendPeer->send(NetMessage::const_pointer(msg));
 	}
 }
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(Chat)
-uint16_t messageLength = message.size();
-uint16_t netMsgLength = htons(messageLength);
-outStr.write(reinterpret_cast<const char*>(&netMsgLength), 2);
-outStr.write(message.c_str(), messageLength);
-outStr.write(reinterpret_cast<const char*>(&sentTime), sizeof(time_t));
+outStr << message << sentTime;
 END_NETTORAWMESSAGE_QCONVERT()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(Chat)
-ourStr >> temp->message >> temp->sentTime;
+inStr >> temp->message >> temp->sentTime;
 END_RAWTONETMESSAGE_QCONVERT()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(Hallo)
@@ -444,7 +445,7 @@ outStr << buddyName << halloStat << peerId << version;
 END_NETTORAWMESSAGE_QCONVERT()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(Hallo)
-ourStr >> temp->buddyName >> temp->halloStat >> temp->peerId >> temp->version;
+inStr >> temp->buddyName >> temp->halloStat >> temp->peerId >> temp->version;
 END_RAWTONETMESSAGE_QCONVERT()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(AvailablePeer)
@@ -452,7 +453,7 @@ outStr << buddyName << peerId;
 END_NETTORAWMESSAGE_QCONVERT()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(AvailablePeer)
-ourStr >> temp->buddyName >> temp->peerId;
+inStr >> temp->buddyName >> temp->peerId;
 END_RAWTONETMESSAGE_QCONVERT()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(Tunneled)
@@ -460,7 +461,7 @@ outStr << peerIdWhom << peerIdFrom << msgType << msgData;
 END_NETTORAWMESSAGE_QCONVERT()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(Tunneled)
-ourStr >> temp->peerIdWhom >> temp->peerIdFrom >> temp->msgType >> temp->msgData;
+inStr >> temp->peerIdWhom >> temp->peerIdFrom >> temp->msgType >> temp->msgData;
 END_RAWTONETMESSAGE_QCONVERT()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(PeerUnavailable)
@@ -468,7 +469,7 @@ outStr << peerId;
 END_NETTORAWMESSAGE_QCONVERT()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(PeerUnavailable)
-ourStr >> temp->peerId;
+inStr >> temp->peerId;
 END_RAWTONETMESSAGE_QCONVERT()
 
 REGISTER_NETMESSAGE(Chat)

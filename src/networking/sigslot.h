@@ -14,6 +14,8 @@
 namespace addstd
 {
 
+template<typename, typename = void> class signal;
+
 template<typename FuncSig>
 class signal_base
 {
@@ -54,6 +56,26 @@ public:
 		bool isValid() { return funcOwner.valid(); }
 	};
 
+    //template <typename OwnerSignalType>
+    struct t_slotSignalledDelete : public t_slot, public std::enable_shared_from_this<t_slotSignalledDelete>
+    {
+        bool valid;
+
+        t_slotSignalledDelete(const t_funcHolder& f) :
+            t_slot(f), valid(true)
+        {
+        }
+
+        void invalidate() { valid = false; }
+        bool isValid() { return valid; }
+    };
+
+    struct t_slotUnmanaged : public t_slot
+    {
+        t_slotUnmanaged(const t_funcHolder& f) : t_slot(f) {}
+        bool isValid() { return true; }
+    };
+
 	signal_base() {}
 
 	void connect(const t_funcHolder& f, osg::Referenced* owner)
@@ -64,15 +86,27 @@ public:
 	template <typename OwnerType>
 	void connect(const t_funcHolder& f, const std::shared_ptr<OwnerType> &p)
 	{
-		m_slots.push_back(std::make_shared<t_slotSharedPtr>(f, p.get()));
+		m_slots.push_back(std::make_shared<t_slotSharedPtr<OwnerType>>(f, p));
 	}
+
+    void connect(const t_funcHolder& f, signal<void()> &destructionSignal)
+    {
+        auto newSlot = std::make_shared<t_slotSignalledDelete>(f);
+        m_slots.push_back(newSlot);
+        destructionSignal.connect(std::bind(&t_slotSignalledDelete::invalidate, newSlot), newSlot);
+    }
+
+    void connect(const t_funcHolder& f, int dummy = -1)
+    {
+        m_slots.push_back(std::make_shared<t_slotUnmanaged>(f));
+    }
 
 protected:
 
 	std::deque<std::shared_ptr<t_slot>> m_slots;
 };
 
-template<typename FuncSig, typename Enable = void>
+template<typename FuncSig, typename Enable>
 class signal : public signal_base<FuncSig>
 {
 public:

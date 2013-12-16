@@ -1,0 +1,61 @@
+<?xml version="1.0" ?>
+<GUILayout version = "4">
+    <Window type="DefaultWindow" name="root">
+        <Window type="TaharezLook/FrameWindow" name="chatWindow">
+            <Property name="Text" value="Chat" />
+			<Property name="Size" value="{{0, 210}, {0, 450}}" />
+			<Property name="MinSize" value="{{0, 200}, {0, 450}}" />
+			
+			<Window type="TaharezLook/MultiLineEditbox" name="output">
+				<Property name="Area" value="{{0,0},{0,0},{1,0},{0.8,0}}" />
+			</Window>
+			
+			<Window type="TaharezLook/Editbox" name="input">
+				<Property name="Area" value="{{0,0},{0.81,0},{1,0},{0.81,30}}" />
+			</Window>
+			
+			<Window type="TaharezLook/Button" name="sendBtn">
+				<Property name="Position" value="{{0, 0},{0.81, 30}}" />
+				<Property name="Text">Send</Property>
+			</Window>
+			
+			<Window type="TaharezLook/Button" name="quitBtn">
+				<Property name="Position" value="{{0.5, 0},{0.81, 30}}" />
+				<Property name="Text">Quit</Property>
+			</Window>
+			
+			<Property name="Visible" value="true" />
+        </Window>
+		
+		<Window type="TaharezLook/FrameWindow" name="networkSettings">
+			<Property name="Text" value="Network" />
+			<Property name="MinSize" value="{{0, 200}, {0, 300}}" />
+			<Property name="Size" value="{{0, 210}, {0, 310}}" />
+			<Property name="Position" value="{{0.45, 0}, {0.45, 0}}" />
+			
+			<Window type="TaharezLook/Editbox" name="portNumber">
+				<Property name="Area" value="{{0,0},{0,5},{1,0},{0,35}}" />
+				<Property name="ValidationString" value="[0-9]*" />
+			</Window>
+			
+			<Window type="TaharezLook/Button" name="listenBtn">
+				<Property name="Position" value="{{0,0},{0,36}}" />
+				<Property name="Text" value="Listen" />
+			</Window>
+			
+			<Window type="TaharezLook/Editbox" name="address">
+				<Property name="Area" value="{{0,0},{0,67},{1,0},{0,102}}" />
+			</Window>
+			
+			<Window type="TaharezLook/Button" name="connectBtn">
+				<Property name="Position" value="{{0,0},{0,103}}" />
+				<Property name="Text" value="Connect" />
+			</Window>
+			
+			<Window type="TaharezLook/MultiLineEditbox" name="console">
+				<Property name="Area" value="{{0,0}, {0,134}, {1, 0}, {1, -5}}" />
+			</Window>
+			
+		</Window>
+    </Window>
+</GUILayout>

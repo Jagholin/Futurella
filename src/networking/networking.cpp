@@ -129,16 +129,14 @@ bool NetConnImpl::connect(std::string addr, uint16_t port)
 {
 	if (connected)
 		return false;
-	//asio::error_code ec = asio::error::host_not_found;
+	boost::system::error_code ec = asio::error::host_not_found;
 	asio::ip::tcp::resolver myResolver(mserv);
 	asio::ip::tcp::resolver::query resQuery(addr, boost::lexical_cast<std::string>(port));
-	mBegin = myResolver.resolve(resQuery);
+	mBegin = myResolver.resolve(resQuery, ec);
 
-	if (mBegin != mEnd)
+	if (mBegin != mEnd && !ec)
 	{
-		//asio::ip::tcp::endpoint* ep = new asio::ip::tcp::endpoint(asio::ip::address::from_string(addr.toStdString()), port);
 		mserv.post(std::bind(&NetConnImpl::doConnect, shared_from_this()));
-		//mySock.async_connect(ep, boost::bind(NetConnImpl::onConnect&, shared_from_this(), asio::placeholders::error));
 	}
 	else
 	{
@@ -171,7 +169,7 @@ void NetConnImpl::onConnect(const boost::system::error_code& code)
 						std::placeholders::_1, //asio::placeholders::error,
 						std::placeholders::_2, //asio::placeholders::bytes_transferred,
 						header));
-		if(buddy && buddy->onConnected) buddy->onConnected(/*buddy->myId*/);
+		if(buddy) buddy->m_connected(/*buddy->myId*/);
 	}
 	else
 	{
@@ -257,7 +255,7 @@ void NetConnImpl::onMsgSent(const boost::system::error_code& code, size_t /*byte
 							std::placeholders::_1, //asio::placeholders::error,
 							std::placeholders::_2 //asio::placeholders::bytes_transferred
 							));
-		if (buddy && buddy->onMessageSent) buddy->onMessageSent(/*buddy->myId,*/ frontMsg++);
+		if (buddy) buddy->m_messageSent(/*buddy->myId,*/ frontMsg++);
 	}
 	else
 	{
@@ -308,7 +306,7 @@ void NetConnImpl::onBodyReceived(const boost::system::error_code& code, size_t /
 						std::placeholders::_1, //asio::placeholders::error,
 						std::placeholders::_2, //asio::placeholders::bytes_transferred,
 						header));
-		if (buddy && buddy->onMessageReceived) buddy->onMessageReceived(/*buddy->myId,*/ msg);
+		if (buddy) buddy->m_messageReceived(/*buddy->myId,*/ msg);
 	}
 	else
 	{
@@ -375,8 +373,7 @@ void NetConnection::close()
 void NetConnection::onNetworkError(const NetworkError& err)
 {
 	close();
-	if (onDisconnect)
-		onDisconnect(/*myId,*/ err.str);
+	m_disconnected(/*myId,*/ err.str);
 }
 
 void NetConnection::scheduleDeletion()
@@ -428,7 +425,7 @@ void NetServerImpl::doListen()
 	{
 		started = false;
 		//qDebug() << "Server stopped: " << QString::fromStdString(ec.message());
-		if (buddy && buddy->onStop) buddy->onStop();
+		if (buddy) buddy->m_stopped();
 		return;
 	}
 	mAccept.async_accept(*mSocket,
@@ -445,14 +442,14 @@ void NetServerImpl::onAccept(const boost::system::error_code& code)
 		NetConnection* newCon = new NetConnection(mserv);
 		newCon->privData->setSocket(mSocket);
 		mSocket.reset(new socket::element_type(mserv));
-		if (buddy && buddy->onConnection) buddy->onConnection(newCon);
+		if (buddy) buddy->m_newConnection(newCon);
 		doListen();
 	}
 	else
 	{
 		started = false;
 		//qDebug() << "Server stopped: " << QString::fromStdString(code.message());
-		if (buddy && buddy->onStop) buddy->onStop();
+		if (buddy) buddy->m_stopped();
 	}
 }
 
@@ -479,8 +476,7 @@ bool NetServer::listen(unsigned int port, std::string& errMsg)
 	if (ec)
 	{
 		errMsg = ec.message();
-		if (onStop)	
-			onStop();
+		m_stopped();
 		return false;
 	}
 	return true;

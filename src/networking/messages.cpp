@@ -5,71 +5,71 @@
 #include <algorithm>
 #include <cassert>
 
-MsgFactory::factoryMap* MsgFactory::msgFactories = 0;
+MsgFactory::factoryMap MsgFactory::msgFactories;
 
-MessagePeer::MessagePeer(): isWorking(false)
+MessagePeer::MessagePeer(): m_isWorking(false)
 {}
 
 MessagePeer::~MessagePeer()
 {
-	assert(!isWorking);
-	std::for_each(transPointers.begin(), transPointers.end(), std::bind(
-			&MessagePeer::disconnectFrom, std::placeholders::_1, this, false));
+	assert(!m_isWorking);
+	std::for_each(m_localPeers.begin(), m_localPeers.end(), std::bind(
+			&MessagePeer::disconnectLocallyFrom, std::placeholders::_1, this, false));
 }
 
-void MessagePeer::connectTo(MessagePeer* buddy, bool recursive /* = true */)
+void MessagePeer::connectLocallyTo(MessagePeer* buddy, bool recursive /* = true */)
 {
-	transPointers.push_back(buddy);
+	m_localPeers.push_back(buddy);
 	if (recursive)
-		buddy->connectTo(this, false);
+		buddy->connectLocallyTo(this, false);
 }
 
-void MessagePeer::disconnectFrom(MessagePeer* buddy, bool recursive /* = true */)
+void MessagePeer::disconnectLocallyFrom(MessagePeer* buddy, bool recursive /* = true */)
 {
-	vector<MessagePeer*>::iterator toClear = std::find(transPointers.begin(), transPointers.end(), buddy);
-	assert(toClear != transPointers.end());
-	transPointers.erase(toClear);
-	assert(std::find(transPointers.begin(), transPointers.end(), buddy) == transPointers.end());
+	vector<MessagePeer*>::iterator toClear = std::find(m_localPeers.begin(), m_localPeers.end(), buddy);
+	assert(toClear != m_localPeers.end());
+	m_localPeers.erase(toClear);
+	assert(std::find(m_localPeers.begin(), m_localPeers.end(), buddy) == m_localPeers.end());
 	// We need to drop all the work which came from the buddy
-	if (!messageQueue.empty()) for (std::deque<workPair>::iterator it = messageQueue.begin(); it != messageQueue.end(); ++it)
+	if (!m_messageQueue.empty()) for (std::deque<workPair>::iterator it = m_messageQueue.begin(); it != m_messageQueue.end(); ++it)
 	{
 		if (it->second == buddy)
 		{
-			messageQueue.erase(it);
+			m_messageQueue.erase(it);
 			// The Iterator is invalidated, begin once again
-			it = messageQueue.begin();
+			it = m_messageQueue.begin();
 		}
 	}
 	if (recursive)
-		buddy->disconnectFrom(this, false);
+		buddy->disconnectLocallyFrom(this, false);
 }
 
-void MessagePeer::sendMessageToAll(const NetMessage::const_pointer& msg)
+void MessagePeer::broadcastLocally(const NetMessage::const_pointer& msg)
 {
-	std::for_each(transPointers.begin(), transPointers.end(), std::bind(&MessagePeer::queueMessage, std::placeholders::_1, msg, this));
+	std::for_each(m_localPeers.begin(), m_localPeers.end(), std::bind(&MessagePeer::send, std::placeholders::_1, msg, this));
 }
 
-void MessagePeer::queueMessage(const NetMessage::const_pointer& msg, MessagePeer* from)
+bool MessagePeer::send(const NetMessage::const_pointer& msg, MessagePeer* from)
 {
 	// Adding the message to the queue
-	messageQueue.push_back(std::make_pair(msg, from));
-	if (!isWorking)
+	m_messageQueue.push_back(std::make_pair(msg, from));
+    bool result = true;
+	if (!m_isWorking)
 	{
-		isWorking = true;
+		m_isWorking = true;
 		do 
 		{
-			workPair curMessage = messageQueue.front();
-			messageQueue.pop_front();
-			this->translateMessage(curMessage.first, curMessage.second);
-		} while (messageQueue.empty() == false);
-		isWorking = false;
+			workPair curMessage = m_messageQueue.front();
+			m_messageQueue.pop_front();
+			result = takeMessage(curMessage.first, curMessage.second);
+		} while (m_messageQueue.empty() == false);
+		m_isWorking = false;
 	}
+    return result;
 }
 
 unsigned int MsgFactory::regFactory(unsigned int id, const factoryFunc& f)
 {
-	if (!msgFactories)
-		msgFactories = new factoryMap();
-	(*msgFactories)[id] = f;
+	msgFactories[id] = f;
 	return id;
 }

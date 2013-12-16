@@ -10,6 +10,7 @@
 #include <functional>
 #include <algorithm>
 #include <boost/asio/io_service.hpp>
+#include "sigslot.h"
 
 using std::vector;
 struct RawMessage
@@ -23,23 +24,6 @@ struct RawMessage
 struct NetworkError
 {
 	std::string str;
-};
-
-class NetConnectionListener
-{
-public:
-	virtual void onMessageSent(/*unsigned int,*/ unsigned int)=0;
-	virtual void onMessageReceived(/*unsigned int,*/ RawMessage::pointer)=0;
-	virtual void onConnected(/*unsigned int*/)=0;
-	virtual void onDisconnect(/*unsigned int,*/ const std::string&)=0;
-};
-
-class NetConnection;
-class NetServerListener
-{
-public:
-	virtual void onConnection(NetConnection*);
-	virtual void onStop();
 };
 
 class NetConnImpl;
@@ -61,13 +45,10 @@ public:
 
 	void scheduleDeletion();
 
-	void setNetworkListener(NetConnectionListener* newListener)
-	{
-		onMessageSent = std::bind(&NetConnectionListener::onMessageSent, newListener, std::placeholders::_1);
-		onMessageReceived = std::bind(&NetConnectionListener::onMessageReceived, newListener, std::placeholders::_1);
-		onConnected = std::bind(&NetConnectionListener::onConnected, newListener);
-		onDisconnect = std::bind(&NetConnectionListener::onDisconnect, newListener, std::placeholders::_1);
-	}
+    template<typename T> void onMessageSent(const std::function<void(unsigned int)>& func, T&& closure) { m_messageSent.connect(func, std::forward<T>(closure)); }
+    template<typename T> void onMessageReceived(const std::function<void(RawMessage::pointer)>& func, T&& closure) { m_messageReceived.connect(func, std::forward<T>(closure)); }
+    template<typename T> void onConnected(const std::function<void()>& func, T&& closure) { m_connected.connect(func, std::forward<T>(closure)); }
+    template<typename T> void onDisconnected(const std::function<void(std::string)>& func, T&& closure) { m_disconnected.connect(func, std::forward<T>(closure)); }
 
 	friend class NetConnImpl;
 	friend class NetServerImpl;
@@ -76,10 +57,10 @@ protected:
 	void onNetworkError(const NetworkError&);
 	void deleteNow();
 
-	std::function<void (/*unsigned int,*/ unsigned int)> onMessageSent;
-	std::function<void (/*unsigned int,*/ RawMessage::pointer)> onMessageReceived;
-	std::function<void (/*unsigned int*/)> onConnected;
-	std::function<void (/*unsigned int,*/ std::string)> onDisconnect;
+	addstd::signal<void (/*unsigned int,*/ unsigned int)> m_messageSent;
+    addstd::signal<void(/*unsigned int,*/ RawMessage::pointer)> m_messageReceived;
+    addstd::signal<void(/*unsigned int*/)> m_connected;
+    addstd::signal<void(/*unsigned int,*/ std::string)> m_disconnected;
 
 	boost::asio::io_service& m_service;
 };
@@ -94,17 +75,14 @@ public:
 	~NetServer();
 
 	bool listen(unsigned int port, std::string& errMsg);
-	void stop();
-	void setNetworkListener(NetServerListener* newListener)
-	{
-		onConnection = std::bind(&NetServerListener::onConnection, newListener, std::placeholders::_1);
-		onStop = std::bind(&NetServerListener::onStop, newListener);
-	}
+    void stop();
+    template<typename T> void onNewConnection(const std::function<void(NetConnection*)>& func, T&& closure) { m_newConnection.connect(func, std::forward<T>(closure)); }
+    template<typename T> void onStopped(const std::function<void()>& func, T&& closure) { m_stopped.connect(func, std::forward<T>(closure)); }
 
 	friend class NetServerImpl;
 protected:
-	std::function<void (NetConnection*)> onConnection;
-	std::function<void ()> onStop;
+	addstd::signal<void (NetConnection*)> m_newConnection;
+	addstd::signal<void ()> m_stopped;
 
 	//boost::asio::io_service& m_service;
 };

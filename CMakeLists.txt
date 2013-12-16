@@ -1,14 +1,30 @@
 cmake_minimum_required(VERSION 2.6)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
-
 project(Futurella)
+
+macro(get_WIN32_WINNT version)
+    if (WIN32 AND CMAKE_SYSTEM_VERSION)
+        set(ver ${CMAKE_SYSTEM_VERSION})
+        string(REPLACE "." "" ver ${ver})
+        string(REGEX REPLACE "([0-9])" "0\\1" ver ${ver})
+
+        set(${version} "0x${ver}")
+    endif()
+endmacro()
+
+if (WIN32)
+	get_WIN32_WINNT(ver)
+	add_definitions(-D_WIN32_WINNT=${ver})
+endif()
 
 find_package(OpenThreads REQUIRED)
 find_package(osg REQUIRED)
 find_package(osgDB REQUIRED)
 find_package(osgUtil REQUIRED)
 find_package(osgViewer REQUIRED)
+find_package(osgGA REQUIRED)
 find_package(CEGUI REQUIRED)
+find_package(OpenGL REQUIRED)
 
 find_package(BOOST 1.54.0 REQUIRED COMPONENTS system asio)
 
@@ -37,8 +53,11 @@ add_executable(Futurella
 	src/networking/messages.h
 	src/networking/peermanager.h
 	src/networking/peermanager.cpp
+	src/networking/sigslot.h
 	src/CEGUIDrawable.h
 	src/CEGUIDrawable.cpp
+	src/GUIApplication.h
+	src/GUIApplication.cpp
     src/main.cpp)
 
 add_lib(Futurella OPENTHREADS)
@@ -46,5 +65,7 @@ add_lib(Futurella OSG)
 add_lib(Futurella OSGDB)
 add_lib(Futurella OSGUTIL)
 add_lib(Futurella OSGVIEWER)
+add_lib(Futurella OSGGA)
 add_lib(Futurella CEGUI)
 add_lib(Futurella Boost)
+add_lib(Futurella OPENGL)
