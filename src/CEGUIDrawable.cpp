@@ -147,7 +147,7 @@ void CeguiDrawable::passEvent(const osgGA::GUIEventAdapter& ea) const
 		int keyCode = ea.getKey();
         if (m_keyboardMap.count(keyCode))
         {
-            System::getSingleton().getDefaultGUIContext().injectKeyDown(m_keyboardMap[keyCode]);
+            System::getSingleton().getDefaultGUIContext().injectKeyDown(m_keyboardMap.at(keyCode));
         }
 		else
 		{
@@ -160,7 +160,7 @@ void CeguiDrawable::passEvent(const osgGA::GUIEventAdapter& ea) const
         int keyCode = ea.getKey();
         if (m_keyboardMap.count(keyCode))
         {
-            System::getSingleton().getDefaultGUIContext().injectKeyDown(m_keyboardMap[keyCode]);
+            System::getSingleton().getDefaultGUIContext().injectKeyDown(m_keyboardMap.at(keyCode));
         }
         else
         {
