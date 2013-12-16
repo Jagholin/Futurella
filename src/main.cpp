@@ -26,7 +26,6 @@ int main()
     osgViewer::Viewer viewer;
 	GUIApplication guiApp(&viewer);
 
-	Level level(500, 0.5f, 1);
 
 	const std::map<unsigned int, unsigned int> testMap;
 	unsigned int myNull = 0;
@@ -37,16 +36,11 @@ int main()
 
     osg::ref_ptr<osg::Group> root = new osg::Group;
 	
-	osg::ref_ptr<osg::Geode> asteroids = new osg::Geode;
+	osg::ref_ptr<osg::Group> asteroids = new osg::Group;
+	Level level(50, 0.5f, 1, asteroids.get());
+    guiApp.setCurrentLevel(&level);
 	
 	//level.setActiveField('r');
-	for (int i = 0; i < level.getAsteroidLength(); i++)
-	{
-		osg::ref_ptr<osg::Shape> sphere = new osg::Sphere(level.getAsteroid(i)->getPosition(), level.getAsteroid(i)->getRadius());
-		osg::ref_ptr<osg::ShapeDrawable> ast = new osg::ShapeDrawable(sphere);
-		ast->setColor(osg::Vec4(0.3f, 0.7f, 0.1f, 1));
-		asteroids->addDrawable(ast);
-	}
 
 	/*
 	level.setActiveField('d');
@@ -77,12 +71,9 @@ int main()
 	postCamera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER);
 
 	root->addChild(asteroids);
-	
-	osgViewer::Viewer viewer;
-	viewer.setSceneData(root.get());
 	postCamera->addChild(ceguiNode);
 
-    root->addChild(cessnaNode);
+    //root->addChild(cessnaNode);
 	//root->addChild(cube);
     root->addChild(postCamera);
 
@@ -90,6 +81,7 @@ int main()
 	//viewer.setThreadingModel(osgViewer::Viewer::SingleThreaded);
 
 	viewer.realize();
+    level.updateField();
 
 	osgViewer::ViewerBase::Windows windowList;
 	viewer.getWindows(windowList);

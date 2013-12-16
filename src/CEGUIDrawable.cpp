@@ -186,7 +186,11 @@ void CeguiDrawable::drawImplementation( osg::RenderInfo& renderInfo ) const
 	// CEGUI OpenGL renderer uses VAO to pass geometry, but doesn't restore old bindings
 	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, reinterpret_cast<GLint*>(&old_vao));
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
-	glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
+    glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
 
 	// While we still have the right GL context enabled,
 	// pass GUI events to CEGUI
@@ -203,6 +207,10 @@ void CeguiDrawable::drawImplementation( osg::RenderInfo& renderInfo ) const
 
 	CEGUI::System::getSingleton().renderAllGUIContexts();
 
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
 	glPopClientAttrib();
 	glPopAttrib();
 	glBindVertexArray(old_vao);

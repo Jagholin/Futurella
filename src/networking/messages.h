@@ -9,6 +9,7 @@
 #include <memory>
 #include <sstream>
 #include "networking.h"
+#include <osg/Vec3>
 
 class NetMessage : public std::enable_shared_from_this<NetMessage>
 {
@@ -57,6 +58,11 @@ public:
 		return operator<<(std::string(val));
 	}
 
+    binaryStream& operator<<(const osg::Vec3f &val){
+        (*this) << val.x() << val.y() << val.z();
+        return *this;
+    }
+
 	template<typename T>
 	binaryStream& operator>>(T& val){
 		m_ss.read(reinterpret_cast<char*>(&val), sizeof(T));
@@ -73,6 +79,13 @@ public:
 		return *this;
 	}
 
+    binaryStream& operator>>(osg::Vec3f& val){
+        osg::Vec3f::value_type x, y, z;
+        (*this) >> x >> y >> z;
+        val.set(x, y, z);
+        return (*this);
+    }
+    
 	std::string str()const{
 		return m_ss.str();
 	}

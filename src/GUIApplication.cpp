@@ -6,6 +6,7 @@
 
 #include "networking/networking.h"
 #include "networking/peermanager.h"
+#include "Level.h"
 
 using namespace CEGUI;
 
@@ -95,7 +96,13 @@ GUIApplication::GUIApplication(osgViewer::Viewer* osgApp)
 	m_osgApp = osgApp;
 	m_networkService = std::make_shared<boost::asio::io_service>();
 	m_networkThread.setService(m_networkService);
+    m_currentLevel = nullptr;
 	RemotePeersManager::getManager()->onNewPeerRegistration(std::bind(&GUIApplication::onNewFuturellaPeer, this, std::placeholders::_1), this);
+}
+
+void GUIApplication::setCurrentLevel(Level* levelData)
+{
+    m_currentLevel = levelData;
 }
 
 void GUIApplication::registerEvents()
@@ -176,6 +183,8 @@ bool GUIApplication::onListenBtnClicked(const EventArgs& args)
 		unsigned int port = boost::lexical_cast<unsigned int>(portNumber->getText());
 		std::string err;
 		bool result = m_networkThread.createAndStartNetServer(port, err);
+        if (m_currentLevel)
+            m_currentLevel->setServerSide(true);
 	}
 	return true;
 }
@@ -189,9 +198,10 @@ bool GUIApplication::onWindowCloseClicked(const EventArgs& args)
 
 void GUIApplication::onNewFuturellaPeer(const RemoteMessagePeer::pointer& peer)
 {
-	peer->onActivation(m_renderThreadService->wrap([&](){
+	peer->onActivation(m_renderThreadService->wrap([&, peer](){
 		MultiLineEditbox* mBox = static_cast<MultiLineEditbox*>(m_guiContext->getRootWindow()->getChild("networkSettings/console"));
 		mBox->appendText("Peer activated");
+        m_currentLevel->connectLocallyTo(peer);
 	}), this);
 
 	peer->onPeerDestruction(m_renderThreadService->wrap([&](){

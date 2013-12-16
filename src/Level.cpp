@@ -3,8 +3,39 @@
 #include "Asteroid.h"
 #include <random>
 #include <cmath>
+#include <osg/Geode>
+#include <osg/ShapeDrawable>
 
-Level::Level(int asteroidNumber, float turbulence, float density)
+BEGIN_DECLNETMESSAGE(AsteroidFieldData, 5001)
+    std::vector<osg::Vec3f> position;
+    std::vector<float> radius;
+END_DECLNETMESSAGE()
+
+BEGIN_RAWTONETMESSAGE_QCONVERT(AsteroidFieldData)
+    unsigned int size;
+    inStr >> size;
+    for (unsigned int i = 0; i < size; ++i)
+    {
+        osg::Vec3f pos;
+        float rad;
+        inStr >> pos >> rad;
+        temp->position.push_back(pos);
+        temp->radius.push_back(rad);
+    }
+END_RAWTONETMESSAGE_QCONVERT()
+
+BEGIN_NETTORAWMESSAGE_QCONVERT(AsteroidFieldData)
+    outStr << position.size();
+    for (int i = 0; i < position.size(); ++i)
+    {
+        outStr << position.at(i) << radius.at(i);
+    }
+END_NETTORAWMESSAGE_QCONVERT()
+
+REGISTER_NETMESSAGE(AsteroidFieldData)
+
+Level::Level(int asteroidNumber, float turbulence, float density, osg::Group* group):
+m_levelData(group), m_serverSide(false)
 {
 	std::random_device randDevice;
 
@@ -68,10 +99,69 @@ Level::getAsteroid(int id)
 	return asteroids->getAsteroid(id);
 }
 
+void Level::setServerSide(bool sside)
+{
+    m_serverSide = sside;
+}
+
 int
 Level::getAsteroidLength()
 {
 	return asteroids->getLength();
+}
+
+bool Level::takeMessage(const NetMessage::const_pointer& msg, MessagePeer*)
+{
+    if (msg->gettype() == NetAsteroidFieldDataMessage::type)
+    {
+        NetAsteroidFieldDataMessage::const_pointer realMsg = msg->as<NetAsteroidFieldDataMessage>();
+        delete asteroids;
+        asteroids = new AsteroidField;
+
+        for (int i = 0; i < realMsg->position.size(); ++i)
+        {
+            asteroids->addAsteroid(realMsg->position.at(i), realMsg->radius.at(i));
+        }
+        updateField();
+        return true;
+    }
+    return false;
+}
+
+void Level::updateField()
+{
+    if (m_levelData->getNumChildren() > 0)
+        m_levelData->removeChildren(0, m_levelData->getNumChildren());
+    //int i = 0;
+    for (int i = 0; i < getAsteroidLength(); i++)
+    {
+        osg::Geode * asteroidsGeode = new osg::Geode;
+        osg::ref_ptr<osg::Shape> sphere = new osg::Sphere(getAsteroid(i)->getPosition(), getAsteroid(i)->getRadius());
+        osg::ref_ptr<osg::ShapeDrawable> ast = new osg::ShapeDrawable(sphere);
+        ast->setUseDisplayList(false);
+        ast->setUseVertexBufferObjects(true);
+        ast->setColor(osg::Vec4(0.3f, 0.7f, 0.1f, 1));
+        asteroidsGeode->addDrawable(ast);
+        m_levelData->addChild(asteroidsGeode);
+    }
+}
+
+void Level::connectLocallyTo(MessagePeer* buddy, bool recursive /*= true*/)
+{
+    MessagePeer::connectLocallyTo(buddy, recursive);
+
+    // if we are the server, send our asteroid field data to client
+    if (m_serverSide)
+    {
+        NetAsteroidFieldDataMessage::pointer msg(new NetAsteroidFieldDataMessage);
+
+        for (int i = 0; i < asteroids->getLength(); ++i)
+        {
+            msg->position.push_back(asteroids->getAsteroid(i)->getPosition());
+            msg->radius.push_back(asteroids->getAsteroid(i)->getRadius());
+        }
+        buddy->send(msg);
+    }
 }
 
 /*

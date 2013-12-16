@@ -14,6 +14,7 @@
 #include "networking/peermanager.h"
 
 using CEGUI::String;
+class Level;
 
 class AsioThread : public OpenThreads::Thread
 {
@@ -47,6 +48,7 @@ public:
 	void registerEvents();
 
 	void setGuiService(const std::shared_ptr<boost::asio::io_service>& service);
+    void setCurrentLevel(Level* levelData);
 
 	// gui-triggered event handlers
 	bool onQuitBtnClicked(const CEGUI::EventArgs&);
@@ -69,6 +71,7 @@ protected:
 	std::shared_ptr<boost::asio::io_service> m_networkService;
 	std::shared_ptr<boost::asio::io_service> m_renderThreadService;
 	AsioThread m_networkThread;
+    Level* m_currentLevel;
 
 	// helper function to register event handlers within CEGUI
 	// windowName = path to the window capturing the event in GUI Layout hierarchy
