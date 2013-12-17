@@ -28,7 +28,7 @@ int main()
 
 	osg::ref_ptr<osg::Group> asteroids = new osg::Group;
     SpaceShip ship;
-    ChaseCam chaseCam(&ship);
+    ChaseCam *chaseCam = new ChaseCam(&ship);
 	Level level(50, 0.5f, 1, asteroids.get());
     guiApp.setCurrentLevel(&level);
 
@@ -67,7 +67,7 @@ int main()
 	osgViewer::ViewerBase::Windows windowList;
 	viewer.getWindows(windowList);
 	windowList[0]->useCursor(false);
-	viewer.setCameraManipulator(&chaseCam);
+	viewer.setCameraManipulator(chaseCam);
 //	viewer.setCameraManipulator(new osgGA::TrackballManipulator);
 	viewer.realize();
 	
