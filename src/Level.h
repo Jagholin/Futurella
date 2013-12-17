@@ -16,14 +16,11 @@ public:
 
 	int getAsteroidLength();
 	Asteroid* getAsteroid(int asteroidId);
-	//void setActiveField(char dr);
 
 private:
 	const float astMinSize = 0.2f, astMaxSize = 1.0f;
 	float asteroidSpaceCubeSidelength;
 	AsteroidField *asteroids;
-	//AsteroidField *scatteredAsteroids; //debug!
-	//AsteroidField *movedAsteroids; //debug!
 	
 };
 

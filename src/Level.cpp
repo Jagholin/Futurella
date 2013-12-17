@@ -12,7 +12,7 @@ Level::Level(int asteroidNumber, float turbulence, float density)
 	//step 1: scatter asteroids. save to AsteroidField
 	AsteroidField *scatteredAsteroids = new AsteroidField();
 	float astSizeDif = astMaxSize - astMinSize;
-	float asteroidSpaceCubeSidelength = astMaxSize * (2 + 9 - density * 9);
+	float asteroidSpaceCubeSidelength = astMaxSize * (2 + 2 - density * 2);
 	float asteroidFieldSpaceCubeSideLength = pow(pow(asteroidSpaceCubeSidelength, 3)*asteroidNumber, 0.333f);
 	float radius;
 	osg::Vec3f pos;
@@ -49,9 +49,6 @@ Level::Level(int asteroidNumber, float turbulence, float density)
 		asteroids->addAsteroid(scatteredAsteroids->getAsteroid(i)->getPosition() + shift, scatteredAsteroids->getAsteroid(i)->getRadius());
 		
 	}
-
-	//movedAsteroids = asteroids;
-
 	delete scatteredAsteroids;
 
 };
@@ -59,7 +56,6 @@ Level::Level(int asteroidNumber, float turbulence, float density)
 Level::~Level()
 {
 	delete asteroids;
-//	delete scatteredAsteroids;
 }
 
 Asteroid*
@@ -73,13 +69,3 @@ Level::getAsteroidLength()
 {
 	return asteroids->getLength();
 }
-
-/*
-void
-Level::setActiveField(char dr)
-{
-	if (dr == 'd')
-		asteroids = scatteredAsteroids;
-	else
-		asteroids = movedAsteroids;
-}*/
