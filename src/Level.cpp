@@ -5,6 +5,7 @@
 #include <cmath>
 #include <osg/Geode>
 #include <osg/ShapeDrawable>
+#include <osgUtil/Optimizer>
 
 BEGIN_DECLNETMESSAGE(AsteroidFieldData, 5001)
     std::vector<osg::Vec3f> position;
@@ -130,6 +131,7 @@ bool Level::takeMessage(const NetMessage::const_pointer& msg, MessagePeer*)
 
 void Level::updateField()
 {
+    osgUtil::Optimizer levelOptimizer;
     if (m_levelData->getNumChildren() > 0)
         m_levelData->removeChildren(0, m_levelData->getNumChildren());
     //int i = 0;
@@ -138,12 +140,13 @@ void Level::updateField()
         osg::Geode * asteroidsGeode = new osg::Geode;
         osg::ref_ptr<osg::Shape> sphere = new osg::Sphere(getAsteroid(i)->getPosition(), getAsteroid(i)->getRadius());
         osg::ref_ptr<osg::ShapeDrawable> ast = new osg::ShapeDrawable(sphere);
-        ast->setUseDisplayList(false);
-        ast->setUseVertexBufferObjects(true);
+        ast->setUseDisplayList(true);
+        //ast->setUseVertexBufferObjects(true);
         ast->setColor(osg::Vec4(0.3f, 0.7f, 0.1f, 1));
         asteroidsGeode->addDrawable(ast);
         m_levelData->addChild(asteroidsGeode);
     }
+    levelOptimizer.optimize(m_levelData, osgUtil::Optimizer::DEFAULT_OPTIMIZATIONS | osgUtil::Optimizer::MERGE_GEODES);
 }
 
 void Level::connectLocallyTo(MessagePeer* buddy, bool recursive /*= true*/)

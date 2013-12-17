@@ -12,6 +12,7 @@
 
 PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
 PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer;
+PFNGLBINDBUFFERPROC glBindBuffer;
 
 class MouseEvents : public osgGA::GUIEventHandler
 {
@@ -176,21 +177,18 @@ void CeguiDrawable::drawImplementation( osg::RenderInfo& renderInfo ) const
     myState->pushStateSet(m_state);
     myState->apply();
     myState->setActiveTextureUnit(0);
+	GLuint old_vao = 0, old_vbo = 0;
+	myState->disableAllVertexArrays();
+	// CEGUI OpenGL renderer uses VAO to pass geometry, but doesn't restore old bindings
+	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, reinterpret_cast<GLint*>(&old_vao));
+    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, reinterpret_cast<GLint*>(&old_vbo));
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
+    glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
 
     if (!m_initDone)
     {
 		init();
     }
-	GLuint old_vao = 0;
-	//myState->disableAllVertexArrays();
-	// CEGUI OpenGL renderer uses VAO to pass geometry, but doesn't restore old bindings
-	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, reinterpret_cast<GLint*>(&old_vao));
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
-    glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
 
 	// While we still have the right GL context enabled,
 	// pass GUI events to CEGUI
@@ -203,17 +201,14 @@ void CeguiDrawable::drawImplementation( osg::RenderInfo& renderInfo ) const
 	m_renderThreadService->poll();
     if (m_renderThreadService->stopped())
         m_renderThreadService->reset();
-	m_eventMutex.unlock();
+    m_eventMutex.unlock();
 
-	CEGUI::System::getSingleton().renderAllGUIContexts();
+    CEGUI::System::getSingleton().renderAllGUIContexts();
 
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
 	glPopClientAttrib();
 	glPopAttrib();
-	glBindVertexArray(old_vao);
+    glBindVertexArray(old_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, old_vbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	myState->checkGLErrors("CeguiDrawable::drawImplementation");
@@ -251,6 +246,7 @@ void CeguiDrawable::init() const
 	// well, what else can you do here, i have no idea.
 	glBindVertexArray = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(osg::getGLExtensionFuncPtr("glBindVertexArray", "glBindVertexArrayEXT", "glBindVertexArrayARB"));
 	glBindFramebuffer = reinterpret_cast<PFNGLBINDFRAMEBUFFERPROC>(osg::getGLExtensionFuncPtr("glBindFramebuffer"));
+    glBindBuffer = reinterpret_cast<PFNGLBINDBUFFERPROC>(osg::getGLExtensionFuncPtr("glBindBuffer"));
 
 	CeguiDrawable* self = const_cast<CeguiDrawable*>(this);
 	self->setEventCallback(new MouseEvents);

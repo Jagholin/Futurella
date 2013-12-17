@@ -32,7 +32,6 @@ protected:
 	friend class TunnelingFuturellaPeer;
 
 	NetConnection* m_connectLine;                                       // << NetConnection object used to communicate remotely
-	//std::deque<msgFunc> m_netMessageHandlers;                           // << function objects that are informed about incoming message packets
 	std::deque<NetMessage::const_pointer> m_activationWaitingQueue;     // << messages waiting for the handshaking to finish before they can be sent
 	std::deque<RemoteMessagePeer::weak_pointer> m_dependencyList;       // << list of all tunnels that are using this peer to communicate through
 	bool m_active;                                                      // << true if connection is active and the handshake is successfully finished
