@@ -13,7 +13,7 @@ BEGIN_DECLNETMESSAGE(AsteroidFieldData, 5001)
 END_DECLNETMESSAGE()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(AsteroidFieldData)
-    unsigned int size;
+    uint16_t size;
     inStr >> size;
     for (unsigned int i = 0; i < size; ++i)
     {
@@ -26,14 +26,51 @@ BEGIN_RAWTONETMESSAGE_QCONVERT(AsteroidFieldData)
 END_RAWTONETMESSAGE_QCONVERT()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(AsteroidFieldData)
-    outStr << position.size();
+    uint16_t size = position.size();
+    outStr << size;
     for (int i = 0; i < position.size(); ++i)
     {
+        osg::Vec3f pos = position.at(i);
+        float rad = radius.at(i);
         outStr << position.at(i) << radius.at(i);
     }
 END_NETTORAWMESSAGE_QCONVERT()
 
 REGISTER_NETMESSAGE(AsteroidFieldData)
+
+class LevelUpdate : public osg::NodeCallback
+{
+    Level& m_level;
+public:
+    LevelUpdate(Level& myLevel) : m_level(myLevel)
+    {
+
+    }
+    virtual void operator()(osg::Node* node, osg::NodeVisitor* nv)
+    {
+        // Node is a group with asteroid geodes
+        // delete geode and insert new ones
+        osg::Group *realNode = static_cast<osg::Group*>(node);
+        osgUtil::Optimizer levelOptimizer;
+        if (realNode->getNumChildren() > 0)
+            realNode->removeChildren(0, realNode->getNumChildren());
+        //int i = 0;
+        for (int i = 0; i < m_level.getAsteroidLength(); i++)
+        {
+            osg::Geode * asteroidsGeode = new osg::Geode;
+            osg::ref_ptr<osg::Shape> sphere = new osg::Sphere(m_level.getAsteroid(i)->getPosition(), m_level.getAsteroid(i)->getRadius());
+            osg::ref_ptr<osg::ShapeDrawable> ast = new osg::ShapeDrawable(sphere);
+            ast->setUseDisplayList(true);
+            //ast->setUseVertexBufferObjects(true);
+            ast->setColor(osg::Vec4(0.3f, 0.7f, 0.1f, 1));
+            asteroidsGeode->addDrawable(ast);
+            realNode->addChild(asteroidsGeode);
+        }
+        //levelOptimizer.optimize(realNode, osgUtil::Optimizer::DEFAULT_OPTIMIZATIONS | osgUtil::Optimizer::MERGE_GEODES);
+
+        realNode->removeUpdateCallback(this);
+    }
+};
 
 Level::Level(int asteroidNumber, float turbulence, float density, osg::Group* group):
 m_levelData(group), m_serverSide(false)
@@ -119,7 +156,7 @@ bool Level::takeMessage(const NetMessage::const_pointer& msg, MessagePeer*)
         {
             asteroids->addAsteroid(realMsg->position.at(i), realMsg->radius.at(i));
         }
-        updateField();
+        m_levelData->setUpdateCallback(new LevelUpdate(*this));
         return true;
     }
     return false;
@@ -142,7 +179,7 @@ void Level::updateField()
         asteroidsGeode->addDrawable(ast);
         m_levelData->addChild(asteroidsGeode);
     }
-    levelOptimizer.optimize(m_levelData, osgUtil::Optimizer::DEFAULT_OPTIMIZATIONS | osgUtil::Optimizer::MERGE_GEODES);
+    //levelOptimizer.optimize(m_levelData, osgUtil::Optimizer::DEFAULT_OPTIMIZATIONS | osgUtil::Optimizer::MERGE_GEODES);
 }
 
 void Level::connectLocallyTo(MessagePeer* buddy, bool recursive /*= true*/)

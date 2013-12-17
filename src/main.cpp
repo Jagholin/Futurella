@@ -29,7 +29,7 @@ int main()
 	osg::ref_ptr<osg::Group> asteroids = new osg::Group;
     SpaceShip ship;
     ChaseCam *chaseCam = new ChaseCam(&ship);
-	Level level(50, 0.5f, 1, asteroids.get());
+	Level level(6, 0.5f, 1, asteroids.get());
     guiApp.setCurrentLevel(&level);
 
 	osg::ref_ptr<osg::Shape> box = new osg::Box(osg::Vec3f(0,0,0), 0.1, 0.1f, 0.3f);
