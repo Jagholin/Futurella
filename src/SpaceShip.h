@@ -16,6 +16,7 @@ public:
 	void setRight(bool state);
 	void setUp(bool state);
 	void setDown(bool state);
+    void setBack(bool state);
 
 	void update(float deltaTime);
 
@@ -23,7 +24,6 @@ public:
 	float getSpeed();
 	osg::Vec3f getVelocity();
 	osg::Quat getOrientation();
-
 private:
 	osg::Vec3f position, velocity;
 	osg::Quat orientation;

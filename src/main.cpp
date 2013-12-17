@@ -27,6 +27,8 @@ int main()
 	osg::ref_ptr<osg::Group> root = new osg::Group;
 
 	osg::ref_ptr<osg::Group> asteroids = new osg::Group;
+    SpaceShip ship;
+    ChaseCam chaseCam(&ship);
 	Level level(50, 0.5f, 1, asteroids.get());
     guiApp.setCurrentLevel(&level);
 

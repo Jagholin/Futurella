@@ -38,6 +38,10 @@ void SpaceShip::setDown(bool state){
 	stateDown = state;
 }
 
+void SpaceShip::setBack(bool state){
+    stateBack = state;
+}
+
 osg::Vec3f SpaceShip::getCenter(){
 	return position;
 }
