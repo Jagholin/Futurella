@@ -44,7 +44,7 @@ m_levelData(group), m_serverSide(false)
 	//step 1: scatter asteroids. save to AsteroidField
 	AsteroidField *scatteredAsteroids = new AsteroidField();
 	float astSizeDif = astMaxSize - astMinSize;
-	float asteroidSpaceCubeSidelength = astMaxSize * (2 + 9 - density * 9);
+	float asteroidSpaceCubeSidelength = astMaxSize * (2 + 2 - density * 2);
 	float asteroidFieldSpaceCubeSideLength = pow(pow(asteroidSpaceCubeSidelength, 3)*asteroidNumber, 0.333f);
 	float radius;
 	osg::Vec3f pos;
@@ -81,9 +81,6 @@ m_levelData(group), m_serverSide(false)
 		asteroids->addAsteroid(scatteredAsteroids->getAsteroid(i)->getPosition() + shift, scatteredAsteroids->getAsteroid(i)->getRadius());
 		
 	}
-
-	//movedAsteroids = asteroids;
-
 	delete scatteredAsteroids;
 
 };
@@ -91,7 +88,6 @@ m_levelData(group), m_serverSide(false)
 Level::~Level()
 {
 	delete asteroids;
-//	delete scatteredAsteroids;
 }
 
 Asteroid*

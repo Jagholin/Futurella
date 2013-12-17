@@ -18,6 +18,7 @@ if (WIN32)
 endif()
 
 find_package(OpenThreads REQUIRED)
+find_package(osgGA REQUIRED)
 find_package(osg REQUIRED)
 find_package(osgDB REQUIRED)
 find_package(osgUtil REQUIRED)
@@ -66,10 +67,15 @@ src/AsteroidField.h
 src/Level.cpp
 src/Level.h
 src/Node.cpp
-src/Node.h)
+src/Node.h
+src/ChaseCam.cpp
+src/ChaseCam.h
+src/SpaceShip.cpp
+src/SpaceShip.h)
 
 add_lib(Futurella OPENTHREADS)
 add_lib(Futurella OSG)
+add_lib(Futurella OSGGA)
 add_lib(Futurella OSGDB)
 add_lib(Futurella OSGUTIL)
 add_lib(Futurella OSGVIEWER)

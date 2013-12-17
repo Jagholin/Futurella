@@ -37,8 +37,6 @@ private:
 
     osg::Group* m_levelData;
     bool m_serverSide;
-	//AsteroidField *scatteredAsteroids; //debug!
-	//AsteroidField *movedAsteroids; //debug!
 	
 };
 
