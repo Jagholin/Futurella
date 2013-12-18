@@ -1,5 +1,4 @@
-#ifndef hLevel_included
-#define hLevel_included
+#pragma once 
 
 #include <list>
 #include <vector>
@@ -9,6 +8,7 @@
 class AsteroidField;
 
 class Asteroid;
+class SpaceShip;
 
 class Level : public LocalMessagePeer//level information
 {
@@ -27,6 +27,9 @@ public:
 
     virtual void connectLocallyTo(MessagePeer* buddy, bool recursive = true);
     void setServerSide(bool sside);
+    void setMySpaceShip(const std::shared_ptr<SpaceShip>& myShip);
+
+    virtual void disconnectLocallyFrom(MessagePeer* buddy, bool recursive = true);
 
     //void setActiveField(char dr);
 
@@ -38,6 +41,6 @@ private:
     osg::Group* m_levelData;
     bool m_serverSide;
 	
+    std::shared_ptr<SpaceShip> m_myShip;
+    std::map<MessagePeer*, std::shared_ptr<SpaceShip>> m_remoteShips;
 };
-
-#endif//hLevel_included ndef

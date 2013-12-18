@@ -1,6 +1,7 @@
 #include "Level.h"
 #include "AsteroidField.h"
 #include "Asteroid.h"
+#include "SpaceShip.h"
 #include <random>
 #include <cmath>
 #include <osg/Geode>
@@ -144,7 +145,7 @@ Level::getAsteroidLength()
 	return asteroids->getLength();
 }
 
-bool Level::takeMessage(const NetMessage::const_pointer& msg, MessagePeer*)
+bool Level::takeMessage(const NetMessage::const_pointer& msg, MessagePeer* sender)
 {
     if (msg->gettype() == NetAsteroidFieldDataMessage::type)
     {
@@ -158,6 +159,13 @@ bool Level::takeMessage(const NetMessage::const_pointer& msg, MessagePeer*)
         }
         m_levelData->setUpdateCallback(new LevelUpdate(*this));
         return true;
+    }
+    else if (msg->gettype() == NetSpaceShipConstructionDataMessage::type)
+    {
+        NetSpaceShipConstructionDataMessage::const_pointer realMsg = msg->as<NetSpaceShipConstructionDataMessage>();
+        std::shared_ptr<SpaceShip> newShip(new SpaceShip(realMsg->pos, realMsg->orient));
+        m_levelData->getParent(0)->addChild(newShip->getTransformGroup());
+        m_remoteShips[sender] = newShip;
     }
     return false;
 }
@@ -198,6 +206,27 @@ void Level::connectLocallyTo(MessagePeer* buddy, bool recursive /*= true*/)
         }
         buddy->send(msg);
     }
+
+    // inform buddy about our space ship
+    NetSpaceShipConstructionDataMessage::pointer shipMsg = m_myShip->createConstructorMessage();
+    buddy->send(shipMsg);
+}
+
+void Level::disconnectLocallyFrom(MessagePeer* buddy, bool recursive /*= true*/)
+{
+    MessagePeer::disconnectLocallyFrom(buddy, recursive);
+
+    if (m_remoteShips.count(buddy) > 0)
+    {
+        //SpaceShip* peerToRemove = m_remoteShips[buddy];
+        //delete peerToRemove;
+        m_remoteShips.erase(buddy);
+    }
+}
+
+void Level::setMySpaceShip(const std::shared_ptr<SpaceShip>& myShip)
+{
+    m_myShip = myShip;
 }
 
 /*
