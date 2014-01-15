@@ -10,6 +10,12 @@
 
 using namespace CEGUI;
 
+AsioThread::AsioThread() :
+m_destructionSignal("AsioThread::destructionSignal")
+{
+
+}
+
 AsioThread::~AsioThread()
 {
 	if (isRunning())
@@ -152,6 +158,10 @@ bool GUIApplication::onSendBtnClicked(const EventArgs& args)
 		String newLine = realInput->getText();
 		if (newLine.empty())
 			newLine = "You clicked me!";
+        else
+        {
+            RemotePeersManager::getManager()->sendChatMessage(newLine.c_str());
+        }
 		realOutput->appendText(newLine);
 		realInput->setText("");
 	}
@@ -198,10 +208,14 @@ bool GUIApplication::onWindowCloseClicked(const EventArgs& args)
 
 void GUIApplication::onNewFuturellaPeer(const RemoteMessagePeer::pointer& peer)
 {
-	peer->onActivation(m_renderThreadService->wrap([&, peer](){
+    peer->onActivation([&, peer](){
+        m_currentLevel->connectLocallyTo(peer);
+        std::cout << "peer activated\n";
+    }, this);
+
+	peer->onActivation(m_renderThreadService->wrap([&](){
 		MultiLineEditbox* mBox = static_cast<MultiLineEditbox*>(m_guiContext->getRootWindow()->getChild("networkSettings/console"));
 		mBox->appendText("Peer activated");
-        m_currentLevel->connectLocallyTo(peer);
 	}), this);
 
 	peer->onPeerDestruction(m_renderThreadService->wrap([&](){

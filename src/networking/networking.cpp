@@ -329,6 +329,10 @@ void NetConnImpl::close()
 
 NetConnection::NetConnection(boost::asio::io_service &s):
 	privData(NetConnImpl::Create(this, s)),
+    //m_messageSent("NetConnection::messageSent"),
+    m_messageReceived("NetConnection::messageReceived"),
+    m_connected("NetConnection::connected"),
+    m_disconnected("NetConnection::disconnected"),
 	m_service(s)
 {
 	//qDebug() << "Net connection class constructor...";
@@ -459,7 +463,9 @@ void NetServerImpl::stop()
 }
 
 NetServer::NetServer(boost::asio::io_service &s):
-	privData(NetServerImpl::Create(this, s))
+	privData(NetServerImpl::Create(this, s)),
+    m_newConnection("NetServer::newConnection"),
+    m_stopped("NetServer::stopped")
 {
 	//qDebug() << "Net server class constructor...";
 }

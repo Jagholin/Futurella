@@ -7,6 +7,7 @@ Copyright (C) 2009 - 2014 Belskiy Pavel, github.com/Jagholin
 #include <map>
 #include <ctime>
 #include <functional>
+#include <atomic>
 #include <boost/asio.hpp>
 
 #include <osg/Referenced>
@@ -34,7 +35,7 @@ protected:
 	NetConnection* m_connectLine;                                       // << NetConnection object used to communicate remotely
 	std::deque<NetMessage::const_pointer> m_activationWaitingQueue;     // << messages waiting for the handshaking to finish before they can be sent
 	std::deque<RemoteMessagePeer::weak_pointer> m_dependencyList;       // << list of all tunnels that are using this peer to communicate through
-	bool m_active;                                                      // << true if connection is active and the handshake is successfully finished
+	std::atomic<bool> m_active;                                         // << true if connection is active and the handshake is successfully finished
 	mutable unsigned int m_halloStatus;                                 // << handshake phase
 	std::string m_buddyName, m_myName;                                  // << name of the remote counterpart and the self(from RemotePeersManager) 
 	uint32_t m_peerIdentityKey;                                         // << id to identify the source of communication over the network.

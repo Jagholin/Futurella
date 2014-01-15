@@ -6,7 +6,7 @@
 #include <osg/MatrixTransform>
 #include <chrono>
 #include <map>
-#include <osgGA\TrackballManipulator>
+#include <osgGA/TrackballManipulator>
 #include <iostream>
 
 #include "CEGUIDrawable.h"

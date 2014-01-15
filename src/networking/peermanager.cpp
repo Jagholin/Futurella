@@ -14,7 +14,7 @@
 #	include <netinet/in.h>
 #endif
 
-RemotePeersManager* RemotePeersManager::mSingleton = 0;
+RemotePeersManager* RemotePeersManager::mSingleton = nullptr;
 
 BEGIN_DECLNETMESSAGE(Hallo, 1000)
 std::string buddyName;
@@ -101,7 +101,12 @@ bool TunnelingFuturellaPeer::takeMessage(const NetMessage::const_pointer& msg, M
 }
 
 RemoteMessagePeer::RemoteMessagePeer(boost::asio::io_service &networkThread):
-	m_active(true), m_netService(networkThread)
+m_active(true), m_netService(networkThread),
+m_tobeDestroyed("RemoteMessagePeer::tobeDestroyed"),
+m_errorSignal("RemoteMessagePeer::errorSignal"),
+m_onActivated("RemoteMessagePeer::onActivated"),
+//m_statusChanged("RemoteMessagePeer::statusChanged"),
+m_messageReceived("RemoteMessagePeer::messageReceived")
 {
 	m_connectLine = nullptr;
 	m_halloStatus = 0;
@@ -110,7 +115,12 @@ RemoteMessagePeer::RemoteMessagePeer(boost::asio::io_service &networkThread):
 }
 
 RemoteMessagePeer::RemoteMessagePeer(NetConnection* con, bool serverSide, boost::asio::io_service& networkService) :
-	m_active(false), m_halloStatus(1), m_buddyName("[Broken Connection]"), m_netService(networkService)
+	m_active(false), m_halloStatus(1), m_buddyName("[Broken Connection]"), m_netService(networkService),
+    m_tobeDestroyed("RemoteMessagePeer::tobeDestroyed"),
+    m_errorSignal("RemoteMessagePeer::errorSignal"),
+    m_onActivated("RemoteMessagePeer::onActivated"),
+    //m_statusChanged("RemoteMessagePeer::statusChanged"),
+    m_messageReceived("RemoteMessagePeer::messageReceived")
 {
 	m_peerIdentityKey = 0;
 	m_connectLine = con;
@@ -151,13 +161,23 @@ RemoteMessagePeer::~RemoteMessagePeer()
 bool RemoteMessagePeer::takeMessage(const NetMessage::const_pointer& msg,
 								   MessagePeer*)
 {
+    std::cout << "Message send: type=" << msg->gettype() << " ";
 	// We can't send any messages till we are ready with greetings procedure
-	if (m_status == MP_DISCONNECTED)
-		return false;
-	if (m_active)
+    if (m_status == MP_DISCONNECTED)
+    {
+        std::cout << "DISCONNECTED\n";
+        return false;
+    }
+    if (m_active)
+    {
+        std::cout << "active=true\n";
 		m_connectLine->sendMessage(msg->toRaw());
-	else
-		m_activationWaitingQueue.push_back(msg);
+    }
+    else
+    {
+        std::cout << "active=false\n";
+        m_activationWaitingQueue.push_back(msg);
+    }
 	return m_active;
 }
 
@@ -165,10 +185,12 @@ void RemoteMessagePeer::netMessageReceived(RawMessage::pointer msg)
 {
 	try
 	{
+        std::cout << "Message receive: type=" << msg->msgType << " ";
 		NetMessage::const_pointer realMsg = MsgFactory::create(*msg);
 		// If we are not ready, only greetings messages are allowed
 		if (m_active)
 		{
+            std::cout << "active=true\n";
 			if (realMsg->gettype() == NetAvailablePeerMessage::type)
 			{
 				// Create new tunneling peer object#
@@ -223,6 +245,7 @@ void RemoteMessagePeer::netMessageReceived(RawMessage::pointer msg)
 		}
 		else
 		{
+            std::cout << "active=false\n";
 			std::shared_ptr<const NetHalloMessage> halloMsg = std::dynamic_pointer_cast<const NetHalloMessage>(realMsg);
 			if (halloMsg)
 				halloProceed(halloMsg);
@@ -338,7 +361,8 @@ bool RemoteMessagePeer::isTunnel() const
     return false;
 }
 
-RemotePeersManager::RemotePeersManager()
+RemotePeersManager::RemotePeersManager():
+m_peerRegistred("RemotePeersManager::peerRegistered")
 {
 	myPeerId = rand();
 }

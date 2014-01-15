@@ -11,6 +11,9 @@
 #include <osg/ref_ptr>
 #include <osg/observer_ptr>
 
+// !Debug
+#include <iostream>
+
 namespace addstd
 {
 
@@ -19,6 +22,8 @@ template<typename, typename = void> class signal;
 template<typename FuncSig>
 class signal_base
 {
+protected:
+    std::string m_name;
 public:
 	typedef std::function<FuncSig> t_funcHolder;
 	typedef typename t_funcHolder::result_type t_result;
@@ -76,7 +81,7 @@ public:
         bool isValid() { return true; }
     };
 
-	signal_base() {}
+    signal_base(std::string const& signalName): m_name(signalName) {}
 
 	void connect(const t_funcHolder& f, osg::Referenced* owner)
 	{
@@ -110,20 +115,31 @@ template<typename FuncSig, typename Enable>
 class signal : public signal_base<FuncSig>
 {
 public:
+    signal() : signal_base<FuncSig>(std::string()) {}
+    explicit signal(std::string const& name) : signal_base<FuncSig>(name) {}
+
 	template <typename... ArgT>
 	t_result operator()(ArgT... params)
 	{
 		t_result res;
 		std::deque<std::shared_ptr<t_slot>> newSlots;
 
+        bool funcCalled = false;
+
 		for (auto func : m_slots)
 		{
 			if (func->isValid())
 			{
 				res = func->funcPtr(params...);
+                funcCalled = true;
 				newSlots.push_back(func);
 			}
 		}
+
+        if (!funcCalled && !m_name.empty())
+        {
+            std::cout << "slot called without receiver: " << m_name << "\n";
+        }
 
 		m_slots.swap(newSlots);
 		return res;
@@ -138,19 +154,29 @@ template<typename FuncSig>
 class signal<FuncSig, typename std::enable_if<std::is_void<typename signal_base<FuncSig>::t_result>::value>::type> : public signal_base<FuncSig>
 {
 public:
+    signal() : signal_base<FuncSig>(std::string()) {}
+    explicit signal(std::string const& name) : signal_base<FuncSig>(name) {}
+
 	template <typename... ArgT>
 	void operator()(ArgT... params)
 	{
-		std::deque<std::shared_ptr<t_slot>> newSlots;
+        std::deque<std::shared_ptr<t_slot>> newSlots;
+        bool funcCalled = false;
 
 		for (auto func : m_slots)
 		{
 			if (func->isValid())
 			{
 				func->funcPtr(params...);
+                funcCalled = true;
 				newSlots.push_back(func);
 			}
 		}
+
+        if (!funcCalled && !m_name.empty())
+        {
+            std::cout << "slot called without receiver: " << m_name << "\n";
+        }
 
 		m_slots.swap(newSlots);
 	}

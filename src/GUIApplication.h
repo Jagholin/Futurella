@@ -19,6 +19,7 @@ class Level;
 class AsioThread : public OpenThreads::Thread
 {
 public:
+    AsioThread();
 	virtual ~AsioThread();
 
 	void setService(const std::shared_ptr<boost::asio::io_service>& service);

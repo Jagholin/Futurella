@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <atomic>
 #include "glincludes.h"
 #include "CEGUIDrawable.h"
 #include "GUIApplication.h"
@@ -14,32 +15,57 @@ PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
 PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer;
 PFNGLBINDBUFFERPROC glBindBuffer;
 
-class MouseEvents : public osgGA::GUIEventHandler
+class GlobalEventHandler : public osgGA::GUIEventHandler
 {
-	bool m_dbc;
+    std::atomic_bool m_guiHandlesEvents;
 public:
 
-	MouseEvents()
-	{
-		m_dbc = false;
-	}
+    GlobalEventHandler()
+    {
+        m_guiHandlesEvents = true;
 
-	virtual bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa, osg::Object *o, osg::NodeVisitor *)
-	{
-		osgGA::GUIEventAdapter::EventType etype = ea.getEventType();
+        using namespace CEGUI;
+        // Click on the root window(outside of all other widgets) will switch back to player controls.
+        Window *root = System::getSingleton().getDefaultGUIContext().getRootWindow();
+        root->subscribeEvent(Window::EventMouseClick, Event::Subscriber(&GlobalEventHandler::resetGuiEventHandling, this));
+    }
 
-		CeguiDrawable* myDrawable = static_cast<CeguiDrawable*>(o);
+    virtual bool handle(const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &aa, osg::Object *o, osg::NodeVisitor *)
+    {
+        osgGA::GUIEventAdapter::EventType etype = ea.getEventType();
 
-		if (etype & (osgGA::GUIEventAdapter::RELEASE | osgGA::GUIEventAdapter::PUSH | osgGA::GUIEventAdapter::MOVE | osgGA::GUIEventAdapter::DRAG | osgGA::GUIEventAdapter::KEYDOWN | osgGA::GUIEventAdapter::KEYUP))
-		{
-			// HACK: don't send events directly to CEGUI, instead wait until the required OpenGL context is active
-			// as CEGUI will probably try to change OpenGL objects/state, which will SILENTLY fail in case of the
-			// wrong or no active OpenGL context(thanks to gDEBugger I've actually seen this happen).
-			// which means, that we should do the injection in draw phase...
-			myDrawable->addEvent(ea);
-		}
-		return false;
-	}
+        CeguiDrawable* myDrawable = static_cast<CeguiDrawable*>(o);
+
+        if (etype & (osgGA::GUIEventAdapter::RELEASE | osgGA::GUIEventAdapter::PUSH | osgGA::GUIEventAdapter::MOVE | osgGA::GUIEventAdapter::DRAG | osgGA::GUIEventAdapter::KEYDOWN | osgGA::GUIEventAdapter::KEYUP))
+        {
+            if (!m_guiHandlesEvents && etype == osgGA::GUIEventAdapter::KEYDOWN && ea.getKey() == osgGA::GUIEventAdapter::KEY_Tab)
+            {
+                using namespace CEGUI;
+
+                m_guiHandlesEvents = true;
+                GUIContext & gui = System::getSingleton().getDefaultGUIContext();
+                gui.getMouseCursor().show();
+                return true;
+            }
+            if (!m_guiHandlesEvents)
+                return false;
+            // HACK: don't send events directly to CEGUI, instead wait until the required OpenGL context is active
+            // as CEGUI will probably try to change OpenGL objects/state, which will SILENTLY fail in case of the
+            // wrong or no active OpenGL context(thanks to gDEBugger I've actually seen this happen).
+            // which means, that we should do the injection in draw phase...
+            myDrawable->addEvent(ea);
+        }
+        return true;
+    }
+
+    bool resetGuiEventHandling(const CEGUI::EventArgs&)
+    {
+        m_guiHandlesEvents = false;
+        using CEGUI::GUIContext;
+        GUIContext & gui = CEGUI::System::getSingleton().getDefaultGUIContext();
+        gui.getMouseCursor().hide();
+        return true;
+    }
 };
 
 class TickEvents : public osg::Drawable::UpdateCallback
@@ -249,7 +275,7 @@ void CeguiDrawable::init() const
     glBindBuffer = reinterpret_cast<PFNGLBINDBUFFERPROC>(osg::getGLExtensionFuncPtr("glBindBuffer"));
 
 	CeguiDrawable* self = const_cast<CeguiDrawable*>(this);
-	self->setEventCallback(new MouseEvents);
+	self->setEventCallback(new GlobalEventHandler);
 	self->setUpdateCallback(new TickEvents);
 	self->m_guiApp->registerEvents();
 
