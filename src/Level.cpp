@@ -76,62 +76,62 @@ public:
 Level::Level(int asteroidNumber, float turbulence, float density, osg::Group* group):
 m_levelData(group), m_serverSide(false)
 {
-	std::random_device randDevice;
+    std::random_device randDevice;
 
 //Generate Asteroid Field
-	//step 1: scatter asteroids. save to AsteroidField
-	AsteroidField *scatteredAsteroids = new AsteroidField();
-	float astSizeDif = astMaxSize - astMinSize;
-	float asteroidSpaceCubeSidelength = astMaxSize * (2 + 2 - density * 2);
-	float asteroidFieldSpaceCubeSideLength = pow(pow(asteroidSpaceCubeSidelength, 3)*asteroidNumber, 0.333f);
-	float radius;
-	osg::Vec3f pos;
-	for (int i = 0; i < asteroidNumber; i++) 
-	{
-		pos.set(
-			randDevice()*asteroidFieldSpaceCubeSideLength / randDevice.max(),
-			randDevice()*asteroidFieldSpaceCubeSideLength / randDevice.max(),
-			randDevice()*asteroidFieldSpaceCubeSideLength / randDevice.max());
-		radius = (randDevice()*astSizeDif / randDevice.max() + astMinSize)*0.5f;
-		scatteredAsteroids->addAsteroid(pos, radius);
-	}
+    //step 1: scatter asteroids. save to AsteroidField
+    AsteroidField *scatteredAsteroids = new AsteroidField();
+    float astSizeDif = m_astMaxSize - m_astMinSize;
+    float asteroidSpaceCubeSidelength = m_astMaxSize * (2 + 2 - density * 2);
+    float asteroidFieldSpaceCubeSideLength = pow(pow(asteroidSpaceCubeSidelength, 3)*asteroidNumber, 0.333f);
+    float radius;
+    osg::Vec3f pos;
+    for (int i = 0; i < asteroidNumber; i++) 
+    {
+        pos.set(
+            randDevice()*asteroidFieldSpaceCubeSideLength / randDevice.max(),
+            randDevice()*asteroidFieldSpaceCubeSideLength / randDevice.max(),
+            randDevice()*asteroidFieldSpaceCubeSideLength / randDevice.max());
+        radius = (randDevice()*astSizeDif / randDevice.max() + m_astMinSize)*0.5f;
+        scatteredAsteroids->addAsteroid(pos, radius);
+    }
 
-	//step 2: move asteroids to avoid overlappings (heuristic). save to Level::asteroidField
-	asteroids = new AsteroidField();
-	for (int i = 0; i < asteroidNumber; i++) 
-	{
-		float favoredDistance = (asteroidSpaceCubeSidelength - astMaxSize) / 2 + scatteredAsteroids->getAsteroid(i)->getRadius();
-		float boundingBoxRadius = favoredDistance + astMaxSize/2;
-		std::list<Asteroid*> candidates = scatteredAsteroids->getAsteroidsInBlock(scatteredAsteroids->getAsteroid(i)->getPosition(), osg::Vec3f(boundingBoxRadius, boundingBoxRadius, boundingBoxRadius));
-		osg::Vec3f shift(0,0,0);
-		int numberOfCloseAsteroids = 0;
-		for (std::list<Asteroid*>::iterator it = candidates.begin(); it != candidates.end(); it++) {
-			if (*it != scatteredAsteroids->getAsteroid(i)) {
-				osg::Vec3f d = scatteredAsteroids->getAsteroid(i)->getPosition() - (*it)->getPosition();
-				float scale = -((d.length() - (*it)->getRadius()) - favoredDistance);
-				if (scale > 0) {
-					d.normalize();
-					shift += shift + (d * scale *0.5f); //push away from other close asteroids
-					numberOfCloseAsteroids++;
-				}
-			}
-		}
-		asteroids->addAsteroid(scatteredAsteroids->getAsteroid(i)->getPosition() + shift, scatteredAsteroids->getAsteroid(i)->getRadius());
-		
-	}
-	delete scatteredAsteroids;
+    //step 2: move asteroids to avoid overlappings (heuristic). save to Level::asteroidField
+    m_asteroids = new AsteroidField();
+    for (int i = 0; i < asteroidNumber; i++) 
+    {
+        float favoredDistance = (asteroidSpaceCubeSidelength - m_astMaxSize) / 2 + scatteredAsteroids->getAsteroid(i)->getRadius();
+        float boundingBoxRadius = favoredDistance + m_astMaxSize/2;
+        std::list<Asteroid*> candidates = scatteredAsteroids->getAsteroidsInBlock(scatteredAsteroids->getAsteroid(i)->getPosition(), osg::Vec3f(boundingBoxRadius, boundingBoxRadius, boundingBoxRadius));
+        osg::Vec3f shift(0,0,0);
+        int numberOfCloseAsteroids = 0;
+        for (std::list<Asteroid*>::iterator it = candidates.begin(); it != candidates.end(); it++) {
+            if (*it != scatteredAsteroids->getAsteroid(i)) {
+                osg::Vec3f d = scatteredAsteroids->getAsteroid(i)->getPosition() - (*it)->getPosition();
+                float scale = -((d.length() - (*it)->getRadius()) - favoredDistance);
+                if (scale > 0) {
+                    d.normalize();
+                    shift += shift + (d * scale *0.5f); //push away from other close asteroids
+                    numberOfCloseAsteroids++;
+                }
+            }
+        }
+        m_asteroids->addAsteroid(scatteredAsteroids->getAsteroid(i)->getPosition() + shift, scatteredAsteroids->getAsteroid(i)->getRadius());
+        
+    }
+    delete scatteredAsteroids;
 
 };
 
 Level::~Level()
 {
-	delete asteroids;
+    delete m_asteroids;
 }
 
 Asteroid*
 Level::getAsteroid(int id)
 {
-	return asteroids->getAsteroid(id);
+    return m_asteroids->getAsteroid(id);
 }
 
 void Level::setServerSide(bool sside)
@@ -142,7 +142,7 @@ void Level::setServerSide(bool sside)
 int
 Level::getAsteroidLength()
 {
-	return asteroids->getLength();
+    return m_asteroids->getLength();
 }
 
 bool Level::takeMessage(const NetMessage::const_pointer& msg, MessagePeer* sender)
@@ -150,12 +150,12 @@ bool Level::takeMessage(const NetMessage::const_pointer& msg, MessagePeer* sende
     if (msg->gettype() == NetAsteroidFieldDataMessage::type)
     {
         NetAsteroidFieldDataMessage::const_pointer realMsg = msg->as<NetAsteroidFieldDataMessage>();
-        delete asteroids;
-        asteroids = new AsteroidField;
+        delete m_asteroids;
+        m_asteroids = new AsteroidField;
 
         for (int i = 0; i < realMsg->position.size(); ++i)
         {
-            asteroids->addAsteroid(realMsg->position.at(i), realMsg->radius.at(i));
+            m_asteroids->addAsteroid(realMsg->position.at(i), realMsg->radius.at(i));
         }
         m_levelData->setUpdateCallback(new LevelUpdate(*this));
         return true;
@@ -199,10 +199,10 @@ void Level::connectLocallyTo(MessagePeer* buddy, bool recursive /*= true*/)
     {
         NetAsteroidFieldDataMessage::pointer msg(new NetAsteroidFieldDataMessage);
 
-        for (int i = 0; i < asteroids->getLength(); ++i)
+        for (int i = 0; i < m_asteroids->getLength(); ++i)
         {
-            msg->position.push_back(asteroids->getAsteroid(i)->getPosition());
-            msg->radius.push_back(asteroids->getAsteroid(i)->getRadius());
+            msg->position.push_back(m_asteroids->getAsteroid(i)->getPosition());
+            msg->radius.push_back(m_asteroids->getAsteroid(i)->getRadius());
         }
         buddy->send(msg);
     }
@@ -233,8 +233,8 @@ void Level::setMySpaceShip(const std::shared_ptr<SpaceShip>& myShip)
 void
 Level::setActiveField(char dr)
 {
-	if (dr == 'd')
-		asteroids = scatteredAsteroids;
-	else
-		asteroids = movedAsteroids;
+    if (dr == 'd')
+        asteroids = scatteredAsteroids;
+    else
+        asteroids = movedAsteroids;
 }*/

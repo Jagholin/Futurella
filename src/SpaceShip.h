@@ -13,26 +13,26 @@ class SpaceShip : public LocalMessagePeer
 {
 public:
     SpaceShip(osg::Vec3f pos, osg::Vec4f orient, bool hostSide = false);
-	explicit SpaceShip(osg::Node* shipNode = nullptr);
+    explicit SpaceShip(osg::Node* shipNode = nullptr);
     virtual ~SpaceShip();
 
-	void setPosition(osg::Vec3f position);
-	void setOrientation(osg::Quat rotation);
+    void setPosition(osg::Vec3f position);
+    void setOrientation(osg::Quat rotation);
 
-	void setAccelerate(bool state);
-	void setLeft(bool state);
-	void setRight(bool state);
-	void setUp(bool state);
-	void setDown(bool state);
+    void setAccelerate(bool state);
+    void setLeft(bool state);
+    void setRight(bool state);
+    void setUp(bool state);
+    void setDown(bool state);
     void setBack(bool state);
     void setHostSide(bool hSide);
 
-	void update(float deltaTime);
+    void update(float deltaTime);
 
-	osg::Vec3f getCenter();
-	float getSpeed();
-	osg::Vec3f getVelocity();
-	osg::Quat getOrientation();
+    osg::Vec3f getCenter();
+    float getSpeed();
+    osg::Vec3f getVelocity();
+    osg::Quat getOrientation();
     osg::MatrixTransform* getTransformGroup();
 
     // virtual func from LocalMessagePeer
@@ -40,12 +40,12 @@ public:
 
     NetSpaceShipConstructionDataMessage::pointer createConstructorMessage() const;
 private:
-	osg::Vec3f position, velocity;
-	osg::Quat orientation;
+    osg::Vec3f m_position, m_velocity;
+    osg::Quat m_orientation;
 
-	bool stateBack, stateAcc, stateLeft, stateRight, stateUp, stateDown;
+    bool m_stateBack, m_stateAcc, m_stateLeft, m_stateRight, m_stateUp, m_stateDown;
 
-	float acceleration, steerability;
+    float m_acceleration, m_steerability;
     osg::ref_ptr<osg::Node> m_shipNode;
     osg::ref_ptr<osg::MatrixTransform> m_transformGroup;
     bool m_hostSide;

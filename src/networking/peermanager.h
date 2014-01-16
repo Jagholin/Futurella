@@ -30,15 +30,15 @@ public:
     enum PeerStatus { MP_CONNECTING = 0, MP_ACTIVE, MP_SERVER, MP_DISCONNECTED };
 
 protected:
-	friend class TunnelingFuturellaPeer;
+    friend class TunnelingFuturellaPeer;
 
-	NetConnection* m_connectLine;                                       // << NetConnection object used to communicate remotely
-	std::deque<NetMessage::const_pointer> m_activationWaitingQueue;     // << messages waiting for the handshaking to finish before they can be sent
-	std::deque<RemoteMessagePeer::weak_pointer> m_dependencyList;       // << list of all tunnels that are using this peer to communicate through
-	std::atomic<bool> m_active;                                         // << true if connection is active and the handshake is successfully finished
-	mutable unsigned int m_halloStatus;                                 // << handshake phase
-	std::string m_buddyName, m_myName;                                  // << name of the remote counterpart and the self(from RemotePeersManager) 
-	uint32_t m_peerIdentityKey;                                         // << id to identify the source of communication over the network.
+    NetConnection* m_connectLine;                                       // << NetConnection object used to communicate remotely
+    std::deque<NetMessage::const_pointer> m_activationWaitingQueue;     // << messages waiting for the handshaking to finish before they can be sent
+    std::deque<RemoteMessagePeer::weak_pointer> m_dependencyList;       // << list of all tunnels that are using this peer to communicate through
+    std::atomic<bool> m_active;                                         // << true if connection is active and the handshake is successfully finished
+    mutable unsigned int m_halloStatus;                                 // << handshake phase
+    std::string m_buddyName, m_myName;                                  // << name of the remote counterpart and the self(from RemotePeersManager) 
+    uint32_t m_peerIdentityKey;                                         // << id to identify the source of communication over the network.
     boost::asio::io_service& m_netService;                              // << network thread service.
     PeerStatus m_status;                                                // << connection status
 
@@ -49,7 +49,7 @@ protected:
     addstd::signal <void(NetMessage::const_pointer, RemoteMessagePeer*)>
         m_messageReceived;                                              // << signals about incoming message packets
 
-	virtual bool takeMessage(const NetMessage::const_pointer&, MessagePeer*);
+    virtual bool takeMessage(const NetMessage::const_pointer&, MessagePeer*);
     RemoteMessagePeer(boost::asio::io_service& networkThread);
 
     // adds a new tunnel to the list
@@ -57,28 +57,28 @@ protected:
 
 public:
     // Creates new MessagePeer using an existing network connection
-	RemoteMessagePeer(NetConnection*, bool serverSide, boost::asio::io_service& networkThread);
-	virtual ~RemoteMessagePeer();
+    RemoteMessagePeer(NetConnection*, bool serverSide, boost::asio::io_service& networkThread);
+    virtual ~RemoteMessagePeer();
 
-	//virtual bool sendMessage(const NetMessage::const_pointer&);
-	PeerStatus getStatus()const;
-	std::string getRemoteName()const;
-	virtual bool isTunnel()const;
+    //virtual bool sendMessage(const NetMessage::const_pointer&);
+    PeerStatus getStatus()const;
+    std::string getRemoteName()const;
+    virtual bool isTunnel()const;
 
     // Functions to connect signals with signal handlers.
-	template<typename T=int> void onPeerDestruction(const std::function<void()> &callBack, T&& closure = int(-1)) { m_tobeDestroyed.connect(callBack, std::forward<T>(closure)); }
-	template<typename T=int> void onError(const std::function<void(std::string)> &callBack, T&& closure = int(-1)) { m_errorSignal.connect(callBack, std::forward<T>(closure)); }
-	template<typename T=int> void onActivation(const std::function<void()> &callBack, T&& closure = int(-1)) { m_onActivated.connect(callBack, std::forward<T>(closure)); }
-	template<typename T=int> void onStatusChange(const std::function<void()> &callBack, T&& closure = int(-1)) { m_statusChanged.connect(callBack, std::forward<T>(closure)); }
+    template<typename T=int> void onPeerDestruction(const std::function<void()> &callBack, T&& closure = int(-1)) { m_tobeDestroyed.connect(callBack, std::forward<T>(closure)); }
+    template<typename T=int> void onError(const std::function<void(std::string)> &callBack, T&& closure = int(-1)) { m_errorSignal.connect(callBack, std::forward<T>(closure)); }
+    template<typename T=int> void onActivation(const std::function<void()> &callBack, T&& closure = int(-1)) { m_onActivated.connect(callBack, std::forward<T>(closure)); }
+    template<typename T=int> void onStatusChange(const std::function<void()> &callBack, T&& closure = int(-1)) { m_statusChanged.connect(callBack, std::forward<T>(closure)); }
     template<typename T=int> void onMessage(const msgFunc &callBack, T&& closure = int(-1)) { m_messageReceived.connect(callBack, std::forward<T>(closure)); }
 
 protected:
-	virtual void netMessageReceived(RawMessage::pointer);
-	virtual void netDisconnected(const std::string&);
-	virtual void netConnected();
+    virtual void netMessageReceived(RawMessage::pointer);
+    virtual void netDisconnected(const std::string&);
+    virtual void netConnected();
 
-	void halloProceed(const std::shared_ptr<const NetHalloMessage>& hallo);
-	NetMessage::pointer createHalloMsg()const;
+    void halloProceed(const std::shared_ptr<const NetHalloMessage>& hallo);
+    NetMessage::pointer createHalloMsg()const;
 };
 
 // This class has a list of all existing RemoteMessagePeers
@@ -86,41 +86,41 @@ protected:
 class RemotePeersManager
 {
 protected:
-	static RemotePeersManager* mSingleton;
-	std::deque<RemoteMessagePeer::pointer> msgPeers;
-	std::map<uint32_t, RemoteMessagePeer::pointer> registeredPeerIds;
-	uint32_t myPeerId;
-	std::string peerName;
+    static RemotePeersManager* mSingleton;
+    std::deque<RemoteMessagePeer::pointer> m_msgPeers;
+    std::map<uint32_t, RemoteMessagePeer::pointer> m_registeredPeerIds;
+    uint32_t m_myPeerId;
+    std::string m_peerName;
 
-	RemotePeersManager();
-	void unregisterPeer(RemoteMessagePeer*);
-	void regFuturellaPeer(RemoteMessagePeer::pointer);
-	bool registerPeerId(uint32_t id, RemoteMessagePeer::pointer);
-	void unregisterPeerId(uint32_t id);
+    RemotePeersManager();
+    void unregisterPeer(RemoteMessagePeer*);
+    void regFuturellaPeer(RemoteMessagePeer::pointer);
+    bool registerPeerId(uint32_t id, RemoteMessagePeer::pointer);
+    void unregisterPeerId(uint32_t id);
 
-	RemoteMessagePeer::pointer peerFromId(uint32_t id)const;
+    RemoteMessagePeer::pointer peerFromId(uint32_t id)const;
 public:
-	static RemotePeersManager* getManager();
+    static RemotePeersManager* getManager();
 
-	bool isAnyoneConnected()const;
-	void broadcast(NetMessage::const_pointer, RemoteMessagePeer::pointer exclude = 0);
+    bool isAnyoneConnected()const;
+    void broadcast(NetMessage::const_pointer, RemoteMessagePeer::pointer exclude = 0);
 
-	void setMyName(std::string name);
-	std::string getMyName()const;
+    void setMyName(std::string name);
+    std::string getMyName()const;
 
-	template<typename T=int> void onNewPeerRegistration(const std::function<void(RemoteMessagePeer::pointer)> &callBack, T&& closure = int(-1))
-	{
-		m_peerRegistred.connect(callBack, std::forward<T>(closure));
-	}
+    template<typename T=int> void onNewPeerRegistration(const std::function<void(RemoteMessagePeer::pointer)> &callBack, T&& closure = int(-1))
+    {
+        m_peerRegistred.connect(callBack, std::forward<T>(closure));
+    }
 
-	friend class RemoteMessagePeer;
-	friend class TunnelingFuturellaPeer;
+    friend class RemoteMessagePeer;
+    friend class TunnelingFuturellaPeer;
 protected:
-	addstd::signal<void(RemoteMessagePeer::pointer)> m_peerRegistred;
+    addstd::signal<void(RemoteMessagePeer::pointer)> m_peerRegistred;
 public:
-	void sendChatMessage(const std::string&);
+    void sendChatMessage(const std::string&);
 protected:
-	void onPeerActivated(const RemoteMessagePeer::pointer& sender);
+    void onPeerActivated(const RemoteMessagePeer::pointer& sender);
 };
 
 BEGIN_DECLNETMESSAGE(Chat, 100)
