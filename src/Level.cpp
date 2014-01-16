@@ -8,7 +8,7 @@
 #include <osg/ShapeDrawable>
 #include <osgUtil/Optimizer>
 
-BEGIN_DECLNETMESSAGE(AsteroidFieldData, 5001)
+BEGIN_DECLNETMESSAGE(AsteroidFieldData, 5001, false)
     std::vector<osg::Vec3f> position;
     std::vector<float> radius;
 END_DECLNETMESSAGE()

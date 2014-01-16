@@ -16,26 +16,26 @@
 
 RemotePeersManager* RemotePeersManager::mSingleton = nullptr;
 
-BEGIN_DECLNETMESSAGE(Hallo, 1000)
+BEGIN_DECLNETMESSAGE(Hallo, 1000, false)
 std::string buddyName;
 uint32_t halloStat;
 uint32_t peerId;
 uint16_t version;
 END_DECLNETMESSAGE()
 
-BEGIN_DECLNETMESSAGE(AvailablePeer, 1001)
+BEGIN_DECLNETMESSAGE(AvailablePeer, 1001, false)
 std::string buddyName;
 uint32_t peerId;
 END_DECLNETMESSAGE()
 
-BEGIN_DECLNETMESSAGE(Tunneled, 1002)
+BEGIN_DECLNETMESSAGE(Tunneled, 1002, false)
 uint32_t peerIdWhom;
 uint32_t peerIdFrom;
 uint32_t msgType;
 std::string msgData;
 END_DECLNETMESSAGE()
 
-BEGIN_DECLNETMESSAGE(PeerUnavailable, 1003)
+BEGIN_DECLNETMESSAGE(PeerUnavailable, 1003, false)
 uint32_t peerId;
 END_DECLNETMESSAGE()
 
@@ -173,7 +173,10 @@ bool RemoteMessagePeer::takeMessage(const NetMessage::const_pointer& msg,
     if (m_active)
     {
         std::cout << "active=true\n";
-        m_connectLine->sendMessage(msg->toRaw());
+        if (msg->prefersUdp())  // TODO: sophisticated udp/tcp choice algorithm?
+            m_connectLine->sendAsUDP(msg->toRaw());
+        else
+            m_connectLine->sendMessage(msg->toRaw());
     }
     else
     {

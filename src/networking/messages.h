@@ -18,6 +18,7 @@ public:
     virtual ~NetMessage(){}
     virtual RawMessage::pointer toRaw()const = 0;
     virtual unsigned int gettype()const = 0;
+    virtual bool prefersUdp()const = 0;
 
     template <typename T> typename T::pointer as_safe() { return std::dynamic_pointer_cast<T>(shared_from_this()); } 
     template <typename T> typename T::pointer as() { return std::static_pointer_cast<T>(shared_from_this()); } 
@@ -104,16 +105,17 @@ public:
     }
 };
 
-#define DECLMESSAGE_BASE(name, number, prefix, baseclass) class prefix##name##Message : public baseclass { \
+#define DECLMESSAGE_BASE(name, number, udppref, prefix, baseclass) class prefix##name##Message : public baseclass { \
     public: typedef std::shared_ptr<prefix##name##Message> pointer; \
     typedef std::shared_ptr<const prefix##name##Message> const_pointer; \
     public: RawMessage::pointer toRaw()const; \
-    enum { type = number }; \
+    enum { type = (number) }; \
     protected: static unsigned int mtype; \
     public: unsigned int gettype()const { return mtype; } \
+    bool prefersUdp()const { return (udppref); } \
     static NetMessage::const_pointer fromRaw(const std::string&);
 
-#define BEGIN_DECLNETMESSAGE(name, number) DECLMESSAGE_BASE(name, number, Net, NetMessage)
+#define BEGIN_DECLNETMESSAGE(name, number, udppref) DECLMESSAGE_BASE(name, number, udppref, Net, NetMessage)
 
 #define END_DECLNETMESSAGE() };
 

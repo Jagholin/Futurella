@@ -123,7 +123,7 @@ protected:
     void onPeerActivated(const RemoteMessagePeer::pointer& sender);
 };
 
-BEGIN_DECLNETMESSAGE(Chat, 100)
+BEGIN_DECLNETMESSAGE(Chat, 100, false)
 std::string message;
 std::time_t sentTime;
 END_DECLNETMESSAGE()

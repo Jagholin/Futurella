@@ -1,7 +1,7 @@
 #include "SpaceShip.h"
 #include <osg/ShapeDrawable>
 
-BEGIN_DECLNETMESSAGE(ShipStateData, 5101)
+BEGIN_DECLNETMESSAGE(ShipStateData, 5101, false)
 osg::Vec3f position;
 osg::Vec4f orientation;
 osg::Vec3f velocity;

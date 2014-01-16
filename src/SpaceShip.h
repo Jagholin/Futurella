@@ -4,7 +4,7 @@
 #include <osg/MatrixTransform>
 #include "networking/messages.h"
 
-BEGIN_DECLNETMESSAGE(SpaceShipConstructionData, 5002)
+BEGIN_DECLNETMESSAGE(SpaceShipConstructionData, 5002, false)
 osg::Vec3f pos;
 osg::Vec4f orient;
 END_DECLNETMESSAGE()
