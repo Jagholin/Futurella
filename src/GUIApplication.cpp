@@ -57,7 +57,7 @@ bool AsioThread::createAndStartNetServer(unsigned int portNumber, std::string& e
         m_serverObject->onNewConnection(std::bind(&AsioThread::onConnection, this, std::placeholders::_1), m_destructionSignal);
         m_serverObject->onStopped(std::bind(&AsioThread::onStop, this), m_destructionSignal);
 	}
-	bool res = m_serverObject->listen(portNumber, errStr);
+	bool res = m_serverObject->listen(portNumber, portNumber+1, errStr);
 	if (res)
 	{
 		if (!isRunning())
@@ -177,7 +177,7 @@ bool GUIApplication::onConnectBtnClicked(const EventArgs& args)
 		NetConnection* newConnection = new NetConnection(*m_networkService);
 		RemoteMessagePeer* myPeer = new RemoteMessagePeer(newConnection, false, *m_networkService);
 
-		newConnection->connectTo(addrWindow->getText().c_str(), 1778);
+		newConnection->connectTo(addrWindow->getText().c_str(), 1778, 1779);
 		if (!m_networkThread.isRunning())
 			m_networkThread.start();
 	}
