@@ -40,8 +40,23 @@ void AsioThread::setGuiService(const std::shared_ptr<boost::asio::io_service>& s
 
 void AsioThread::run()
 {
-	m_servicePoint->run();
-    m_servicePoint->reset();
+    try 
+    {
+        m_servicePoint->run();
+        m_servicePoint->reset();
+    }
+    catch (const boost::system::system_error &err)
+    {
+        m_guiService->post([err](){
+            GUIContext& gui = System::getSingleton().getDefaultGUIContext();
+            MultiLineEditbox* window = static_cast<MultiLineEditbox*>(gui.getRootWindow()->getChild("networkSettings/console"));
+
+            if (window)
+            {
+                window->appendText(String(err.what()));
+            }
+        });
+    }
 }
 
 bool AsioThread::createAndStartNetServer(unsigned int portNumber, std::string& errStr)

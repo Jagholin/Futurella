@@ -266,6 +266,9 @@ void RemoteMessagePeer::netDisconnected(const std::string& err)
 {
     if (!err.empty())
         m_errorSignal(err);
+    if (m_status == MP_DISCONNECTED)
+        return; //about to be deleted anyway
+
 	m_status = MP_DISCONNECTED;
 	m_statusChanged();
 	m_netService.post([this](){
