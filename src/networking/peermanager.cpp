@@ -133,7 +133,9 @@ RemoteMessagePeer::RemoteMessagePeer(NetConnection* con, bool serverSide, boost:
         if (con->isActive())
             runHallo = true;
         //else
-        con->onConnected(std::bind(&RemoteMessagePeer::netConnected, this), m_tobeDestroyed);
+        if (!serverSide) // if NetConnection is created by NetServer, it is already "connected"(except perhaps UDP side)
+            // prevent it call netConnected here, which going to mess up with handshaking procedure.
+            con->onConnected(std::bind(&RemoteMessagePeer::netConnected, this), m_tobeDestroyed);
         con->onDisconnected(std::bind(&RemoteMessagePeer::netDisconnected, this, std::placeholders::_1), m_tobeDestroyed);
         con->onMessageReceived(std::bind(&RemoteMessagePeer::netMessageReceived, this, std::placeholders::_1), m_tobeDestroyed);
     }
