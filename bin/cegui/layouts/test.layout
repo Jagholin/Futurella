@@ -79,6 +79,7 @@
 				<Property name="Font" value="Jura-10" />
 			</Window>
 			<Property name="Text" value="Console" />
+			<Property name="Area" value="{{0, 0}, {0, 0}, {1, 0}, {0.25, 0}}" />
 		</Window>
     </Window>
 </GUILayout>

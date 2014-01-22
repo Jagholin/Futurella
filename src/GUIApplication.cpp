@@ -342,11 +342,20 @@ bool GUIApplication::onConsoleInput(const CEGUI::EventArgs&)
         if (s.size() > 0)
             consoleParts.push_back(s);
     }
+    typedef std::map < String, std::function<void(const std::vector<String>&, String&)>> consoleFuncsMap;
+    auto consoleHelpProcedure = [](const consoleFuncsMap& funcs, const std::vector<String>&, String& out){
+        out = "\nKnown console commands include:";
+        for (auto f : funcs)
+        {
+            out += " " + f.first;
+        }
+    };
 
-    static const auto consoleFuncs = std::map<String, std::function<void(const std::vector<String>& params, String& output)>> {
+    static const consoleFuncsMap consoleFuncs = consoleFuncsMap {
         { "login", std::bind(&GUIApplication::consoleCreateUser, this, std::placeholders::_1, std::placeholders::_2) },
         { "show_network", std::bind(&GUIApplication::consoleShowNetwork, this, std::placeholders::_1, std::placeholders::_2) },
-        { "clear", std::bind(&GUIApplication::consoleClear, this, std::placeholders::_1, std::placeholders::_2) }
+        { "clear", std::bind(&GUIApplication::consoleClear, this, std::placeholders::_1, std::placeholders::_2) },
+        { "help", std::bind(consoleHelpProcedure, std::cref(consoleFuncs), std::placeholders::_1, std::placeholders::_2) }
     };
 
     if (consoleFuncs.count(consoleParts[0]) > 0)
@@ -374,9 +383,19 @@ void GUIApplication::consoleCreateUser(const std::vector<String>& params, String
         output = "\nExpected more parameters: login <userName> <udpPort>";
         return;
     }
-    m_userName = params[1];
-    m_userListensUdpPort = boost::lexical_cast<unsigned int>(params[2]);
-    m_userCreated = true;
+
+    try
+    {
+        m_userName = params[1];
+        m_userListensUdpPort = boost::lexical_cast<unsigned int>(params[2]);
+        m_userCreated = true;
+    }
+    catch (boost::bad_lexical_cast)
+    {
+        m_userCreated = false;
+        output = "\nWrong parameter types. Expected login <userName> <udpPort>";
+        return;
+    }
 
     RemotePeersManager::getManager()->setMyName(m_userName.c_str());
     // TODO: start listening at given UDP port.

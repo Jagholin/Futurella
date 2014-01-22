@@ -54,6 +54,10 @@ add_executable(Futurella
     src/networking/peermanager.h
     src/networking/peermanager.cpp
     src/networking/sigslot.h
+    src/gamecommon/GameMessagePeer.h
+    src/gamecommon/GameMessagePeer.cpp
+    src/gamecommon/GameObject.h
+    src/gamecommon/GameObject.cpp
     src/gameserver/SpaceShipServer.h
     src/gameclient/SpaceShipClient.h
     src/CEGUIDrawable.h
