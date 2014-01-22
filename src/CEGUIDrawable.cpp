@@ -38,6 +38,11 @@ public:
 
         if (etype & (osgGA::GUIEventAdapter::RELEASE | osgGA::GUIEventAdapter::PUSH | osgGA::GUIEventAdapter::MOVE | osgGA::GUIEventAdapter::DRAG | osgGA::GUIEventAdapter::KEYDOWN | osgGA::GUIEventAdapter::KEYUP))
         {
+            if (etype == osgGA::GUIEventAdapter::KEYDOWN && ea.getKey() == osgGA::GUIEventAdapter::KEY_F7)
+            {
+                myDrawable->addEvent(ea);
+                return true;
+            }
             if (!m_guiHandlesEvents && etype == osgGA::GUIEventAdapter::KEYDOWN && ea.getKey() == osgGA::GUIEventAdapter::KEY_Tab)
             {
                 using namespace CEGUI;
@@ -54,8 +59,9 @@ public:
             // wrong or no active OpenGL context(thanks to gDEBugger I've actually seen this happen).
             // which means, that we should do the injection in draw phase...
             myDrawable->addEvent(ea);
+            return true;
         }
-        return true;
+        return false;
     }
 
     bool resetGuiEventHandling(const CEGUI::EventArgs&)
@@ -172,6 +178,18 @@ void CeguiDrawable::passEvent(const osgGA::GUIEventAdapter& ea) const
     else if (etype & (osgGA::GUIEventAdapter::KEYDOWN))
     {
         int keyCode = ea.getKey();
+        if (keyCode == osgGA::GUIEventAdapter::KEY_F7)
+        {
+            // Special key: reload HUD layout
+            WindowManager& win = WindowManager::getSingleton();
+            win.destroyAllWindows();
+            GUIContext& gui = System::getSingleton().getDefaultGUIContext();
+            Window* root = win.loadLayoutFromFile("test.layout");
+            gui.setRootWindow(root);
+            m_guiApp->registerEvents();
+            root->subscribeEvent(Window::EventMouseClick, Event::Subscriber(&GlobalEventHandler::resetGuiEventHandling, const_cast<GlobalEventHandler*>(static_cast<const GlobalEventHandler*>(getEventCallback()))));
+            return;
+        }
         if (m_keyboardMap.count(keyCode))
         {
             System::getSingleton().getDefaultGUIContext().injectKeyDown(m_keyboardMap.at(keyCode));
@@ -187,7 +205,7 @@ void CeguiDrawable::passEvent(const osgGA::GUIEventAdapter& ea) const
         int keyCode = ea.getKey();
         if (m_keyboardMap.count(keyCode))
         {
-            System::getSingleton().getDefaultGUIContext().injectKeyDown(m_keyboardMap.at(keyCode));
+            System::getSingleton().getDefaultGUIContext().injectKeyUp(m_keyboardMap.at(keyCode));
         }
         else
         {
@@ -263,6 +281,8 @@ void CeguiDrawable::init() const
     CEGUI::SchemeManager::getSingleton().createFromFile("TaharezLook.scheme");
 
     CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().setDefaultImage("TaharezLook/MouseArrow");
+    CEGUI::System::getSingleton().getDefaultGUIContext().setDefaultFont("DejaVuSans-12");
+    CEGUI::System::getSingleton().getDefaultGUIContext().setDefaultTooltipType("TaharezLook/Tooltip");
 
     using namespace CEGUI;
     Window* myRoot = WindowManager::getSingleton().loadLayoutFromFile("test.layout");

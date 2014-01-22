@@ -79,7 +79,9 @@ public:
     ~NetServer();
 
     bool listen(unsigned int portTCP, unsigned int portUDP, std::string& errMsg);
+    bool listenUdp(unsigned int portUDP, std::string& errMsg);
     void stop();
+    bool isRunning() const;
     template<typename T> void onNewConnection(const std::function<void(NetConnection*)>& func, T&& closure) { m_newConnection.connect(func, std::forward<T>(closure)); }
     template<typename T> void onStopped(const std::function<void()>& func, T&& closure) { m_stopped.connect(func, std::forward<T>(closure)); }
 

@@ -126,11 +126,16 @@ public:
         return pointer(new NetServerImpl(s, buddy));
     }
     boost::system::error_code beginListen(uint16_t portTCP, uint16_t portUDP);
+    boost::system::error_code beginListen(uint16_t portUDP);
     void stop();
     void disconnect()
     {
         buddy = 0;
         stop();
+    }
+    bool isRunning() const
+    {
+        return started;
     }
     ~NetServerImpl()
     {
@@ -515,6 +520,11 @@ unsigned int NetConnection::sendMessage(RawMessage::const_pointer msg)
     return privData->writeTCP(msg);
 }
 
+unsigned int NetConnection::sendAsUDP(RawMessage::const_pointer msg)
+{
+    return privData->writeUDP(msg);
+}
+
 std::string NetConnection::getAddrString()const
 {
     return privData->getAddrStr();
@@ -587,6 +597,22 @@ boost::system::error_code NetServerImpl::beginListen(uint16_t portTCP, uint16_t 
     return ec;
 }
 
+boost::system::error_code NetServerImpl::beginListen(uint16_t portUDP)
+{
+    if (started)
+        return boost::system::error_code();
+    boost::system::error_code ec;
+    mSocketUDP->open(asio::ip::udp::v4(), ec);
+    if (ec) return ec;
+    mSocketUDP->bind(asio::ip::udp::endpoint(asio::ip::udp::v4(), portUDP), ec);
+    if (ec) return ec;
+    mSocketUDP->async_receive_from(asio::buffer(mDatagramBuffer, 512), mDatagramSender,
+        std::bind(&NetServerImpl::onDatagramReceive, shared_from_this(),
+        std::placeholders::_1, std::placeholders::_2));
+    started = true;
+    return ec;
+}
+
 void NetServerImpl::doListen()
 {
     boost::system::error_code ec;
@@ -594,6 +620,7 @@ void NetServerImpl::doListen()
     if (ec)
     {
         started = false;
+        mSocketUDP->close();
         if (buddy) buddy->m_stopped();
         return;
     }
@@ -627,6 +654,7 @@ void NetServerImpl::onAccept(const boost::system::error_code& code)
     else
     {
         started = false;
+        mSocketUDP->close();
         if (buddy) buddy->m_stopped();
     }
 }
@@ -664,13 +692,19 @@ void NetServerImpl::onDatagramReceive(const boost::system::error_code& ec, std::
     }
     else
     {
-        // TODO: error on datagram receive
+        mSocketUDP->close();
+        if (mAccept.is_open())
+            mAccept.close();
+        started = false;
+        if (buddy) buddy->m_stopped();
     }
 }
 
 void NetServerImpl::stop()
 {
     mAccept.close();
+    mSocketUDP->close();
+    started = false;
 }
 
 NetServer::NetServer(boost::asio::io_service &s):
@@ -699,7 +733,24 @@ bool NetServer::listen(unsigned int portTCP, unsigned int portUDP, std::string& 
     return true;
 }
 
+bool NetServer::listenUdp(unsigned int portUDP, std::string& errMsg)
+{
+    boost::system::error_code ec = privData->beginListen(portUDP);
+    if (ec)
+    {
+        errMsg = ec.message();
+        m_stopped();
+        return false;
+    }
+    return true;
+}
+
 void NetServer::stop()
 {
     privData->stop();
+}
+
+bool NetServer::isRunning() const
+{
+    return privData->isRunning();
 }

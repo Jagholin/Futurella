@@ -26,7 +26,8 @@ public:
     void setGuiService(const std::shared_ptr<boost::asio::io_service>& service);
     virtual void run();
 
-    bool createAndStartNetServer(unsigned int portNumber, std::string& errStr);
+    bool createAndStartNetServer(unsigned int portNumberTCP, unsigned int portNumberUDP, std::string& errStr);
+    bool startUdpListener(unsigned int portUDP, std::string& errStr);
 
     // virtual funcs from NetServerListener
     virtual void onConnection(NetConnection*);
@@ -57,6 +58,8 @@ public:
     bool onSendBtnClicked(const CEGUI::EventArgs&);
     bool onConnectBtnClicked(const CEGUI::EventArgs&);
     bool onListenBtnClicked(const CEGUI::EventArgs&);
+    bool onConsoleClicked(const CEGUI::EventArgs&);
+    bool onConsoleInput(const CEGUI::EventArgs&);
 
     // network-related events
     // peermanager: newly connected peer
@@ -72,7 +75,13 @@ protected:
     std::shared_ptr<boost::asio::io_service> m_networkService;
     std::shared_ptr<boost::asio::io_service> m_renderThreadService;
     AsioThread m_networkThread;
+    
     Level* m_currentLevel;
+
+    // User data 
+    bool m_userCreated;
+    String m_userName;
+    unsigned int m_userListensUdpPort;
 
     // helper function to register event handlers within CEGUI
     // windowName = path to the window capturing the event in GUI Layout hierarchy
@@ -81,4 +90,9 @@ protected:
     // It will be most likely called deep within CeguiDrawable::drawImplementation context, so be careful about what you do
     // and how long it takes.
     void addEventHandler(const String& windowName, const String& eventName, const CEGUI::Event::Subscriber& function);
+
+    // Functions replying on console messages
+    void consoleCreateUser(const std::vector<String>& params, String& output);
+    void consoleShowNetwork(const std::vector<String>& params, String& output);
+    void consoleClear(const std::vector<String>& params, String& output);
 };

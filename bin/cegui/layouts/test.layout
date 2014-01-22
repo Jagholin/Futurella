@@ -6,12 +6,21 @@
 			<Property name="Size" value="{{0, 210}, {0, 450}}" />
 			<Property name="MinSize" value="{{0, 200}, {0, 450}}" />
 			
-			<Window type="TaharezLook/MultiLineEditbox" name="output">
+			<Window type="TaharezLook/Label" name="output">
+				<Window type="TaharezLook/ImageButton" name="testBtn" >
+					<Property name="NormalImage" value="Figures/square" />
+					<Property name="PushedImage" value="Figures/red_square" />
+					<Property name="HoverImage" value="Figures/green_square" />
+					<Property name="MinSize" value="{{0, 32}, {0, 32}}" />
+				</Window>
 				<Property name="Area" value="{{0,0},{0,0},{1,0},{0.8,0}}" />
+				<Property name="Text">Test yo!:[window='testBtn']</Property>
+				<Property name="Font" value="Jura-10" />
 			</Window>
 			
 			<Window type="TaharezLook/Editbox" name="input">
 				<Property name="Area" value="{{0,0},{0.81,0},{1,0},{0.81,30}}" />
+				<Property name="TooltipText" value="Enter something here" />
 			</Window>
 			
 			<Window type="TaharezLook/Button" name="sendBtn">
@@ -24,7 +33,7 @@
 				<Property name="Text">Quit</Property>
 			</Window>
 			
-			<Property name="Visible" value="true" />
+			<Property name="Visible" value="false" />
         </Window>
 		
 		<Window type="TaharezLook/FrameWindow" name="networkSettings">
@@ -55,7 +64,21 @@
 			<Window type="TaharezLook/MultiLineEditbox" name="console">
 				<Property name="Area" value="{{0,0}, {0,134}, {1, 0}, {1, -5}}" />
 			</Window>
-			
+			<Property name="Visible" value="false" />
+		</Window>
+		
+		<Window type="TaharezLook/FrameWindow" name="console">
+			<Window type="TaharezLook/StaticText" name="output">
+				<Property name="Area" value="{{0, 4}, {0, 4}, {1, -4}, {1, -40}}" />
+				<Property name="VertFormatting" value="BottomAligned" />
+				<Property name="Font" value="Jura-10" />
+				<Property name="Text" value="Welcome" />
+			</Window>
+			<Window type="TaharezLook/Editbox" name="input">
+				<Property name="Area" value="{{0, 4}, {1, -40}, {1, -4}, {1, -4}}" /> 
+				<Property name="Font" value="Jura-10" />
+			</Window>
+			<Property name="Text" value="Console" />
 		</Window>
     </Window>
 </GUILayout>
