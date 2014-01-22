@@ -465,43 +465,43 @@ void RemotePeersManager::onPeerActivated(const RemoteMessagePeer::pointer& sendP
 }
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(Chat)
-outStr << message << sentTime;
+out << message << sentTime;
 END_NETTORAWMESSAGE_QCONVERT()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(Chat)
-inStr >> temp->message >> temp->sentTime;
+in >> message >> sentTime;
 END_RAWTONETMESSAGE_QCONVERT()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(Hallo)
-outStr << buddyName << halloStat << peerId << version;
+out << buddyName << halloStat << peerId << version;
 END_NETTORAWMESSAGE_QCONVERT()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(Hallo)
-inStr >> temp->buddyName >> temp->halloStat >> temp->peerId >> temp->version;
+in >> buddyName >> halloStat >> peerId >> version;
 END_RAWTONETMESSAGE_QCONVERT()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(AvailablePeer)
-outStr << buddyName << peerId;
+out << buddyName << peerId;
 END_NETTORAWMESSAGE_QCONVERT()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(AvailablePeer)
-inStr >> temp->buddyName >> temp->peerId;
+in >> buddyName >> peerId;
 END_RAWTONETMESSAGE_QCONVERT()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(Tunneled)
-outStr << peerIdWhom << peerIdFrom << msgType << msgData;
+out << peerIdWhom << peerIdFrom << msgType << msgData;
 END_NETTORAWMESSAGE_QCONVERT()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(Tunneled)
-inStr >> temp->peerIdWhom >> temp->peerIdFrom >> temp->msgType >> temp->msgData;
+in >> peerIdWhom >> peerIdFrom >> msgType >> msgData;
 END_RAWTONETMESSAGE_QCONVERT()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(PeerUnavailable)
-outStr << peerId;
+out << peerId;
 END_NETTORAWMESSAGE_QCONVERT()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(PeerUnavailable)
-inStr >> temp->peerId;
+in >> peerId;
 END_RAWTONETMESSAGE_QCONVERT()
 
 REGISTER_NETMESSAGE(Chat)

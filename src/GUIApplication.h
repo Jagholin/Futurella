@@ -15,6 +15,8 @@
 
 using CEGUI::String;
 class Level;
+class GameInstanceServer;
+class GameInstanceClient;
 
 class AsioThread : public OpenThreads::Thread
 {
@@ -77,8 +79,10 @@ protected:
     AsioThread m_networkThread;
     
     Level* m_currentLevel;
+    GameInstanceServer* m_gameServer;
+    GameInstanceClient* m_gameClient;
 
-    // User data 
+    // User data =====> TODO: Relocate this to somewhere else, PLEASE!
     bool m_userCreated;
     String m_userName;
     unsigned int m_userListensUdpPort;
@@ -95,4 +99,9 @@ protected:
     void consoleCreateUser(const std::vector<String>& params, String& output);
     void consoleShowNetwork(const std::vector<String>& params, String& output);
     void consoleClear(const std::vector<String>& params, String& output);
+    void consoleConnect(const std::vector<String>& params, String& output);
+    void consoleNetServerCommand(const std::vector<String>& params, String& output);
+    void consoleStartNetServer(const std::vector<String>& params, String& output);
+    void consoleGameServerCommand(const std::vector<String>& params, String& output);
+    void consoleStartGameServer(const std::vector<String>& params, String& output);
 };

@@ -22,6 +22,7 @@
 #include <deque>
 #include <memory>
 #include <functional>
+#include <atomic>
 
 using std::shared_ptr;
 using std::auto_ptr;
@@ -125,8 +126,8 @@ public:
     {
         return pointer(new NetServerImpl(s, buddy));
     }
-    boost::system::error_code beginListen(uint16_t portTCP, uint16_t portUDP);
-    boost::system::error_code beginListen(uint16_t portUDP);
+    bool beginListen(uint16_t portTCP, uint16_t portUDP, boost::system::error_code&);
+    bool beginListen(uint16_t portUDP, boost::system::error_code&);
     void stop();
     void disconnect()
     {
@@ -147,7 +148,7 @@ protected:
     socket_udp mSocketUDP;
     acceptor mAccept;
     NetServer* buddy;
-    bool started;
+    std::atomic<bool> started;
 
     char mDatagramBuffer[512];
     asio::ip::udp::endpoint mDatagramSender;
@@ -579,38 +580,46 @@ NetServerImpl::NetServerImpl(asio::io_service& serv, NetServer* b):
     //nop
 }
 
-boost::system::error_code NetServerImpl::beginListen(uint16_t portTCP, uint16_t portUDP)
+bool NetServerImpl::beginListen(uint16_t portTCP, uint16_t portUDP, boost::system::error_code& ec)
 {
     if (started)
-        return boost::system::error_code();
-    boost::system::error_code ec;
-    mAccept.open(asio::ip::tcp::v4(), ec);
-    if (ec) return ec;
-    mAccept.bind(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), portTCP), ec);
-    if (ec) return ec;
-    mSocketUDP->open(asio::ip::udp::v4(), ec);
-    if (ec) return ec;
-    mSocketUDP->bind(asio::ip::udp::endpoint(asio::ip::udp::v4(), portUDP), ec);
-    if (ec) return ec;
-    mserv.post(std::bind(&NetServerImpl::doListen, shared_from_this()));
+    {
+        return false;
+    }
+    try {
+        mAccept.open(asio::ip::tcp::v4());
+        mAccept.bind(asio::ip::tcp::endpoint(asio::ip::tcp::v4(), portTCP));
+        mSocketUDP->open(asio::ip::udp::v4());
+        mSocketUDP->bind(asio::ip::udp::endpoint(asio::ip::udp::v4(), portUDP));
+    }
+    catch (boost::system::system_error e)
+    {
+        ec = e.code();
+        return false;
+    }
     started = true;
-    return ec;
+    mserv.post(std::bind(&NetServerImpl::doListen, shared_from_this()));
+    return true;
 }
 
-boost::system::error_code NetServerImpl::beginListen(uint16_t portUDP)
+bool NetServerImpl::beginListen(uint16_t portUDP, boost::system::error_code& ec)
 {
     if (started)
-        return boost::system::error_code();
-    boost::system::error_code ec;
-    mSocketUDP->open(asio::ip::udp::v4(), ec);
-    if (ec) return ec;
-    mSocketUDP->bind(asio::ip::udp::endpoint(asio::ip::udp::v4(), portUDP), ec);
-    if (ec) return ec;
+        return false;
+    try{
+        mSocketUDP->open(asio::ip::udp::v4());
+        mSocketUDP->bind(asio::ip::udp::endpoint(asio::ip::udp::v4(), portUDP));
+    }
+    catch (boost::system::system_error e)
+    {
+        ec = e.code();
+        return false;
+    }
+    started = true;
     mSocketUDP->async_receive_from(asio::buffer(mDatagramBuffer, 512), mDatagramSender,
         std::bind(&NetServerImpl::onDatagramReceive, shared_from_this(),
         std::placeholders::_1, std::placeholders::_2));
-    started = true;
-    return ec;
+    return true;
 }
 
 void NetServerImpl::doListen()
@@ -619,9 +628,11 @@ void NetServerImpl::doListen()
     mAccept.listen(asio::socket_base::max_connections, ec);
     if (ec)
     {
-        started = false;
-        mSocketUDP->close();
-        if (buddy) buddy->m_stopped();
+        if (started.exchange(false))
+        {
+            mSocketUDP->close();
+            if (buddy) buddy->m_stopped();
+        }
         return;
     }
     mAccept.async_accept(*mSocketTCP,
@@ -653,9 +664,11 @@ void NetServerImpl::onAccept(const boost::system::error_code& code)
     }
     else
     {
-        started = false;
-        mSocketUDP->close();
-        if (buddy) buddy->m_stopped();
+        if (started.exchange(false))
+        {
+            mSocketUDP->close();
+            if (buddy) buddy->m_stopped();
+        }
     }
 }
 
@@ -692,19 +705,24 @@ void NetServerImpl::onDatagramReceive(const boost::system::error_code& ec, std::
     }
     else
     {
-        mSocketUDP->close();
-        if (mAccept.is_open())
-            mAccept.close();
-        started = false;
-        if (buddy) buddy->m_stopped();
+        if (started.exchange(false))
+        {
+            mSocketUDP->close();
+            if (mAccept.is_open())
+                mAccept.close();
+            if (buddy) buddy->m_stopped();
+        }
     }
 }
 
 void NetServerImpl::stop()
 {
-    mAccept.close();
-    mSocketUDP->close();
-    started = false;
+    if (started.exchange(false))
+    {
+        mAccept.close();
+        mSocketUDP->close();
+        if (buddy) buddy->m_stopped();
+    }
 }
 
 NetServer::NetServer(boost::asio::io_service &s):
@@ -723,24 +741,40 @@ NetServer::~NetServer()
 
 bool NetServer::listen(unsigned int portTCP, unsigned int portUDP, std::string& errMsg)
 {
-    boost::system::error_code ec = privData->beginListen(portTCP, portUDP);
-    if (ec)
+    boost::system::error_code ec;
+    if (!privData->beginListen(portTCP, portUDP, ec))
     {
-        errMsg = ec.message();
-        m_stopped();
-        return false;
+        if (ec)
+        {
+            errMsg = ec.message();
+            //m_stopped();
+            return false;
+        }
+        else
+        {
+            errMsg = "Server appears to be already running";
+            return false;
+        }
     }
     return true;
 }
 
 bool NetServer::listenUdp(unsigned int portUDP, std::string& errMsg)
 {
-    boost::system::error_code ec = privData->beginListen(portUDP);
-    if (ec)
+    boost::system::error_code ec;
+    if (!privData->beginListen(portUDP, ec))
     {
-        errMsg = ec.message();
-        m_stopped();
-        return false;
+        if (ec)
+        {
+            errMsg = ec.message();
+            //m_stopped();
+            return false;
+        }
+        else
+        {
+            errMsg = "Server appears to be already running";
+            return false;
+        }
     }
     return true;
 }

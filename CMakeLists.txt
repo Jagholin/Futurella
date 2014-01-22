@@ -27,6 +27,7 @@ find_package(CEGUI REQUIRED)
 find_package(OpenGL REQUIRED)
 
 find_package(BOOST 1.54.0 REQUIRED COMPONENTS system asio)
+# add_definitions(-DBOOST_ASIO_ENABLE_HANDLER_TRACKING)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
@@ -59,7 +60,9 @@ add_executable(Futurella
     src/gamecommon/GameObject.h
     src/gamecommon/GameObject.cpp
     src/gameserver/SpaceShipServer.h
+    src/gameserver/GameInstanceServer.h
     src/gameclient/SpaceShipClient.h
+    src/gameclient/GameInstanceClient.h
     src/CEGUIDrawable.h
     src/CEGUIDrawable.cpp
     src/GUIApplication.h

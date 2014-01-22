@@ -1,6 +1,8 @@
 <?xml version="1.0" ?>
 <GUILayout version = "4">
     <Window type="DefaultWindow" name="root">
+		<!-- Chat window follows
+		-->
         <Window type="TaharezLook/FrameWindow" name="chatWindow">
             <Property name="Text" value="Chat" />
 			<Property name="Size" value="{{0, 210}, {0, 450}}" />
@@ -14,7 +16,7 @@
 					<Property name="MinSize" value="{{0, 32}, {0, 32}}" />
 				</Window>
 				<Property name="Area" value="{{0,0},{0,0},{1,0},{0.8,0}}" />
-				<Property name="Text">Test yo!:[window='testBtn']</Property>
+				<Property name="Text">Text embedded widgets:[window='testBtn']</Property>
 				<Property name="Font" value="Jura-10" />
 			</Window>
 			
@@ -36,6 +38,8 @@
 			<Property name="Visible" value="false" />
         </Window>
 		
+		<!-- Network window
+		-->
 		<Window type="TaharezLook/FrameWindow" name="networkSettings">
 			<Property name="Text" value="Network" />
 			<Property name="MinSize" value="{{0, 200}, {0, 300}}" />
@@ -67,12 +71,15 @@
 			<Property name="Visible" value="false" />
 		</Window>
 		
+		<!-- Console window
+		-->
 		<Window type="TaharezLook/FrameWindow" name="console">
 			<Window type="TaharezLook/StaticText" name="output">
 				<Property name="Area" value="{{0, 4}, {0, 4}, {1, -4}, {1, -40}}" />
 				<Property name="VertFormatting" value="BottomAligned" />
 				<Property name="Font" value="Jura-10" />
-				<Property name="Text" value="Welcome" />
+				<Property name="Text">Welcome.
+To see the list of available commands, try "help".</Property>
 			</Window>
 			<Window type="TaharezLook/Editbox" name="input">
 				<Property name="Area" value="{{0, 4}, {1, -40}, {1, -4}, {1, -4}}" /> 

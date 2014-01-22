@@ -16,14 +16,16 @@ struct GameMessage : public NetMessage, public std::enable_shared_from_this<Game
 
 #define REGISTER_GAMEMESSAGE(name) REGISTER_MESSAGE_BASE(name, Game)
 
-#define BEGIN_GAMETORAWMESSAGE_QCONVERT(name) BEGIN_TORAWMESSAGE_QCONVERTBASE(name, Game)
+#define BEGIN_GAMETORAWMESSAGE_QCONVERT(name) BEGIN_TORAWMESSAGE_QCONVERTBASE(name, Game) \
+    out << objectId;
 
-#define END_GAMETORAWMESSAGE_QCONVERT() } result->msgBytes = outStr.str(); \
+#define END_GAMETORAWMESSAGE_QCONVERT() } result->msgBytes = out.str(); \
     return result; }
 
-#define BEGIN_RAWTOGAMEMESSAGE_QCONVERT(name) BEGIN_TONETMESSAGE_QCONVERTBASE(name, Game)
+#define BEGIN_RAWTOGAMEMESSAGE_QCONVERT(name) BEGIN_TONETMESSAGE_QCONVERTBASE(name, Game) \
+    in >> objectId;
 
-#define END_RAWTOGAMEMESSAGE_QCONVERT() return NetMessage::pointer(temp);}
+#define END_RAWTOGAMEMESSAGE_QCONVERT() }
 
 class GameObject;
 

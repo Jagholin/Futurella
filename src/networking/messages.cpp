@@ -67,9 +67,3 @@ bool MessagePeer::send(const NetMessage::const_pointer& msg, MessagePeer* from)
     }
     return result;
 }
-
-unsigned int MsgFactory::regFactory(unsigned int id, const factoryFunc& f)
-{
-    msgFactories[id] = f;
-    return id;
-}

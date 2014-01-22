@@ -115,33 +115,32 @@ public:
     public: unsigned int gettype()const { return mtype; } \
     bool prefersUdp()const { return (udppref); } \
     bool isGameMessage()const { return (isgamemsg); } \
-    static NetMessage::const_pointer fromRaw(const std::string&);
+    void fromRaw(const std::string&);
 
 #define BEGIN_DECLNETMESSAGE(name, number, udppref) DECLMESSAGE_BASE(name, number, udppref, false, Net, NetMessage)
 
 #define END_DECLNETMESSAGE() };
 
-#define REGISTER_MESSAGE_BASE(name, prefix) unsigned int prefix##name##Message::mtype = MsgFactory::regFactory(prefix##name##Message::type, &prefix##name##Message::fromRaw);
+#define REGISTER_MESSAGE_BASE(name, prefix) unsigned int prefix##name##Message::mtype = MsgFactory::regFactory<prefix##name##Message>(prefix##name##Message::type);
 
 #define REGISTER_NETMESSAGE(name) REGISTER_MESSAGE_BASE(name, Net)
 
 #define BEGIN_TORAWMESSAGE_QCONVERTBASE(name, prefix) RawMessage::pointer prefix##name##Message::toRaw() const { \
     RawMessage::pointer result(new RawMessage); \
     result->msgType = mtype; \
-    binaryStream outStr; {
+    binaryStream out; {
 
 #define BEGIN_NETTORAWMESSAGE_QCONVERT(name) BEGIN_TORAWMESSAGE_QCONVERTBASE(name, Net)
 
-#define END_NETTORAWMESSAGE_QCONVERT() } result->msgBytes = outStr.str(); \
+#define END_NETTORAWMESSAGE_QCONVERT() } result->msgBytes = out.str(); \
     return result; }
 
-#define BEGIN_TONETMESSAGE_QCONVERTBASE(name, prefix) NetMessage::const_pointer prefix##name##Message::fromRaw(const std::string& str) { \
-    binaryStream inStr(str); \
-    prefix##name##Message* temp = new prefix##name##Message; 
+#define BEGIN_TONETMESSAGE_QCONVERTBASE(name, prefix) void prefix##name##Message::fromRaw(const std::string& str) { \
+    binaryStream in(str);  
 
 #define BEGIN_RAWTONETMESSAGE_QCONVERT(name) BEGIN_TONETMESSAGE_QCONVERTBASE(name, Net)
 
-#define END_RAWTONETMESSAGE_QCONVERT() return NetMessage::pointer(temp);}
+#define END_RAWTONETMESSAGE_QCONVERT() }
 
 class MessagePeer
 {
@@ -184,7 +183,16 @@ private:
     static factoryMap msgFactories;
     MsgFactory();
 public:
-    static unsigned int regFactory(unsigned int, const factoryFunc&);
+    template <typename T>
+    static unsigned int regFactory(unsigned int id)
+    {
+        msgFactories[id] = [](const std::string& str) -> NetMessage::const_pointer {
+            typename T::pointer tempObj{ new T };
+            tempObj->fromRaw(str);
+            return tempObj;
+        };
+        return id;
+    }
     static NetMessage::const_pointer create(const RawMessage& msg)
     {
         if (msgFactories.count(msg.msgType) > 0)

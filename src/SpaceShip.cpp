@@ -8,19 +8,19 @@ osg::Vec3f velocity;
 END_DECLNETMESSAGE()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(ShipStateData)
-outStr << position << orientation << velocity;
+out << position << orientation << velocity;
 END_NETTORAWMESSAGE_QCONVERT()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(ShipStateData)
-inStr >> temp->position >> temp->orientation >> temp->velocity;
+in >> position >> orientation >> velocity;
 END_RAWTONETMESSAGE_QCONVERT()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(SpaceShipConstructionData)
-outStr << pos << orient;
+out << pos << orient;
 END_NETTORAWMESSAGE_QCONVERT()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(SpaceShipConstructionData)
-inStr >> temp->pos >> temp->orient;
+in >> pos >> orient;
 END_RAWTONETMESSAGE_QCONVERT()
 
 REGISTER_NETMESSAGE(ShipStateData);

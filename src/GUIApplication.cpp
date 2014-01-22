@@ -1,4 +1,3 @@
-
 #include "GUIApplication.h"
 
 #include <CEGUI/CEGUI.h>
@@ -8,8 +7,50 @@
 #include "networking/networking.h"
 #include "networking/peermanager.h"
 #include "Level.h"
+#include "gameclient/GameInstanceClient.h"
+#include "gameserver/GameInstanceServer.h"
 
 using namespace CEGUI;
+
+// Some netmessages that inform about existing GameInstanceServers or request a connection
+// between GameInstanceServer and GameInstanceClient
+
+BEGIN_DECLNETMESSAGE(GameServerAvailable, 1400, false)
+std::string serverName;
+END_DECLNETMESSAGE()
+
+BEGIN_DECLNETMESSAGE(GameConnectRequest, 1401, false)
+END_DECLNETMESSAGE()
+
+BEGIN_DECLNETMESSAGE(GameConnectDenied, 1402, false)
+std::string reason;
+END_DECLNETMESSAGE()
+
+BEGIN_NETTORAWMESSAGE_QCONVERT(GameServerAvailable)
+out << serverName;
+END_NETTORAWMESSAGE_QCONVERT()
+
+BEGIN_RAWTONETMESSAGE_QCONVERT(GameServerAvailable)
+in >> serverName;
+END_RAWTONETMESSAGE_QCONVERT()
+
+BEGIN_NETTORAWMESSAGE_QCONVERT(GameConnectRequest)
+END_NETTORAWMESSAGE_QCONVERT()
+
+BEGIN_RAWTONETMESSAGE_QCONVERT(GameConnectRequest)
+END_RAWTONETMESSAGE_QCONVERT()
+
+BEGIN_NETTORAWMESSAGE_QCONVERT(GameConnectDenied)
+out << reason;
+END_NETTORAWMESSAGE_QCONVERT()
+
+BEGIN_RAWTONETMESSAGE_QCONVERT(GameConnectDenied)
+in >> reason;
+END_RAWTONETMESSAGE_QCONVERT()
+
+REGISTER_NETMESSAGE(GameServerAvailable)
+REGISTER_NETMESSAGE(GameConnectRequest)
+REGISTER_NETMESSAGE(GameConnectDenied)
 
 AsioThread::AsioThread() :
 m_destructionSignal("AsioThread::destructionSignal")
@@ -82,6 +123,7 @@ void AsioThread::run()
 
 bool AsioThread::createAndStartNetServer(unsigned int portNumber, unsigned int portNumberUDP, std::string& errStr)
 {
+    std::shared_ptr<boost::asio::io_service::work> tempWork;
     if (!m_servicePoint)
     {
         errStr = "No service object bound. Refusing to start NetServer.";
@@ -94,7 +136,11 @@ bool AsioThread::createAndStartNetServer(unsigned int portNumber, unsigned int p
         m_serverObject->onStopped(std::bind(&AsioThread::onStop, this), m_destructionSignal);
     }
     if (m_serverObject->isRunning())
+    {
+        // prevent network thread from stopping
+        tempWork = std::make_shared<boost::asio::io_service::work>(*m_servicePoint);
         m_serverObject->stop();
+    }
     bool res = m_serverObject->listen(portNumber, portNumberUDP, errStr);
     if (res)
     {
@@ -170,6 +216,8 @@ GUIApplication::GUIApplication(osgViewer::Viewer* osgApp)
     m_networkThread.setService(m_networkService);
     m_currentLevel = nullptr;
     m_userCreated = false;
+    m_gameClient = nullptr;
+    m_gameServer = nullptr;
     RemotePeersManager::getManager()->onNewPeerRegistration(std::bind(&GUIApplication::onNewFuturellaPeer, this, std::placeholders::_1), this);
 }
 
@@ -342,7 +390,7 @@ bool GUIApplication::onConsoleInput(const CEGUI::EventArgs&)
         if (s.size() > 0)
             consoleParts.push_back(s);
     }
-    typedef std::map < String, std::function<void(const std::vector<String>&, String&)>> consoleFuncsMap;
+    typedef std::map < String, std::function<void(const std::vector<String>&, String&)> > consoleFuncsMap;
     auto consoleHelpProcedure = [](const consoleFuncsMap& funcs, const std::vector<String>&, String& out){
         out = "\nKnown console commands include:";
         for (auto f : funcs)
@@ -355,6 +403,8 @@ bool GUIApplication::onConsoleInput(const CEGUI::EventArgs&)
         { "login", std::bind(&GUIApplication::consoleCreateUser, this, std::placeholders::_1, std::placeholders::_2) },
         { "show_network", std::bind(&GUIApplication::consoleShowNetwork, this, std::placeholders::_1, std::placeholders::_2) },
         { "clear", std::bind(&GUIApplication::consoleClear, this, std::placeholders::_1, std::placeholders::_2) },
+        { "netserver", std::bind(&GUIApplication::consoleNetServerCommand, this, std::placeholders::_1, std::placeholders::_2) },
+        { "connect", std::bind(&GUIApplication::consoleConnect, this, std::placeholders::_1, std::placeholders::_2) },
         { "help", std::bind(consoleHelpProcedure, std::cref(consoleFuncs), std::placeholders::_1, std::placeholders::_2) }
     };
 
@@ -421,4 +471,146 @@ void GUIApplication::consoleClear(const std::vector<String>& params, String& out
 {
     Window* targetWindow = m_guiContext->getRootWindow()->getChild("console/output");
     targetWindow->setText("");
+}
+
+void GUIApplication::consoleConnect(const std::vector<String>& params, String& output)
+{
+    if (!m_userCreated)
+    {
+        output = "\nThis command is only available after log-in";
+        return;
+    }
+    if (params.size() < 4)
+    {
+        output = "\nExpected more parameters: connect <address> <tcp_port> <udp_port>";
+        return;
+    }
+
+    unsigned int tcpPort, udpPort;
+    try {
+        tcpPort = boost::lexical_cast<unsigned int>(params[2]);
+        udpPort = boost::lexical_cast<unsigned int>(params[3]);
+    }
+    catch (boost::bad_lexical_cast)
+    {
+        output = "\nBad parameter types. Expected: connect <address> <tcp_port> <udp_port>";
+        return;
+    }
+
+    NetConnection* newConnection = new NetConnection(*m_networkService);
+    RemoteMessagePeer* myPeer = new RemoteMessagePeer(newConnection, false, *m_networkService);
+
+    newConnection->connectTo(params[1].c_str(), tcpPort, udpPort);
+    if (!m_networkThread.isRunning())
+        m_networkThread.start();
+    output = "\ncommand accepted.";
+}
+
+void GUIApplication::consoleNetServerCommand(const std::vector<String>& params, String& output)
+{
+    // 1. Parameter: sub-command
+    if (!m_userCreated)
+    {
+        output = "\nThis command is only available after log-in";
+        return;
+    }
+
+    if (params.size() < 2)
+    {
+        output = "\nExpected more parameters: netserver <command> [paramlist]*";
+        return;
+    }
+
+    typedef std::map < String, std::function<void(const std::vector<String>&, String&)> > consoleFuncsMap;
+    auto consoleHelpProcedure = [](const consoleFuncsMap& funcs, const std::vector<String>&, String& out){
+        out = "\nKnown netserver commands include:";
+        for (auto f : funcs)
+        {
+            out += " " + f.first;
+        }
+    };
+
+    static const consoleFuncsMap consoleFuncs = consoleFuncsMap{
+        { "start", std::bind(&GUIApplication::consoleStartNetServer, this, std::placeholders::_1, std::placeholders::_2) },
+        { "help", std::bind(consoleHelpProcedure, std::cref(consoleFuncs), std::placeholders::_1, std::placeholders::_2) }
+    };
+
+    if (consoleFuncs.count(params[1]) > 0)
+    {
+        consoleFuncs.at(params[1])(params, output);
+    }
+    else
+        output = "\nunknown command: " + params[1];
+}
+
+
+void GUIApplication::consoleStartNetServer(const std::vector<String>& params, String& output)
+{
+    // 1. Parameter: TCP port to listen
+    if (params.size() < 3)
+    {
+        output = "\nExpected more parameters: netserver start <tcp_port>";
+        return;
+    }
+
+    try {
+        unsigned int portNumber = boost::lexical_cast<unsigned int>(params[2]);
+        std::string errStr;
+        if (!m_networkThread.createAndStartNetServer(portNumber, m_userListensUdpPort, errStr))
+        {
+            output = String("\nCannot start the server: ") + errStr;
+            return;
+        }
+    }
+    catch (boost::bad_lexical_cast)
+    {
+        output = "\nBad parameter types. Expected: netserver start <tcp_port>";
+        return;
+    }
+
+    if (m_currentLevel)
+        m_currentLevel->setServerSide(true);
+    output = "\ncommand accepted.";
+}
+
+void GUIApplication::consoleGameServerCommand(const std::vector<String>& params, String& output)
+{
+    // 1. Parameter: sub-command
+    if (!m_userCreated)
+    {
+        output = "\nThis command is only available after log-in";
+        return;
+    }
+
+    if (params.size() < 2)
+    {
+        output = "\nExpected more parameters: gameserver <command> [paramlist]*";
+        return;
+    }
+
+    typedef std::map < String, std::function<void(const std::vector<String>&, String&)> > consoleFuncsMap;
+    auto consoleHelpProcedure = [](const consoleFuncsMap& funcs, const std::vector<String>&, String& out){
+        out = "\nKnown gameserver commands include:";
+        for (auto f : funcs)
+        {
+            out += " " + f.first;
+        }
+    };
+
+    static const consoleFuncsMap consoleFuncs = consoleFuncsMap{
+        { "start", std::bind(&GUIApplication::consoleStartGameServer, this, std::placeholders::_1, std::placeholders::_2) },
+        { "help", std::bind(consoleHelpProcedure, std::cref(consoleFuncs), std::placeholders::_1, std::placeholders::_2) }
+    };
+
+    if (consoleFuncs.count(params[1]) > 0)
+    {
+        consoleFuncs.at(params[1])(params, output);
+    }
+    else
+        output = "\nunknown command: " + params[1];
+}
+
+void GUIApplication::consoleStartGameServer(const std::vector<String>& params, String& output)
+{
+
 }

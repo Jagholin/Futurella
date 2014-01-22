@@ -15,25 +15,25 @@ END_DECLNETMESSAGE()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(AsteroidFieldData)
     uint16_t size;
-    inStr >> size;
+    in >> size;
     for (unsigned int i = 0; i < size; ++i)
     {
         osg::Vec3f pos;
         float rad;
-        inStr >> pos >> rad;
-        temp->position.push_back(pos);
-        temp->radius.push_back(rad);
+        in >> pos >> rad;
+        position.push_back(pos);
+        radius.push_back(rad);
     }
 END_RAWTONETMESSAGE_QCONVERT()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(AsteroidFieldData)
     uint16_t size = position.size();
-    outStr << size;
+    out << size;
     for (int i = 0; i < position.size(); ++i)
     {
         osg::Vec3f pos = position.at(i);
         float rad = radius.at(i);
-        outStr << position.at(i) << radius.at(i);
+        out << position.at(i) << radius.at(i);
     }
 END_NETTORAWMESSAGE_QCONVERT()
 
