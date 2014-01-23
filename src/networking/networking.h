@@ -33,12 +33,18 @@ class NetConnection
 {
 private:
     std::shared_ptr<NetConnImpl> privData;
-    //unsigned int myId;
 public:
     NetConnection(boost::asio::io_service& s);
     ~NetConnection();
 
-    void connectTo(std::string addr, unsigned int portTCP, unsigned int portUDP);
+    void connectTo(std::string addr, unsigned int portTCP);
+
+    /**
+    *   @brief
+    *       After the TCP connection is established, it still lacks UDP socket.
+    *       This function corrects the problem.
+    */
+    void setupUdpSocket(unsigned int portUDP);
     unsigned int sendMessage(RawMessage::const_pointer);
     unsigned int sendAsUDP(RawMessage::const_pointer);
     std::string getAddrString()const;

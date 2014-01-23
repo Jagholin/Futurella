@@ -26,7 +26,7 @@ public:
     typedef RemoteMessagePeer* pointer;
     typedef RemoteMessagePeer* weak_pointer;
 
-    enum { protokoll_version = 1002 };
+    enum { protokoll_version = 1003 };
     enum PeerStatus { MP_CONNECTING = 0, MP_ACTIVE, MP_SERVER, MP_DISCONNECTED };
 
 protected:
@@ -77,6 +77,7 @@ protected:
     virtual void netDisconnected(const std::string&);
     virtual void netConnected();
 
+private:
     void halloProceed(const std::shared_ptr<const NetHalloMessage>& hallo);
     NetMessage::pointer createHalloMsg()const;
 };
@@ -90,6 +91,7 @@ protected:
     std::deque<RemoteMessagePeer::pointer> m_msgPeers;
     std::map<uint32_t, RemoteMessagePeer::pointer> m_registeredPeerIds;
     uint32_t m_myPeerId;
+    uint16_t m_myUdpPort;
     std::string m_peerName;
 
     RemotePeersManager();
@@ -106,7 +108,9 @@ public:
     void broadcast(NetMessage::const_pointer, RemoteMessagePeer::pointer exclude = 0);
 
     void setMyName(std::string name);
+    void setMyUdpPort(uint16_t portNum);
     std::string getMyName()const;
+    uint32_t getMyId()const;
 
     template<typename T=int> void onNewPeerRegistration(const std::function<void(RemoteMessagePeer::pointer)> &callBack, T&& closure = int(-1))
     {

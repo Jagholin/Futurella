@@ -296,7 +296,7 @@ bool GUIApplication::onConnectBtnClicked(const EventArgs& args)
         NetConnection* newConnection = new NetConnection(*m_networkService);
         RemoteMessagePeer* myPeer = new RemoteMessagePeer(newConnection, false, *m_networkService);
 
-        newConnection->connectTo(addrWindow->getText().c_str(), 1778, 1779);
+        newConnection->connectTo(addrWindow->getText().c_str(), 1778);
         if (!m_networkThread.isRunning())
             m_networkThread.start();
     }
@@ -463,6 +463,7 @@ void GUIApplication::consoleCreateUser(const std::vector<String>& params, String
     }
 
     RemotePeersManager::getManager()->setMyName(m_userName.c_str());
+    RemotePeersManager::getManager()->setMyUdpPort(m_userListensUdpPort);
     // TODO: start listening at given UDP port.
     std::string errStr;
     if (!m_networkThread.startUdpListener(m_userListensUdpPort, errStr))
@@ -495,27 +496,26 @@ void GUIApplication::consoleConnect(const std::vector<String>& params, String& o
         output = "\nThis command is only available after log-in";
         return;
     }
-    if (params.size() < 4)
+    if (params.size() < 3)
     {
-        output = "\nExpected more parameters: connect <address> <tcp_port> <udp_port>";
+        output = "\nExpected more parameters: connect <address> <tcp_port>";
         return;
     }
 
-    unsigned int tcpPort, udpPort;
+    unsigned int tcpPort = 0;
     try {
         tcpPort = boost::lexical_cast<unsigned int>(params[2]);
-        udpPort = boost::lexical_cast<unsigned int>(params[3]);
     }
     catch (boost::bad_lexical_cast)
     {
-        output = "\nBad parameter types. Expected: connect <address> <tcp_port> <udp_port>";
+        output = "\nBad parameter types. Expected: connect <address> <tcp_port>";
         return;
     }
 
     NetConnection* newConnection = new NetConnection(*m_networkService);
     RemoteMessagePeer* myPeer = new RemoteMessagePeer(newConnection, false, *m_networkService);
 
-    newConnection->connectTo(params[1].c_str(), tcpPort, udpPort);
+    newConnection->connectTo(params[1].c_str(), tcpPort);
     if (!m_networkThread.isRunning())
         m_networkThread.start();
     output = "\ncommand accepted.";

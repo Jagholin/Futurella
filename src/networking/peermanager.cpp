@@ -20,6 +20,7 @@ BEGIN_DECLNETMESSAGE(Hallo, 1000, false)
 std::string buddyName;
 uint32_t halloStat;
 uint32_t peerId;
+uint16_t udpPort;
 uint16_t version;
 END_DECLNETMESSAGE()
 
@@ -316,9 +317,14 @@ void RemoteMessagePeer::halloProceed(const std::shared_ptr<const NetHalloMessage
     {
         m_active = true;
         if (m_halloStatus == 4)
-            m_status = MP_SERVER;
-        else
+        {
             m_status = MP_ACTIVE;
+        }
+        else
+        {
+            m_status = MP_SERVER;
+        }
+        m_connectLine->setupUdpSocket(hallo->udpPort);
         // sending all messages from the waiting queue
         while(!m_activationWaitingQueue.empty())
         {
@@ -342,6 +348,7 @@ NetMessage::pointer RemoteMessagePeer::createHalloMsg() const
     myMsg->buddyName = m_myName;
     myMsg->halloStat = ++m_halloStatus;
     ++m_halloStatus;
+    myMsg->udpPort = RemotePeersManager::getManager()->m_myUdpPort;
     myMsg->version = protokoll_version;
     myMsg->peerId = RemotePeersManager::getManager()->m_myPeerId;
     return NetMessage::pointer(myMsg);
@@ -373,6 +380,7 @@ RemotePeersManager::RemotePeersManager():
 m_peerRegistred("RemotePeersManager::peerRegistered")
 {
     m_myPeerId = rand();
+    m_myUdpPort = 0;
 }
 
 RemotePeersManager* RemotePeersManager::getManager()
@@ -464,6 +472,16 @@ void RemotePeersManager::onPeerActivated(const RemoteMessagePeer::pointer& sendP
     }
 }
 
+uint32_t RemotePeersManager::getMyId() const
+{
+    return m_myPeerId;
+}
+
+void RemotePeersManager::setMyUdpPort(uint16_t portNum)
+{
+    m_myUdpPort = portNum;
+}
+
 BEGIN_NETTORAWMESSAGE_QCONVERT(Chat)
 out << message << sentTime;
 END_NETTORAWMESSAGE_QCONVERT()
@@ -473,11 +491,11 @@ in >> message >> sentTime;
 END_RAWTONETMESSAGE_QCONVERT()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(Hallo)
-out << buddyName << halloStat << peerId << version;
+out << buddyName << halloStat << peerId << udpPort << version;
 END_NETTORAWMESSAGE_QCONVERT()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(Hallo)
-in >> buddyName >> halloStat >> peerId >> version;
+in >> buddyName >> halloStat >> peerId >> udpPort >> version;
 END_RAWTONETMESSAGE_QCONVERT()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(AvailablePeer)
