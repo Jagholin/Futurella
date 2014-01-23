@@ -29,7 +29,7 @@ REGISTER_NETMESSAGE(SpaceShipConstructionData);
 SpaceShip::SpaceShip(osg::Vec3f pos, osg::Vec4f orient, bool hostSide /* = false */):
 m_position(pos), m_orientation(orient), m_hostSide(hostSide)
 {
-	for (int i = 0; i < inputTypesNumber; i++) m_inputState[i] = false; //No keys pressed yet
+    for (int i = 0; i < inputTypesNumber; i++) m_inputState[i] = false; //No keys pressed yet
     osg::ref_ptr<osg::Shape> box = new osg::Box(osg::Vec3f(0, 0, 0), 0.1f, 0.1f, 0.3f);
     osg::ref_ptr<osg::ShapeDrawable> s = new osg::ShapeDrawable(box);
     s->setColor(osg::Vec4(1, 1, 1, 1));
@@ -45,7 +45,7 @@ m_position(pos), m_orientation(orient), m_hostSide(hostSide)
 SpaceShip::SpaceShip(osg::Node* shipNode):
 m_shipNode(shipNode), m_hostSide(true)
 {
-	for (int i = 0; i < inputTypesNumber; i++) m_inputState[i] = false; // No keys pressed yet
+    for (int i = 0; i < inputTypesNumber; i++) m_inputState[i] = false; // No keys pressed yet
     if (!m_shipNode)
     {
         osg::ref_ptr<osg::Shape> box = new osg::Box(osg::Vec3f(0, 0, 0), 0.1f, 0.1f, 0.3f);
@@ -64,8 +64,8 @@ m_shipNode(shipNode), m_hostSide(true)
     setPosition(osg::Vec3f(0, 0, 0));
     setOrientation(osg::Quat(0, osg::Vec3f(1, 0, 0)));
     m_acceleration = 4;
-	m_steerability = 2;
-	m_friction = 0.7f;
+    m_steerability = 2;
+    m_friction = 0.7f;
 }
 
 SpaceShip::~SpaceShip()
@@ -87,7 +87,7 @@ void SpaceShip::setOrientation(osg::Quat o)
 }
 
 void SpaceShip::setInput(inputType t, bool state){
-	m_inputState[t] = state;
+    m_inputState[t] = state;
 }
 
 osg::Vec3f SpaceShip::getCenter()
@@ -116,48 +116,49 @@ osg::MatrixTransform* SpaceShip::getTransformGroup()
 }
 
 
-void SpaceShip::update(float dt){
-	//position update
-	m_position += m_velocity*dt;
+void SpaceShip::update(float dt)
+{
+    //position update
+    m_position += m_velocity*dt;
 
-	//Friction
-	m_velocity *= pow(m_friction, dt);
+    //Friction
+    m_velocity *= pow(m_friction, dt);
 
-	//handle input
-	if (m_inputState[ACCELERATE] != m_inputState[BACK])
-	{
-		if (m_inputState[ACCELERATE])
-			m_velocity += m_orientation*osg::Vec3f(0, 0, -m_acceleration * dt);
-		else
-			m_velocity += m_orientation*osg::Vec3f(0, 0, m_acceleration * dt);
-	}
+    //handle input
+    if (m_inputState[ACCELERATE] != m_inputState[BACK])
+    {
+        if (m_inputState[ACCELERATE])
+            m_velocity += m_orientation*osg::Vec3f(0, 0, -m_acceleration * dt);
+        else
+            m_velocity += m_orientation*osg::Vec3f(0, 0, m_acceleration * dt);
+    }
 
-	if (m_inputState[LEFT] != m_inputState[RIGHT]){
-		float amount = m_steerability * dt;
-		if (m_inputState[LEFT]){
-			//roll left
-			osg::Quat q(amount, osg::Vec3f(0, 0, 1));
-			m_orientation = q * m_orientation;
-		}
-		else{
-			//roll right
-			osg::Quat q(-amount, osg::Vec3f(0, 0, 1));
-			m_orientation = q * m_orientation;
-		}
-	}
-	if (m_inputState[UP] != m_inputState[DOWN]){
-		float amount = m_steerability * dt;
-		if (m_inputState[UP]){
-			//rear up
-			osg::Quat q(-amount, osg::Vec3f(1, 0, 0));
-			m_orientation = q * m_orientation;
-		}
-		else{
-			//rear down
-			osg::Quat q(amount, osg::Vec3f(1, 0, 0));
-			m_orientation = q * m_orientation;
-		}
-	}
+    if (m_inputState[LEFT] != m_inputState[RIGHT]){
+        float amount = m_steerability * dt;
+        if (m_inputState[LEFT]){
+            //roll left
+            osg::Quat q(amount, osg::Vec3f(0, 0, 1));
+            m_orientation = q * m_orientation;
+        }
+        else{
+            //roll right
+            osg::Quat q(-amount, osg::Vec3f(0, 0, 1));
+            m_orientation = q * m_orientation;
+        }
+    }
+    if (m_inputState[UP] != m_inputState[DOWN]){
+        float amount = m_steerability * dt;
+        if (m_inputState[UP]){
+            //rear up
+            osg::Quat q(-amount, osg::Vec3f(1, 0, 0));
+            m_orientation = q * m_orientation;
+        }
+        else{
+            //rear down
+            osg::Quat q(amount, osg::Vec3f(1, 0, 0));
+            m_orientation = q * m_orientation;
+        }
+    }
     m_transformGroup->setMatrix(osg::Matrix::translate(getCenter()));
     osg::Matrix rotationMatrix;
     getOrientation().get(rotationMatrix);

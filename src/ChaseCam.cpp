@@ -36,41 +36,40 @@ void ChaseCam::init(const GUIEventAdapter& ea, GUIActionAdapter& us)
 
 }
 
-bool ChaseCam::handle(const GUIEventAdapter& ea, GUIActionAdapter& us) {
-
-	if (ea.getHandled()) return false;
-
-	
-	osgGA::GUIEventAdapter::EventType et = ea.getEventType();
-	if (et == GUIEventAdapter::KEYDOWN || et == GUIEventAdapter::KEYUP)
-	{
-		bool onoff = (et == GUIEventAdapter::KEYDOWN);
-		if (ea.getKey() == GUIEventAdapter::KEY_Space) {
-			ship->setInput(SpaceShip::ACCELERATE, onoff);
-			return true;
-		}
-		else if (ea.getKey() == GUIEventAdapter::KEY_Left) {
-			ship->setInput(SpaceShip::LEFT, onoff);
-			return true;
-		}
-		else if (ea.getKey() == GUIEventAdapter::KEY_Right) {
-			ship->setInput(SpaceShip::RIGHT, onoff);
-			return true;
-		}
-		else if (ea.getKey() == GUIEventAdapter::KEY_Up) {
-			ship->setInput(SpaceShip::UP, onoff);
-			return true;
-		}
-		else if (ea.getKey() == GUIEventAdapter::KEY_Down) {
-			ship->setInput(SpaceShip::DOWN, onoff);
-			return true;
-		}
-		else if (ea.getKey() == GUIEventAdapter::KEY_S) {
-			ship->setInput(SpaceShip::BACK, onoff);
-			return true;
-		}
-	}	
-	return false;
+bool ChaseCam::handle(const GUIEventAdapter& ea, GUIActionAdapter& us) 
+{
+    if (ea.getHandled()) return false;
+    
+    osgGA::GUIEventAdapter::EventType et = ea.getEventType();
+    if (et == GUIEventAdapter::KEYDOWN || et == GUIEventAdapter::KEYUP)
+    {
+        bool onoff = (et == GUIEventAdapter::KEYDOWN);
+        if (ea.getKey() == GUIEventAdapter::KEY_Space) {
+            ship->setInput(SpaceShip::ACCELERATE, onoff);
+            return true;
+        }
+        else if (ea.getKey() == GUIEventAdapter::KEY_Left) {
+            ship->setInput(SpaceShip::LEFT, onoff);
+            return true;
+        }
+        else if (ea.getKey() == GUIEventAdapter::KEY_Right) {
+            ship->setInput(SpaceShip::RIGHT, onoff);
+            return true;
+        }
+        else if (ea.getKey() == GUIEventAdapter::KEY_Up) {
+            ship->setInput(SpaceShip::UP, onoff);
+            return true;
+        }
+        else if (ea.getKey() == GUIEventAdapter::KEY_Down) {
+            ship->setInput(SpaceShip::DOWN, onoff);
+            return true;
+        }
+        else if (ea.getKey() == GUIEventAdapter::KEY_S) {
+            ship->setInput(SpaceShip::BACK, onoff);
+            return true;
+        }
+    }
+    return false;
 }
 
 void ChaseCam::updateCamera(osg::Camera& camera)
@@ -102,18 +101,19 @@ osg::Matrixd ChaseCam::getInverseMatrix() const
     return osg::Matrixd::inverse(cameraMatrix);
 }
 
-void ChaseCam::computeMatrix(){
-	osg::Matrix newCameraMatrix;
-	newCameraMatrix.makeTranslate(osg::Vec3d(0, 0, 5));
-	osg::Matrix shipTransform;
-	delayRotation.slerp(0.05, delayRotation, ship->getOrientation());
-	delayRotation.get(shipTransform);
-	newCameraMatrix.postMult(shipTransform);
-	shipTransform.makeTranslate(ship->getCenter());
-	newCameraMatrix.postMult(shipTransform);
+void ChaseCam::computeMatrix()
+{
+    osg::Matrix newCameraMatrix;
+    newCameraMatrix.makeTranslate(osg::Vec3d(0, 0, 5));
+    osg::Matrix shipTransform;
+    delayRotation.slerp(0.05, delayRotation, ship->getOrientation());
+    delayRotation.get(shipTransform);
+    newCameraMatrix.postMult(shipTransform);
+    shipTransform.makeTranslate(ship->getCenter());
+    newCameraMatrix.postMult(shipTransform);
 
-	//zoom
+    //zoom
 
-	cameraMatrix = newCameraMatrix;
+    cameraMatrix = newCameraMatrix;
 }
 

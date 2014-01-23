@@ -9,5 +9,7 @@ END_DECLNETMESSAGE()
 
 class SpaceShipServer : public GameObject
 {
-    // todo
+public:
+
+    virtual bool takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender);
 };
