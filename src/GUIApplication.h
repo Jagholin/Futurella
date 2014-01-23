@@ -81,6 +81,7 @@ protected:
     Level* m_currentLevel;
     GameInstanceServer* m_gameServer;
     GameInstanceClient* m_gameClient;
+    std::vector<std::tuple<std::string, MessagePeer*>> m_availableGameServers;
 
     // User data =====> TODO: Relocate this to somewhere else, PLEASE!
     bool m_userCreated;
@@ -95,7 +96,7 @@ protected:
     // and how long it takes.
     void addEventHandler(const String& windowName, const String& eventName, const CEGUI::Event::Subscriber& function);
 
-    // Functions replying on console messages
+    // Functions replying on console commands
     void consoleCreateUser(const std::vector<String>& params, String& output);
     void consoleShowNetwork(const std::vector<String>& params, String& output);
     void consoleClear(const std::vector<String>& params, String& output);
@@ -104,4 +105,5 @@ protected:
     void consoleStartNetServer(const std::vector<String>& params, String& output);
     void consoleGameServerCommand(const std::vector<String>& params, String& output);
     void consoleStartGameServer(const std::vector<String>& params, String& output);
+    void consoleListGameServers(const std::vector<String>& params, String& output);
 };

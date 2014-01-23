@@ -343,9 +343,18 @@ void GUIApplication::onNewFuturellaPeer(const RemoteMessagePeer::pointer& peer)
         mBox->appendText("\nPeer activated");
     }), this);
 
-    peer->onPeerDestruction(m_renderThreadService->wrap([&](){
+    peer->onPeerDestruction(m_renderThreadService->wrap([this, peer](){
         Window* mBox = m_guiContext->getRootWindow()->getChild("console/output");
         mBox->appendText("\nPeer destroyed");
+
+        // Remove all available servers from the peer
+        auto serverToRemove = std::find_if(m_availableGameServers.begin(), m_availableGameServers.end(),
+            [peer](const std::tuple<std::string, MessagePeer*> item){
+                return peer == std::get<1>(item);
+        });
+
+        if (serverToRemove != m_availableGameServers.end())
+            m_availableGameServers.erase(serverToRemove);
     }), this);
 
     peer->onError(m_renderThreadService->wrap([&](const std::string &str){
@@ -364,7 +373,7 @@ void GUIApplication::onNetworkMessage(NetMessage::const_pointer msg, RemoteMessa
     {
         // GUI can only be changed from the GUI thread/and context,
         // so go there
-        m_renderThreadService->post([&, msg](){
+        m_renderThreadService->post([this, msg](){
             Window* chatWindow = m_guiContext->getRootWindow()->getChild("chatWindow/output");
             NetChatMessage::const_pointer realMsg{msg->as<NetChatMessage>()};
             chatWindow->appendText(realMsg->message);
@@ -372,10 +381,11 @@ void GUIApplication::onNetworkMessage(NetMessage::const_pointer msg, RemoteMessa
     }
     else if (msg->gettype() == NetGameServerAvailableMessage::type)
     {
-        m_renderThreadService->post([&, msg](){
+        m_renderThreadService->post([this, msg, sender](){
             Window* console = m_guiContext->getRootWindow()->getChild("console/output");
             NetGameServerAvailableMessage::const_pointer realMsg{ msg->as<NetGameServerAvailableMessage>() };
-            console->appendText(String("\nNew Game server available: ") + realMsg->serverName);
+            m_availableGameServers.push_back(std::make_tuple(realMsg->serverName, sender));
+            console->appendText(String("\nNew Game server available: \\[") + boost::lexical_cast<std::string>(m_availableGameServers.size() - 1) + "]: " + realMsg->serverName);
         });
     }
 }
@@ -614,6 +624,7 @@ void GUIApplication::consoleGameServerCommand(const std::vector<String>& params,
 
     static const consoleFuncsMap consoleFuncs = consoleFuncsMap{
         { "start", std::bind(&GUIApplication::consoleStartGameServer, this, std::placeholders::_1, std::placeholders::_2) },
+        { "list", std::bind(&GUIApplication::consoleListGameServers, this, std::placeholders::_1, std::placeholders::_2) },
         { "help", std::bind(consoleHelpProcedure, std::cref(consoleFuncs), std::placeholders::_1, std::placeholders::_2) }
     };
 
@@ -627,11 +638,6 @@ void GUIApplication::consoleGameServerCommand(const std::vector<String>& params,
 
 void GUIApplication::consoleStartGameServer(const std::vector<String>& params, String& output)
 {
-    if (!m_userCreated)
-    {
-        output = "\nThis command is only available after log-in";
-        return;
-    }
     if (m_gameServer)
     {
         output = "\nGame server appears to be running already";
@@ -648,5 +654,17 @@ void GUIApplication::consoleStartGameServer(const std::vector<String>& params, S
     msg->serverName = params[2].c_str();
     RemotePeersManager::getManager()->broadcast(msg);
 
+    m_availableGameServers.push_back(std::make_tuple(params[2].c_str(), m_gameServer));
+
     output = "\ngame server created successfully";
+}
+
+void GUIApplication::consoleListGameServers(const std::vector<String>& params, String& output)
+{
+    output = "\nList of available servers:";
+    unsigned int a = 0;
+    for (auto serverListEntry : m_availableGameServers)
+    {
+        output += String("\n\\[") + boost::lexical_cast<std::string>(a) + "]: " + std::get<0>(serverListEntry);
+    }
 }

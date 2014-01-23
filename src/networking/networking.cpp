@@ -179,7 +179,7 @@ bool NetConnImpl::connect(std::string addr, uint16_t portTCP/*, uint16_t portUDP
 
     if (tcpBegin != tcpEnd && !ecTCP)
     {
-        mserv.post(std::bind(&NetConnImpl::doConnectTCP, shared_from_this(), tcpBegin));
+        mserv.dispatch(std::bind(&NetConnImpl::doConnectTCP, shared_from_this(), tcpBegin));
     }
     else
     {
@@ -248,7 +248,7 @@ void NetConnImpl::setSocket(socket_tcp& sock)
     mySockTCP = sock;
     mySockTCP->set_option(asio::socket_base::keep_alive(true));
     connectedTCP = true;
-    mserv.post([this](){
+    mserv.dispatch([this](){
         uint16_t* header = new uint16_t;
         asio::async_read(*mySockTCP, asio::buffer(header, sizeof(uint16_t)),
                 std::bind(&NetConnImpl::onHeadReceived,
@@ -265,7 +265,7 @@ void NetConnImpl::setupUdpSocket(uint16_t port)
         if (connectedUDP)
             ConnectionFinder::eraseConnection(udpEndpoint.address());
     }
-    mserv.post([this, port](){
+    mserv.dispatch([this, port](){
         asio::ip::udp::resolver udpResolver(mserv);
         asio::ip::udp::resolver::query udpQuery(asio::ip::udp::v4(), mySockTCP->remote_endpoint().address().to_string(), boost::lexical_cast<std::string>(port));
         udpEndpoint = *udpResolver.resolve(udpQuery);
@@ -278,7 +278,7 @@ unsigned int NetConnImpl::writeTCP(RawMessage::const_pointer toSend)
 {
     if (!connectedTCP)
         return 0;
-    mserv.post(std::bind(&NetConnImpl::doWrite, shared_from_this(), toSend));
+    mserv.dispatch(std::bind(&NetConnImpl::doWrite, shared_from_this(), toSend));
     return endMsg++;
 }
 
@@ -304,7 +304,7 @@ unsigned int NetConnImpl::writeUDP(RawMessage::const_pointer msg)
     }
 
     //unsigned short portToSend = udpEndpoint.port();
-    mserv.post([this, toSend](){
+    mserv.dispatch([this, toSend](){
         std::cerr << "Sending to " << udpEndpoint.address().to_string() << ": " << udpEndpoint.port() << " " << toSend->size() << "bytes\n";
         mySockUDP->async_send_to(asio::buffer(*toSend), udpEndpoint, std::bind(&NetConnImpl::onMsgSentUDP,
             shared_from_this(), toSend,
@@ -557,7 +557,7 @@ bool NetServerImpl::beginListen(uint16_t portTCP, uint16_t portUDP, boost::syste
         return false;
     }
     started = true;
-    mserv.post(std::bind(&NetServerImpl::doListen, shared_from_this()));
+    mserv.dispatch(std::bind(&NetServerImpl::doListen, shared_from_this()));
     return true;
 }
 
