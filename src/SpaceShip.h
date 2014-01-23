@@ -12,6 +12,17 @@ END_DECLNETMESSAGE()
 class SpaceShip : public LocalMessagePeer
 {
 public:
+	static const int inputTypesNumber = 6;
+	enum inputType
+	{
+		ACCELERATE,
+		LEFT,
+		RIGHT,
+		UP,
+		DOWN,
+		BACK
+	};
+
     SpaceShip(osg::Vec3f pos, osg::Vec4f orient, bool hostSide = false);
 	explicit SpaceShip(osg::Node* shipNode = nullptr);
     virtual ~SpaceShip();
@@ -19,12 +30,8 @@ public:
 	void setPosition(osg::Vec3f position);
 	void setOrientation(osg::Quat rotation);
 
-	void setAccelerate(bool state);
-	void setLeft(bool state);
-	void setRight(bool state);
-	void setUp(bool state);
-	void setDown(bool state);
-    void setBack(bool state);
+	void setInput(inputType type, bool state);
+
     void setHostSide(bool hSide);
 
 	void update(float deltaTime);
@@ -43,10 +50,11 @@ private:
 	osg::Vec3f position, velocity;
 	osg::Quat orientation;
 
-	bool stateBack, stateAcc, stateLeft, stateRight, stateUp, stateDown;
+	bool inputState[inputTypesNumber];
 
-	float acceleration, steerability;
-    osg::ref_ptr<osg::Node> m_shipNode;
+	float acceleration, steerability, friction; //Ship Steering Behaviour
+    
+	osg::ref_ptr<osg::Node> m_shipNode;
     osg::ref_ptr<osg::MatrixTransform> m_transformGroup;
     bool m_hostSide;
 };

@@ -40,27 +40,27 @@ bool ChaseCam::handle(const GUIEventAdapter& ea, GUIActionAdapter& us) {
 	{
 		bool onoff = (et == GUIEventAdapter::KEYDOWN);
 		if (ea.getKey() == GUIEventAdapter::KEY_Space) {
-			ship->setAccelerate(onoff);
+			ship->setInput(SpaceShip::ACCELERATE, onoff);
 			return true;
 		}
 		else if (ea.getKey() == GUIEventAdapter::KEY_Left) {
-			ship->setLeft(onoff);
+			ship->setInput(SpaceShip::LEFT, onoff);
 			return true;
 		}
 		else if (ea.getKey() == GUIEventAdapter::KEY_Right) {
-			ship->setRight(onoff);
+			ship->setInput(SpaceShip::RIGHT, onoff);
 			return true;
 		}
 		else if (ea.getKey() == GUIEventAdapter::KEY_Up) {
-			ship->setUp(onoff);
+			ship->setInput(SpaceShip::UP, onoff);
 			return true;
 		}
 		else if (ea.getKey() == GUIEventAdapter::KEY_Down) {
-			ship->setDown(onoff);
+			ship->setInput(SpaceShip::DOWN, onoff);
 			return true;
 		}
 		else if (ea.getKey() == GUIEventAdapter::KEY_S) {
-			ship->setBack(onoff);
+			ship->setInput(SpaceShip::BACK, onoff);
 			return true;
 		}
 	}	
@@ -104,6 +104,10 @@ void ChaseCam::computeMatrix(){
 	newCameraMatrix.postMult(shipTransform);
 	shipTransform.makeTranslate(ship->getCenter());
 	newCameraMatrix.postMult(shipTransform);
+
+	//zoom
+	
+	
 
 	cameraMatrix = newCameraMatrix;
 }

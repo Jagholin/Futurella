@@ -27,8 +27,9 @@ REGISTER_NETMESSAGE(ShipStateData);
 REGISTER_NETMESSAGE(SpaceShipConstructionData);
 
 SpaceShip::SpaceShip(osg::Vec3f pos, osg::Vec4f orient, bool hostSide /* = false */):
-position(pos), orientation(orient), stateBack(false), stateAcc(false), stateLeft(false), stateRight(false), stateUp(false), stateDown(false), m_hostSide(hostSide)
+position(pos), orientation(orient), m_hostSide(hostSide)
 {
+	for (int i = 0; i < inputTypesNumber; i++) inputState[i] = false; //No keys pressed yet
     osg::ref_ptr<osg::Shape> box = new osg::Box(osg::Vec3f(0, 0, 0), 0.1f, 0.1f, 0.3f);
     osg::ref_ptr<osg::ShapeDrawable> s = new osg::ShapeDrawable(box);
     s->setColor(osg::Vec4(1, 1, 1, 1));
@@ -44,6 +45,7 @@ position(pos), orientation(orient), stateBack(false), stateAcc(false), stateLeft
 SpaceShip::SpaceShip(osg::Node* shipNode):
 m_shipNode(shipNode), m_hostSide(true)
 {
+	for (int i = 0; i < inputTypesNumber; i++) inputState[i] = false; // No keys pressed yet
     if (!m_shipNode)
     {
         osg::ref_ptr<osg::Shape> box = new osg::Box(osg::Vec3f(0, 0, 0), 0.1f, 0.1f, 0.3f);
@@ -61,9 +63,9 @@ m_shipNode(shipNode), m_hostSide(true)
 	velocity = osg::Vec3f(0, 0, 0);
 	setPosition(osg::Vec3f(0, 0, 0));
 	setOrientation(osg::Quat(0, osg::Vec3f(1, 0, 0)));
-	stateBack = stateAcc = stateLeft = stateRight = stateDown = stateUp = false;
-	acceleration = 2;
-	steerability = 1;
+	acceleration = 4;
+	steerability = 2;
+	friction = 0.7f;
 }
 
 SpaceShip::~SpaceShip()
@@ -82,28 +84,8 @@ void SpaceShip::setOrientation(osg::Quat o){
 	orientation = o;
 }
 
-void SpaceShip::setAccelerate(bool state){
-	stateAcc = state;
-}
-
-void SpaceShip::setLeft(bool state){
-	stateLeft = state;
-}
-
-void SpaceShip::setRight(bool state){
-	stateRight = state;
-}
-
-void SpaceShip::setUp(bool state){
-	stateUp = state;
-}
-
-void SpaceShip::setDown(bool state){
-	stateDown = state;
-}
-
-void SpaceShip::setBack(bool state){
-    stateBack = state;
+void SpaceShip::setInput(inputType t, bool state){
+	inputState[t] = state;
 }
 
 osg::Vec3f SpaceShip::getCenter(){
@@ -128,20 +110,24 @@ osg::MatrixTransform* SpaceShip::getTransformGroup()
 }
 
 void SpaceShip::update(float dt){
-
+	//position update
 	position += velocity*dt;
 
-	if (stateAcc != stateBack)
+	//Friction
+	velocity *= pow(friction, dt);
+
+	//handle input
+	if (inputState[ACCELERATE] != inputState[BACK])
 	{
-		if (stateAcc)
+		if (inputState[ACCELERATE])
 			velocity += orientation*osg::Vec3f(0, 0, -acceleration * dt);
 		else
 			velocity += orientation*osg::Vec3f(0, 0, acceleration * dt);
 	}
 
-	if (stateLeft != stateRight){
+	if (inputState[LEFT] != inputState[RIGHT]){
 		float amount = steerability * dt;
-		if (stateLeft){
+		if (inputState[LEFT]){
 			//roll left
 			osg::Quat q(amount, osg::Vec3f(0, 0, 1));
 			orientation = q * orientation;
@@ -152,9 +138,9 @@ void SpaceShip::update(float dt){
 			orientation = q * orientation;
 		}
 	}
-	if (stateUp != stateDown){
+	if (inputState[UP] != inputState[DOWN]){
 		float amount = steerability * dt;
-		if (stateUp){
+		if (inputState[UP]){
 			//rear up
 			osg::Quat q(-amount, osg::Vec3f(1, 0, 0));
 			orientation = q * orientation;
@@ -164,7 +150,9 @@ void SpaceShip::update(float dt){
 			osg::Quat q(amount, osg::Vec3f(1, 0, 0));
 			orientation = q * orientation;
 		}
-    }
+	}
+
+	
 
     m_transformGroup->setMatrix(osg::Matrix::translate(getCenter()));
     osg::Matrix rotationMatrix;

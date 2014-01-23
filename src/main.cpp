@@ -63,6 +63,8 @@ int main()
 	viewer.setCameraManipulator(chaseCam);
 //	viewer.setCameraManipulator(new osgGA::TrackballManipulator);
 	viewer.realize();
+
+	viewer.getCamera()->setProjectionMatrixAsPerspective(70, 16.0f/9.0f, 0.1f, 1000); //TODO: use real aspect ratio
 	
 	std::chrono::duration<float> frameTime(0);
 	std::chrono::steady_clock::time_point start;
