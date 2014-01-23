@@ -64,6 +64,7 @@ add_executable(Futurella
     src/gameserver/GameInstanceServer.cpp
     src/gameclient/SpaceShipClient.h
     src/gameclient/GameInstanceClient.h
+    src/gameclient/GameInstanceClient.cpp
     src/CEGUIDrawable.h
     src/CEGUIDrawable.cpp
     src/GUIApplication.h

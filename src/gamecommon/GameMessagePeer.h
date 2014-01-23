@@ -48,6 +48,10 @@ public:
     void registerGameObject(uint16_t objId, GameObject* obj);
     uint16_t registerGameObject(GameObject*);
     void unregisterGameObject(uint16_t objId);
+
+protected:
+    virtual bool unknownObjectIdMessage(const GameMessage::const_pointer& msg, MessagePeer* sender) = 0;
+
 protected:
     std::map<uint16_t, GameObject*> m_messageListeners;
     uint16_t m_lastObjectId;

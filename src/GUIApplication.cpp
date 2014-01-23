@@ -388,6 +388,31 @@ void GUIApplication::onNetworkMessage(NetMessage::const_pointer msg, RemoteMessa
             console->appendText(String("\nNew Game server available: \\[") + boost::lexical_cast<std::string>(m_availableGameServers.size() - 1) + "]: " + realMsg->serverName);
         });
     }
+    else if (msg->gettype() == NetGameConnectRequestMessage::type)
+    {
+        m_renderThreadService->post([this, msg, sender](){
+            if (!m_gameServer)
+            {
+                NetGameConnectDeniedMessage::pointer response{ new NetGameConnectDeniedMessage };
+                response->reason = "The server you requested to be connected with, doesn't exist";
+                sender->send(response);
+                return;
+            }
+            m_gameServer->connectLocallyTo(sender);
+
+            Window* console = m_guiContext->getRootWindow()->getChild("console/output");
+            console->appendText("\nOne remote user connected to the game server");
+        });
+    }
+    else if (msg->gettype() == NetGameConnectDeniedMessage::type)
+    {
+        m_renderThreadService->post([this, sender](){
+            if (m_gameClient){
+                // connection refused
+                m_gameClient->disconnectLocallyFrom(sender);
+            }
+        });
+    }
 }
 
 bool GUIApplication::onConsoleClicked(const CEGUI::EventArgs& a)
@@ -555,7 +580,7 @@ void GUIApplication::consoleNetServerCommand(const std::vector<String>& params, 
         }
     };
 
-    static const consoleFuncsMap consoleFuncs = consoleFuncsMap{
+    static const consoleFuncsMap consoleFuncs {
         { "start", std::bind(&GUIApplication::consoleStartNetServer, this, std::placeholders::_1, std::placeholders::_2) },
         { "help", std::bind(consoleHelpProcedure, std::cref(consoleFuncs), std::placeholders::_1, std::placeholders::_2) }
     };
@@ -622,8 +647,9 @@ void GUIApplication::consoleGameServerCommand(const std::vector<String>& params,
         }
     };
 
-    static const consoleFuncsMap consoleFuncs = consoleFuncsMap{
+    static const consoleFuncsMap consoleFuncs {
         { "start", std::bind(&GUIApplication::consoleStartGameServer, this, std::placeholders::_1, std::placeholders::_2) },
+        { "connect", std::bind(&GUIApplication::consoleConnectGameServer, this, std::placeholders::_1, std::placeholders::_2) },
         { "list", std::bind(&GUIApplication::consoleListGameServers, this, std::placeholders::_1, std::placeholders::_2) },
         { "help", std::bind(consoleHelpProcedure, std::cref(consoleFuncs), std::placeholders::_1, std::placeholders::_2) }
     };
@@ -667,4 +693,50 @@ void GUIApplication::consoleListGameServers(const std::vector<String>& params, S
     {
         output += String("\n\\[") + boost::lexical_cast<std::string>(a) + "]: " + std::get<0>(serverListEntry);
     }
+}
+
+void GUIApplication::consoleConnectGameServer(const std::vector<String>& params, String& output)
+{
+    if (m_gameClient)
+    {
+        output = "\nGame client appears to be running already";
+        return;
+    }
+    if (params.size() < 3)
+    {
+        output = "\nExpected more parameters: gameserver connect <ServerNumber>";
+        return;
+    }
+
+    unsigned int serverNumber = 0;
+    try {
+        serverNumber = boost::lexical_cast<unsigned int>(params[2]);
+    }
+    catch (boost::bad_lexical_cast)
+    {
+        output = "\nBad parameter types. Expected: gameserver connect <ServerNumber>";
+        return;
+    }
+
+    if (serverNumber >= m_availableGameServers.size())
+    {
+        output = "\nThe server with this number doesn't exist. Type in 'gameserver list' for a list.";
+        return;
+    }
+
+    m_gameClient = new GameInstanceClient;
+    m_gameClient->onClientOrphaned(m_renderThreadService->wrap([this](){
+        // No server is connected to the game client, so we may just drop it
+        delete m_gameClient;
+        m_gameClient = nullptr;
+        Window* consoleOut = m_guiContext->getRootWindow()->getChild("console/output");
+        consoleOut->appendText("\nGame client lost connection, and was automatically deleted.");
+    }), this);
+
+    MessagePeer* gameServer = std::get<1>(m_availableGameServers[serverNumber]);
+    m_gameClient->connectLocallyTo(gameServer);
+
+    NetGameConnectRequestMessage::pointer msg{ new NetGameConnectRequestMessage };
+    gameServer->send(msg);
+    output = "\n Game client created";
 }

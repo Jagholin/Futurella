@@ -19,6 +19,11 @@ MessagePeer::~MessagePeer()
 
 void MessagePeer::connectLocallyTo(MessagePeer* buddy, bool recursive /* = true */)
 {
+    // Don't establish the same connections twice, or the messages will be sent twice.
+    bool alreadyExists = std::find(m_localPeers.begin(), m_localPeers.end(), buddy) != m_localPeers.end();
+    if (alreadyExists)
+        return;
+
     m_localPeers.push_back(buddy);
     if (recursive)
         buddy->connectLocallyTo(this, false);

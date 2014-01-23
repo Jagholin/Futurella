@@ -106,4 +106,5 @@ protected:
     void consoleGameServerCommand(const std::vector<String>& params, String& output);
     void consoleStartGameServer(const std::vector<String>& params, String& output);
     void consoleListGameServers(const std::vector<String>& params, String& output);
+    void consoleConnectGameServer(const std::vector<String>& params, String& output);
 };
