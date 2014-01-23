@@ -1,35 +1,35 @@
 #include "SpaceShip.h"
 #include <osg/ShapeDrawable>
 
-BEGIN_DECLNETMESSAGE(ShipStateData, 5101)
+BEGIN_DECLNETMESSAGE(ShipStateData, 5101, false)
 osg::Vec3f position;
 osg::Vec4f orientation;
 osg::Vec3f velocity;
 END_DECLNETMESSAGE()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(ShipStateData)
-outStr << position << orientation << velocity;
+out << position << orientation << velocity;
 END_NETTORAWMESSAGE_QCONVERT()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(ShipStateData)
-inStr >> temp->position >> temp->orientation >> temp->velocity;
+in >> position >> orientation >> velocity;
 END_RAWTONETMESSAGE_QCONVERT()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(SpaceShipConstructionData)
-outStr << pos << orient;
+out << pos << orient;
 END_NETTORAWMESSAGE_QCONVERT()
 
 BEGIN_RAWTONETMESSAGE_QCONVERT(SpaceShipConstructionData)
-inStr >> temp->pos >> temp->orient;
+in >> pos >> orient;
 END_RAWTONETMESSAGE_QCONVERT()
 
 REGISTER_NETMESSAGE(ShipStateData);
 REGISTER_NETMESSAGE(SpaceShipConstructionData);
 
 SpaceShip::SpaceShip(osg::Vec3f pos, osg::Vec4f orient, bool hostSide /* = false */):
-position(pos), orientation(orient), m_hostSide(hostSide)
+m_position(pos), m_orientation(orient), m_hostSide(hostSide)
 {
-	for (int i = 0; i < inputTypesNumber; i++) inputState[i] = false; //No keys pressed yet
+	for (int i = 0; i < inputTypesNumber; i++) m_inputState[i] = false; //No keys pressed yet
     osg::ref_ptr<osg::Shape> box = new osg::Box(osg::Vec3f(0, 0, 0), 0.1f, 0.1f, 0.3f);
     osg::ref_ptr<osg::ShapeDrawable> s = new osg::ShapeDrawable(box);
     s->setColor(osg::Vec4(1, 1, 1, 1));
@@ -45,7 +45,7 @@ position(pos), orientation(orient), m_hostSide(hostSide)
 SpaceShip::SpaceShip(osg::Node* shipNode):
 m_shipNode(shipNode), m_hostSide(true)
 {
-	for (int i = 0; i < inputTypesNumber; i++) inputState[i] = false; // No keys pressed yet
+	for (int i = 0; i < inputTypesNumber; i++) m_inputState[i] = false; // No keys pressed yet
     if (!m_shipNode)
     {
         osg::ref_ptr<osg::Shape> box = new osg::Box(osg::Vec3f(0, 0, 0), 0.1f, 0.1f, 0.3f);
@@ -60,12 +60,12 @@ m_shipNode(shipNode), m_hostSide(true)
     m_transformGroup->setMatrix(osg::Matrix::translate(0, 0, 0));
     m_transformGroup->addChild(m_shipNode);
 
-	velocity = osg::Vec3f(0, 0, 0);
-	setPosition(osg::Vec3f(0, 0, 0));
-	setOrientation(osg::Quat(0, osg::Vec3f(1, 0, 0)));
-	acceleration = 4;
-	steerability = 2;
-	friction = 0.7f;
+    m_velocity = osg::Vec3f(0, 0, 0);
+    setPosition(osg::Vec3f(0, 0, 0));
+    setOrientation(osg::Quat(0, osg::Vec3f(1, 0, 0)));
+    m_acceleration = 4;
+	m_steerability = 2;
+	m_friction = 0.7f;
 }
 
 SpaceShip::~SpaceShip()
@@ -76,32 +76,38 @@ SpaceShip::~SpaceShip()
         parent->removeChild(m_transformGroup);
 }
 
-void SpaceShip::setPosition(osg::Vec3f p){
-	position = p;
+void SpaceShip::setPosition(osg::Vec3f p)
+{
+    m_position = p;
 }
 
-void SpaceShip::setOrientation(osg::Quat o){
-	orientation = o;
+void SpaceShip::setOrientation(osg::Quat o)
+{
+    m_orientation = o;
 }
 
 void SpaceShip::setInput(inputType t, bool state){
-	inputState[t] = state;
+	m_inputState[t] = state;
 }
 
-osg::Vec3f SpaceShip::getCenter(){
-	return position;
+osg::Vec3f SpaceShip::getCenter()
+{
+    return m_position;
 }
 
-float SpaceShip::getSpeed(){
-	return velocity.length();
+float SpaceShip::getSpeed()
+{
+    return m_velocity.length();
 }
 
-osg::Vec3f SpaceShip::getVelocity(){
-	return velocity;
+osg::Vec3f SpaceShip::getVelocity()
+{
+    return m_velocity;
 }
 
-osg::Quat SpaceShip::getOrientation(){
-	return orientation;
+osg::Quat SpaceShip::getOrientation()
+{
+    return m_orientation;
 }
 
 osg::MatrixTransform* SpaceShip::getTransformGroup()
@@ -109,51 +115,49 @@ osg::MatrixTransform* SpaceShip::getTransformGroup()
     return m_transformGroup.get();
 }
 
+
 void SpaceShip::update(float dt){
 	//position update
-	position += velocity*dt;
+	m_position += m_velocity*dt;
 
 	//Friction
-	velocity *= pow(friction, dt);
+	m_velocity *= pow(m_friction, dt);
 
 	//handle input
-	if (inputState[ACCELERATE] != inputState[BACK])
+	if (m_inputState[ACCELERATE] != m_inputState[BACK])
 	{
-		if (inputState[ACCELERATE])
-			velocity += orientation*osg::Vec3f(0, 0, -acceleration * dt);
+		if (m_inputState[ACCELERATE])
+			m_velocity += m_orientation*osg::Vec3f(0, 0, -m_acceleration * dt);
 		else
-			velocity += orientation*osg::Vec3f(0, 0, acceleration * dt);
+			m_velocity += m_orientation*osg::Vec3f(0, 0, m_acceleration * dt);
 	}
 
-	if (inputState[LEFT] != inputState[RIGHT]){
-		float amount = steerability * dt;
-		if (inputState[LEFT]){
+	if (m_inputState[LEFT] != m_inputState[RIGHT]){
+		float amount = m_steerability * dt;
+		if (m_inputState[LEFT]){
 			//roll left
 			osg::Quat q(amount, osg::Vec3f(0, 0, 1));
-			orientation = q * orientation;
+			m_orientation = q * m_orientation;
 		}
 		else{
 			//roll right
 			osg::Quat q(-amount, osg::Vec3f(0, 0, 1));
-			orientation = q * orientation;
+			m_orientation = q * m_orientation;
 		}
 	}
-	if (inputState[UP] != inputState[DOWN]){
-		float amount = steerability * dt;
-		if (inputState[UP]){
+	if (m_inputState[UP] != m_inputState[DOWN]){
+		float amount = m_steerability * dt;
+		if (m_inputState[UP]){
 			//rear up
 			osg::Quat q(-amount, osg::Vec3f(1, 0, 0));
-			orientation = q * orientation;
+			m_orientation = q * m_orientation;
 		}
 		else{
 			//rear down
 			osg::Quat q(amount, osg::Vec3f(1, 0, 0));
-			orientation = q * orientation;
+			m_orientation = q * m_orientation;
 		}
 	}
-
-	
-
     m_transformGroup->setMatrix(osg::Matrix::translate(getCenter()));
     osg::Matrix rotationMatrix;
     getOrientation().get(rotationMatrix);
@@ -167,9 +171,9 @@ bool SpaceShip::takeMessage(const NetMessage::const_pointer& msg, MessagePeer*)
         NetShipStateDataMessage::const_pointer realMsg = msg->as<NetShipStateDataMessage>();
 
         // set position, rotation and velocity.
-        position = realMsg->position;
-        velocity = realMsg->velocity;
-        orientation.set(realMsg->orientation);
+        m_position = realMsg->position;
+        m_velocity = realMsg->velocity;
+        m_orientation.set(realMsg->orientation);
 
         update(0);
         return true;
@@ -188,8 +192,8 @@ NetSpaceShipConstructionDataMessage::pointer SpaceShip::createConstructorMessage
         return nullptr;
 
     NetSpaceShipConstructionDataMessage::pointer result(new NetSpaceShipConstructionDataMessage);
-    result->orient = orientation.asVec4();
-    result->pos = position;
+    result->orient = m_orientation.asVec4();
+    result->pos = m_position;
     return result;
 }
 

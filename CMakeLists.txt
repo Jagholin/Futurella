@@ -13,8 +13,8 @@ macro(get_WIN32_WINNT version)
 endmacro()
 
 if (WIN32)
-	get_WIN32_WINNT(ver)
-	add_definitions(-D_WIN32_WINNT=${ver})
+    get_WIN32_WINNT(ver)
+    add_definitions(-D_WIN32_WINNT=${ver})
 endif()
 
 find_package(OpenThreads REQUIRED)
@@ -27,9 +27,10 @@ find_package(CEGUI REQUIRED)
 find_package(OpenGL REQUIRED)
 
 find_package(BOOST 1.54.0 REQUIRED COMPONENTS system asio)
+# add_definitions(-DBOOST_ASIO_ENABLE_HANDLER_TRACKING)
 
 if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE "Release")
+    set(CMAKE_BUILD_TYPE "Release")
 endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY          ${CMAKE_SOURCE_DIR}/bin)
@@ -47,30 +48,40 @@ endmacro()
 link_directories(${Boost_LIBRARY_DIRS}) # for Boost dynamic linking
 
 add_executable(Futurella
-	src/networking/networking.cpp
-	src/networking/networking.h
-	src/networking/messages.cpp
-	src/networking/messages.h
-	src/networking/peermanager.h
-	src/networking/peermanager.cpp
-	src/networking/sigslot.h
-	src/CEGUIDrawable.h
-	src/CEGUIDrawable.cpp
-	src/GUIApplication.h
-	src/GUIApplication.cpp
-src/main.cpp
-src/Asteroid.cpp
-src/Asteroid.h
-src/AsteroidField.cpp
-src/AsteroidField.h
-src/Level.cpp
-src/Level.h
-src/Node.cpp
-src/Node.h
-src/ChaseCam.cpp
-src/ChaseCam.h
-src/SpaceShip.cpp
-src/SpaceShip.h)
+    src/networking/networking.cpp
+    src/networking/networking.h
+    src/networking/messages.cpp
+    src/networking/messages.h
+    src/networking/peermanager.h
+    src/networking/peermanager.cpp
+    src/networking/sigslot.h
+    src/gamecommon/GameMessagePeer.h
+    src/gamecommon/GameMessagePeer.cpp
+    src/gamecommon/GameObject.h
+    src/gamecommon/GameObject.cpp
+    src/gameserver/SpaceShipServer.h
+    src/gameserver/GameInstanceServer.h
+    src/gameserver/GameInstanceServer.cpp
+    src/gameclient/SpaceShipClient.h
+    src/gameclient/GameInstanceClient.h
+    src/gameclient/GameInstanceClient.cpp
+    src/CEGUIDrawable.h
+    src/CEGUIDrawable.cpp
+    src/GUIApplication.h
+    src/GUIApplication.cpp
+    src/main.cpp
+    src/Asteroid.cpp
+    src/Asteroid.h
+    src/AsteroidField.cpp
+    src/AsteroidField.h
+    src/Level.cpp
+    src/Level.h
+    src/Node.cpp
+    src/Node.h
+    src/ChaseCam.cpp
+    src/ChaseCam.h
+    src/SpaceShip.cpp
+    src/SpaceShip.h)
 
 add_lib(Futurella OPENTHREADS)
 add_lib(Futurella OSG)

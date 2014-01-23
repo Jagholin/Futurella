@@ -8,25 +8,31 @@
 using namespace osg;
 using namespace osgGA;
 
-ChaseCam::ChaseCam(SpaceShip* spaceShip) {
-	ship = spaceShip;
-	delayRotation.makeRotate(0,osg::Vec3f(1,0,0));
+ChaseCam::ChaseCam(SpaceShip* spaceShip) 
+{
+    ship = spaceShip;
+    delayRotation.makeRotate(0,osg::Vec3f(1,0,0));
 }
 
-ChaseCam::~ChaseCam() {
+ChaseCam::~ChaseCam() 
+{
+    //nop
 }
 
-void ChaseCam::computeHomePosition() {
-	//cam should be point berechnen 
-	//setzen
+void ChaseCam::computeHomePosition() 
+{
+    //cam should be point berechnen 
+    //setzen
 }
 
-void ChaseCam::home(const GUIEventAdapter& ea, GUIActionAdapter& us) {
-	computeHomePosition();
+void ChaseCam::home(const GUIEventAdapter& ea, GUIActionAdapter& us) 
+{
+    computeHomePosition();
 }
 
-void ChaseCam::init(const GUIEventAdapter& ea, GUIActionAdapter& us) {
-	//vielleicht verwenden: us.requestContinuousUpdate(true);
+void ChaseCam::init(const GUIEventAdapter& ea, GUIActionAdapter& us) 
+{
+    //vielleicht verwenden: us.requestContinuousUpdate(true);
 
 }
 
@@ -67,18 +73,19 @@ bool ChaseCam::handle(const GUIEventAdapter& ea, GUIActionAdapter& us) {
 	return false;
 }
 
-void ChaseCam::updateCamera(osg::Camera& camera){
-	computeMatrix();
-	CameraManipulator::updateCamera(camera);
+void ChaseCam::updateCamera(osg::Camera& camera)
+{
+    computeMatrix();
+    CameraManipulator::updateCamera(camera);
 }
 
 void ChaseCam::getUsage(osg::ApplicationUsage& usage) const
 {
-	usage.addKeyboardMouseBinding("Drive: Space", "Accelerate");
-	usage.addKeyboardMouseBinding("Drive: Left", "Roll left");
-	usage.addKeyboardMouseBinding("Drive: Right", "Roll right");
-	usage.addKeyboardMouseBinding("Drive: Down", "Hochziehen");
-	usage.addKeyboardMouseBinding("Drive: Up", "Runterziehen");
+    usage.addKeyboardMouseBinding("Drive: Space", "Accelerate");
+    usage.addKeyboardMouseBinding("Drive: Left", "Roll left");
+    usage.addKeyboardMouseBinding("Drive: Right", "Roll right");
+    usage.addKeyboardMouseBinding("Drive: Down", "Hochziehen");
+    usage.addKeyboardMouseBinding("Drive: Up", "Runterziehen");
 }
 
 void ChaseCam::setByMatrix(const osg::Matrixd& matrix)
@@ -87,12 +94,12 @@ void ChaseCam::setByMatrix(const osg::Matrixd& matrix)
 
 osg::Matrixd ChaseCam::getMatrix() const
 {
-	return cameraMatrix;
+    return cameraMatrix;
 }
 
 osg::Matrixd ChaseCam::getInverseMatrix() const
 {
-	return osg::Matrixd::inverse(cameraMatrix);
+    return osg::Matrixd::inverse(cameraMatrix);
 }
 
 void ChaseCam::computeMatrix(){
@@ -106,8 +113,6 @@ void ChaseCam::computeMatrix(){
 	newCameraMatrix.postMult(shipTransform);
 
 	//zoom
-	
-	
 
 	cameraMatrix = newCameraMatrix;
 }
