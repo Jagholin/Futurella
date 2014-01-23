@@ -328,6 +328,12 @@ bool GUIApplication::onWindowCloseClicked(const EventArgs& args)
 void GUIApplication::onNewFuturellaPeer(const RemoteMessagePeer::pointer& peer)
 {
     peer->onActivation([&, peer](){
+        if (m_gameServer)
+        {
+            NetGameServerAvailableMessage::pointer msg{ new NetGameServerAvailableMessage };
+            msg->serverName = m_gameServer->name();
+            peer->send(msg);
+        }
         m_currentLevel->connectLocallyTo(peer);
         std::cout << "peer activated\n";
     }, this);
@@ -359,9 +365,17 @@ void GUIApplication::onNetworkMessage(NetMessage::const_pointer msg, RemoteMessa
         // GUI can only be changed from the GUI thread/and context,
         // so go there
         m_renderThreadService->post([&, msg](){
-            MultiLineEditbox* chatWindow = static_cast<MultiLineEditbox*>(m_guiContext->getRootWindow()->getChild("chatWindow/output"));
+            Window* chatWindow = m_guiContext->getRootWindow()->getChild("chatWindow/output");
             NetChatMessage::const_pointer realMsg{msg->as<NetChatMessage>()};
             chatWindow->appendText(realMsg->message);
+        });
+    }
+    else if (msg->gettype() == NetGameServerAvailableMessage::type)
+    {
+        m_renderThreadService->post([&, msg](){
+            Window* console = m_guiContext->getRootWindow()->getChild("console/output");
+            NetGameServerAvailableMessage::const_pointer realMsg{ msg->as<NetGameServerAvailableMessage>() };
+            console->appendText(String("\nNew Game server available: ") + realMsg->serverName);
         });
     }
 }
@@ -399,11 +413,12 @@ bool GUIApplication::onConsoleInput(const CEGUI::EventArgs&)
         }
     };
 
-    static const consoleFuncsMap consoleFuncs = consoleFuncsMap {
+    static const consoleFuncsMap consoleFuncs {
         { "login", std::bind(&GUIApplication::consoleCreateUser, this, std::placeholders::_1, std::placeholders::_2) },
         { "show_network", std::bind(&GUIApplication::consoleShowNetwork, this, std::placeholders::_1, std::placeholders::_2) },
         { "clear", std::bind(&GUIApplication::consoleClear, this, std::placeholders::_1, std::placeholders::_2) },
         { "netserver", std::bind(&GUIApplication::consoleNetServerCommand, this, std::placeholders::_1, std::placeholders::_2) },
+        { "gameserver", std::bind(&GUIApplication::consoleGameServerCommand, this, std::placeholders::_1, std::placeholders::_2) },
         { "connect", std::bind(&GUIApplication::consoleConnect, this, std::placeholders::_1, std::placeholders::_2) },
         { "help", std::bind(consoleHelpProcedure, std::cref(consoleFuncs), std::placeholders::_1, std::placeholders::_2) }
     };
@@ -612,5 +627,26 @@ void GUIApplication::consoleGameServerCommand(const std::vector<String>& params,
 
 void GUIApplication::consoleStartGameServer(const std::vector<String>& params, String& output)
 {
+    if (!m_userCreated)
+    {
+        output = "\nThis command is only available after log-in";
+        return;
+    }
+    if (m_gameServer)
+    {
+        output = "\nGame server appears to be running already";
+        return;
+    }
+    if (params.size() < 3)
+    {
+        output = "\nExpected more parameters: gameserver start <server_name>";
+        return;
+    }
 
+    m_gameServer = new GameInstanceServer(params[2].c_str());
+    NetGameServerAvailableMessage::pointer msg{ new NetGameServerAvailableMessage };
+    msg->serverName = params[2].c_str();
+    RemotePeersManager::getManager()->broadcast(msg);
+
+    output = "\ngame server created successfully";
 }

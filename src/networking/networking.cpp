@@ -70,7 +70,7 @@ public:
 
     void datagramReceived(RawMessage::pointer newMessage); // called by NetServerImpl;
     void doConnectTCP(const asio::ip::tcp::resolver::iterator& tcpBegin);
-    void doConnectUDP(const asio::ip::udp::resolver::iterator& udpBegin);
+    //void doConnectUDP(const asio::ip::udp::resolver::iterator& udpBegin);
 protected:
     asio::io_service& mserv;
     socket_tcp mySockTCP;
@@ -81,16 +81,17 @@ protected:
     bool connectedTCP, connectedUDP;
     unsigned int frontMsg, endMsg;
     NetConnection* buddy;
+    asio::ip::udp::endpoint udpEndpoint;
 
     //asio::ip::tcp::resolver::iterator mBegin, mEnd;
     NetConnImpl(asio::io_service& serv, NetConnection*);
     void doWrite(RawMessage::const_pointer);
     void onConnectTCP(const boost::system::error_code&, const asio::ip::tcp::resolver::iterator& tcpBegin);
-    void onConnectUDP(const boost::system::error_code&, const asio::ip::udp::resolver::iterator& udpBegin);
+    //void onConnectUDP(const boost::system::error_code&, const asio::ip::udp::resolver::iterator& udpBegin);
     void onHeadReceived(const boost::system::error_code&, size_t, uint16_t*);
     void onBodyReceived(const boost::system::error_code&, size_t);
     void onMsgSent(const boost::system::error_code&, size_t);
-    void onMsgSentUDP(const boost::system::error_code&, size_t);
+    void onMsgSentUDP(shared_ptr<vector<char>>, const boost::system::error_code&, size_t);
 };
 
 class ConnectionFinder
@@ -162,7 +163,7 @@ protected:
 NetConnImpl::NetConnImpl(asio::io_service& serv, NetConnection* b):
     mserv(serv),
     mySockTCP(new socket_tcp::element_type(serv)),
-    mySockUDP(new socket_udp::element_type(serv)),
+    mySockUDP(new socket_udp::element_type(serv, asio::ip::udp::endpoint(asio::ip::udp::v4(), 0))),
     sending(false), connectedTCP(false), connectedUDP(false),
     frontMsg(0), endMsg(0), buddy(b)
 {
@@ -175,18 +176,23 @@ bool NetConnImpl::connect(std::string addr, uint16_t portTCP, uint16_t portUDP)
         return false;
     boost::system::error_code ecTCP = asio::error::host_not_found, ecUDP = asio::error::host_not_found;
     asio::ip::tcp::resolver myResolver(mserv);
-    asio::ip::tcp::resolver::query resQueryTCP(addr, boost::lexical_cast<std::string>(portTCP));
+    asio::ip::tcp::resolver::query resQueryTCP(asio::ip::tcp::v4(), addr, boost::lexical_cast<std::string>(portTCP));
     asio::ip::tcp::resolver::iterator tcpBegin = myResolver.resolve(resQueryTCP, ecTCP);
     asio::ip::udp::resolver udpResolver(mserv);
-    asio::ip::udp::resolver::query resQueryUDP(addr, boost::lexical_cast<std::string>(portUDP));
+    asio::ip::udp::resolver::query resQueryUDP(asio::ip::udp::v4(), addr, boost::lexical_cast<std::string>(portUDP));
     asio::ip::udp::resolver::iterator udpBegin = udpResolver.resolve(resQueryUDP, ecUDP);
     asio::ip::tcp::resolver::iterator tcpEnd;
     asio::ip::udp::resolver::iterator udpEnd;
 
-    if (tcpBegin != tcpEnd && udpBegin != udpEnd && !ecTCP && !ecUDP)
+    if (tcpBegin != tcpEnd && !ecTCP && !ecUDP)
     {
         mserv.post(std::bind(&NetConnImpl::doConnectTCP, shared_from_this(), tcpBegin));
-        mserv.post(std::bind(&NetConnImpl::doConnectUDP, shared_from_this(), udpBegin));
+        //mserv.post(std::bind(&NetConnImpl::doConnectUDP, shared_from_this(), udpBegin));
+        udpEndpoint = *udpBegin;
+        connectedUDP = true;
+        ConnectionFinder::addConnection(udpEndpoint.address(), this);
+        if (connectedTCP && buddy)
+            buddy->m_connected(/*buddy->myId*/);
     }
     else
     {
@@ -248,57 +254,10 @@ void NetConnImpl::onConnectTCP(const boost::system::error_code& code, const asio
     }
 }
 
-void NetConnImpl::doConnectUDP(const asio::ip::udp::resolver::iterator& udpBegin)
-{
-    auto nextUdpEndpoint = udpBegin;
-    ++nextUdpEndpoint;
-    mySockUDP->async_connect(*udpBegin,
-        std::bind(&NetConnImpl::onConnectUDP,
-        shared_from_this(),
-        std::placeholders::_1, //asio::placeholders::error
-        nextUdpEndpoint
-        ));
-}
-
-void NetConnImpl::onConnectUDP(const boost::system::error_code& code, const asio::ip::udp::resolver::iterator& udpBegin)
-{
-    if (!code)
-    {
-        connectedUDP = true;
-        ConnectionFinder::addConnection(mySockUDP->remote_endpoint().address(), this);
-        if (connectedTCP && buddy)
-            buddy->m_connected(/*buddy->myId*/);
-    }
-    else
-    {
-        mySockUDP->close();
-        if (udpBegin != asio::ip::udp::resolver::iterator())
-        {
-            auto nextUdpEndpoint = udpBegin;
-            ++nextUdpEndpoint;
-            mySockUDP->async_connect(*udpBegin,
-                std::bind(&NetConnImpl::onConnectUDP,
-                shared_from_this(),
-                std::placeholders::_1, //asio::placeholders::error
-                nextUdpEndpoint
-                ));
-        }
-        else
-        {
-            NetworkError err;
-            err.str = code.message().data();
-            if (buddy) buddy->onNetworkError(err);
-        }
-    }
-}
-
 void NetConnImpl::setSocket(socket_tcp& sock)
 {
-    //if (mySock)
-    {
-        mySockTCP->close();
-        //delete mySock;
-    }
+    mySockTCP->close();
+    
     mySockTCP = sock;
     mySockTCP->set_option(asio::socket_base::keep_alive(true));
     connectedTCP = true;
@@ -339,23 +298,26 @@ unsigned int NetConnImpl::writeUDP(RawMessage::const_pointer msg)
     if (!connectedUDP)
         return 0;
     // Create asio read buffer from message
-    vector<char> toSend/*msg->msgBytes.size() + sizeof(uint32_t) + sizeof(uint16_t)*/;
-    toSend.reserve(msg->msgBytes.size() + sizeof(uint32_t)+sizeof(uint16_t));
+    shared_ptr<vector<char>> toSend{ new vector<char> }/*msg->msgBytes.size() + sizeof(uint32_t) + sizeof(uint16_t)*/;
+    toSend->reserve(msg->msgBytes.size() + sizeof(uint32_t)+sizeof(uint16_t));
     // Composite send vector
     uint16_t nboSize = htons(msg->msgBytes.size() + sizeof(uint32_t));
-    toSend.insert(toSend.end(), (char*)&nboSize, ((char*)&nboSize) + sizeof(uint16_t));
+    toSend->insert(toSend->end(), (char*)&nboSize, ((char*)&nboSize) + sizeof(uint16_t));
     uint32_t nboType = htonl(msg->msgType);
-    toSend.insert(toSend.end(), (char*)&nboType, ((char*)&nboType) + sizeof(uint32_t));
-    toSend.insert(toSend.end(), msg->msgBytes.begin(), msg->msgBytes.end());
+    toSend->insert(toSend->end(), (char*)&nboType, ((char*)&nboType) + sizeof(uint32_t));
+    toSend->insert(toSend->end(), msg->msgBytes.begin(), msg->msgBytes.end());
 
-    if (toSend.size() > 512)
+    if (toSend->size() > 512)
     {
         if (buddy)
             buddy->m_warn("Packet size > 512 bytes, can't send via UDP, ignoring");
         return 0;
     }
-    mySockUDP->async_send(asio::buffer(toSend), std::bind(&NetConnImpl::onMsgSentUDP,
-        shared_from_this(),
+
+    //unsigned short portToSend = udpEndpoint.port();
+    std::cerr << "Sending to " << udpEndpoint.address().to_string() << ": " << udpEndpoint.port() << " " << toSend->size() << "bytes\n";
+    mySockUDP->async_send_to(asio::buffer(*toSend), udpEndpoint, std::bind(&NetConnImpl::onMsgSentUDP,
+        shared_from_this(), toSend,
         std::placeholders::_1, std::placeholders::_2));
     return endMsg++;
 }
@@ -408,7 +370,7 @@ void NetConnImpl::onMsgSent(const boost::system::error_code& code, size_t /*byte
     }
 }
 
-void NetConnImpl::onMsgSentUDP(const boost::system::error_code& code, size_t /*bytes_transferred*/)
+void NetConnImpl::onMsgSentUDP(shared_ptr<vector<char>> sendVec, const boost::system::error_code& code, size_t /*bytes_transferred*/)
 {
     if (!code)
     {
@@ -488,7 +450,7 @@ void NetConnImpl::close()
     }
     if (mySockUDP->is_open())
     {
-        ConnectionFinder::eraseConnection(mySockUDP->remote_endpoint().address());
+        ConnectionFinder::eraseConnection(udpEndpoint.address());
         mySockUDP->close();
     }
     sending = false; connectedTCP = false;
@@ -652,15 +614,19 @@ void NetServerImpl::onAccept(const boost::system::error_code& code)
     {
         NetConnection* newCon = new NetConnection(mserv);
         asio::ip::udp::resolver udpResolver(mserv);
-        auto udpEndpointIterator = udpResolver.resolve(asio::ip::udp::endpoint(mSocketTCP->remote_endpoint().address(), mSocketUDP->local_endpoint().port()));
+        //auto udpEndpointIterator = udpResolver.resolve(asio::ip::udp::endpoint(mSocketTCP->remote_endpoint().address(), mSocketUDP->local_endpoint().port()));
 
         newCon->privData->setSocket(mSocketTCP);
-        newCon->privData->doConnectUDP(udpEndpointIterator);
+        //newCon->privData->doConnectUDP(udpEndpointIterator);
 
         mSocketTCP.reset(new socket_tcp::element_type(mserv));
 
         if (buddy) buddy->m_newConnection(newCon);
-        doListen();
+        mAccept.async_accept(*mSocketTCP,
+            std::bind(&NetServerImpl::onAccept,
+            shared_from_this(),
+            std::placeholders::_1 //::placeholders::error
+            ));
     }
     else
     {
@@ -677,6 +643,7 @@ void NetServerImpl::onDatagramReceive(const boost::system::error_code& ec, std::
     if (!ec)
     {
         char* buffer = &(mDatagramBuffer[0]);
+        std::cerr << "Received dg size= " << datagramSize << " bytes\n";
         if (datagramSize >= sizeof(uint16_t)+sizeof(uint32_t))
         {
             uint16_t packetSize = ntohs(*reinterpret_cast<uint16_t*>(buffer));
