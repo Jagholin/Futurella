@@ -741,3 +741,9 @@ void GUIApplication::consoleConnectGameServer(const std::vector<String>& params,
     gameServer->send(msg);
     output = "\n Game client created";
 }
+
+void GUIApplication::timeTick(float dt)
+{
+    if (m_gameServer)
+        m_gameServer->physicsTick(dt);
+}

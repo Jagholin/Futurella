@@ -53,6 +53,7 @@ public:
 
     void setGuiService(const std::shared_ptr<boost::asio::io_service>& service);
     //void setCurrentLevel(Level* levelData);
+    void timeTick(float dt);
 
     // gui-triggered event handlers
     bool onQuitBtnClicked(const CEGUI::EventArgs&);

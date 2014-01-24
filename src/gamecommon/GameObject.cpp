@@ -19,6 +19,7 @@ m_myOwnerId(ownerId)
 
 GameObject::GameObject(uint16_t myId, uint32_t ownerId, GameMessagePeer* context):
 m_context(context),
+m_myObjectId(myId),
 m_myOwnerId(ownerId)
 {
     context->registerGameObject(myId, this);

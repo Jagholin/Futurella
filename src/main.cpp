@@ -74,6 +74,7 @@ int main()
         start = std::chrono::steady_clock::now();
 
         //ship->update(frameTime.count());
+        guiApp.timeTick(frameTime.count());
         viewer->frame();
 
         frameTime = std::chrono::steady_clock::now() - start;

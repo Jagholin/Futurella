@@ -16,6 +16,8 @@ public:
 
     virtual void disconnectLocallyFrom(MessagePeer* buddy, bool recursive = true);
 
+    void physicsTick(float timeInterval);
+
 protected:
     std::map<MessagePeer*, SpaceShipServer::pointer> m_peerSpaceShips;
 

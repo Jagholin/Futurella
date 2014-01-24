@@ -5,7 +5,38 @@
 #include <osg/Geode>
 #include <osg/MatrixTransform>
 
+#include <chrono>
+
 REGISTER_GAMEOBJECT_TYPE(SpaceShipClient, 5002)
+
+// We use Update Callback to update ship's transformation group
+class ShipTransformUpdate : public osg::NodeCallback
+{
+    SpaceShipClient* m_ship;
+    std::chrono::steady_clock::time_point m_lastTick;
+public:
+    META_Object(futurella, ShipTransformUpdate);
+
+    ShipTransformUpdate()
+    {
+        m_ship = nullptr;
+    }
+    ShipTransformUpdate(SpaceShipClient* obj){
+        m_ship = obj;
+    }
+
+    ShipTransformUpdate(const ShipTransformUpdate& rhs, const osg::CopyOp&)
+    {
+        m_ship = rhs.m_ship;
+    }
+
+    void operator()(osg::Node*, osg::NodeVisitor*)
+    {
+        // Keep track of time
+        std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
+        m_ship->tick(std::chrono::duration_cast<std::chrono::seconds>(currentTime - m_lastTick).count());
+    }
+};
 
 SpaceShipClient::SpaceShipClient(osg::Vec3f pos, osg::Vec4f orient, uint16_t objId, uint32_t ownerId, GameInstanceClient* ctx):
 GameObject(objId, ownerId, ctx)
@@ -25,6 +56,7 @@ GameObject(objId, ownerId, ctx)
     m_transformGroup->addChild(m_shipNode);
 
     m_rootGroup->addChild(m_transformGroup);
+    m_transformGroup->setUpdateCallback(new ShipTransformUpdate(this));
 }
 
 SpaceShipClient::~SpaceShipClient()

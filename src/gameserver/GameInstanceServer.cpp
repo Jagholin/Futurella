@@ -46,3 +46,11 @@ void GameInstanceServer::disconnectLocallyFrom(MessagePeer* buddy, bool recursiv
 
     m_peerSpaceShips.erase(buddy);
 }
+
+void GameInstanceServer::physicsTick(float timeInterval)
+{
+    for (auto aShip : m_peerSpaceShips)
+    {
+        aShip.second->timeTick(timeInterval);
+    }
+}
