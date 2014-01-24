@@ -1,12 +1,13 @@
 #pragma once
 
 #include "../gamecommon/GameMessagePeer.h"
+#include "SpaceShipClient.h"
 
 class GameInstanceClient : public GameMessagePeer
 {
     // TODO
 public:
-    GameInstanceClient();
+    GameInstanceClient(osg::Group* rootGroup);
     //...
 
     // Connect clientOrphaned signal to the given slot.
@@ -18,8 +19,17 @@ public:
 
     virtual bool unknownObjectIdMessage(const GameMessage::const_pointer& msg, MessagePeer* sender);
 
+    void addExternalSpaceShip(SpaceShipClient::pointer ship);
+    osg::Group* sceneGraphRoot();
+
+    virtual bool takeMessage(const NetMessage::const_pointer&, MessagePeer*);
+
 protected:
     addstd::signal<void()> m_clientOrphaned;
+    osg::ref_ptr<osg::Group> m_rootGraphicsGroup;
+
+    std::vector<SpaceShipClient::pointer> m_otherShips;
+    SpaceShipClient::pointer m_myShip;
 
     bool m_connected;
     bool m_orphaned;

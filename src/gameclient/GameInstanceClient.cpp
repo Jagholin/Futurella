@@ -1,7 +1,9 @@
 #include "GameInstanceClient.h"
 #include "../gamecommon/GameObject.h"
+#include "../networking/peermanager.h"
 
-GameInstanceClient::GameInstanceClient():
+GameInstanceClient::GameInstanceClient(osg::Group* rootGroup):
+m_rootGraphicsGroup(rootGroup),
 m_connected(false),
 m_orphaned(false)
 {
@@ -40,4 +42,35 @@ bool GameInstanceClient::unknownObjectIdMessage(const GameMessage::const_pointer
         // Do nothing, just ignore the message.
     }
     return true;
+}
+
+void GameInstanceClient::addExternalSpaceShip(SpaceShipClient::pointer ship)
+{
+    if (ship->getOwnerId() == RemotePeersManager::getManager()->getMyId())
+        m_myShip = ship;
+    else
+        m_otherShips.push_back(ship);
+}
+
+bool GameInstanceClient::takeMessage(const NetMessage::const_pointer& msg, MessagePeer* sender)
+{
+    if (msg->gettype() == NetRemoveGameObjectMessage::type)
+    {
+        NetRemoveGameObjectMessage::const_pointer realMsg = msg->as<NetRemoveGameObjectMessage>();
+        auto it = std::find_if(m_otherShips.cbegin(), m_otherShips.cend(), [realMsg]
+            (const SpaceShipClient::pointer& aShip) -> bool {
+            return aShip->getObjectId() == realMsg->objectId;
+        });
+        if (it != m_otherShips.cend())
+        {
+            m_otherShips.erase(it);
+        }
+        return true;
+    }
+    return GameMessagePeer::takeMessage(msg, sender);
+}
+
+osg::Group* GameInstanceClient::sceneGraphRoot()
+{
+    return m_rootGraphicsGroup;
 }

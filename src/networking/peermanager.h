@@ -111,6 +111,7 @@ public:
     void setMyUdpPort(uint16_t portNum);
     std::string getMyName()const;
     uint32_t getMyId()const;
+    uint32_t getPeersId(MessagePeer*)const;
 
     template<typename T=int> void onNewPeerRegistration(const std::function<void(RemoteMessagePeer::pointer)> &callBack, T&& closure = int(-1))
     {

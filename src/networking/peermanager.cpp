@@ -482,6 +482,16 @@ void RemotePeersManager::setMyUdpPort(uint16_t portNum)
     m_myUdpPort = portNum;
 }
 
+uint32_t RemotePeersManager::getPeersId(MessagePeer* peer) const
+{
+    for (auto regRemotePeers : m_registeredPeerIds)
+    {
+        if (regRemotePeers.second == peer)
+            return regRemotePeers.first;
+    }
+    return getMyId();
+}
+
 BEGIN_NETTORAWMESSAGE_QCONVERT(Chat)
 out << message << sentTime;
 END_NETTORAWMESSAGE_QCONVERT()

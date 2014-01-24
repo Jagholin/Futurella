@@ -1,14 +1,25 @@
 #include "GameObject.h"
 #include <boost/lexical_cast.hpp>
 
-GameObject::GameObject(GameMessagePeer* context):
-m_context(context)
+BEGIN_NETTORAWMESSAGE_QCONVERT(RemoveGameObject)
+out << objectId;
+END_NETTORAWMESSAGE_QCONVERT()
+BEGIN_RAWTONETMESSAGE_QCONVERT(RemoveGameObject)
+in >> objectId;
+END_RAWTONETMESSAGE_QCONVERT()
+
+REGISTER_NETMESSAGE(RemoveGameObject)
+
+GameObject::GameObject(uint32_t ownerId, GameMessagePeer* context):
+m_context(context),
+m_myOwnerId(ownerId)
 {
     m_myObjectId = context->registerGameObject(this);
 }
 
-GameObject::GameObject(uint16_t myId, GameMessagePeer* context):
-m_context(context)
+GameObject::GameObject(uint16_t myId, uint32_t ownerId, GameMessagePeer* context):
+m_context(context),
+m_myOwnerId(ownerId)
 {
     context->registerGameObject(myId, this);
 }
@@ -18,7 +29,7 @@ GameObject::~GameObject()
     m_context->unregisterGameObject(m_myObjectId);
 }
 
-uint16_t GameObject::getOwnerId() const
+uint32_t GameObject::getOwnerId() const
 {
     return m_context->getOwnerId();
 }

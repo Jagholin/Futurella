@@ -46,20 +46,20 @@ protected:
 class GUIApplication : public osg::Referenced
 {
 public:
-    GUIApplication(osgViewer::Viewer* osgApp);
+    GUIApplication(osgViewer::Viewer* osgApp, osg::Group* rootGroup);
 
     // register event handlers in CEGUI
     void registerEvents();
 
     void setGuiService(const std::shared_ptr<boost::asio::io_service>& service);
-    void setCurrentLevel(Level* levelData);
+    //void setCurrentLevel(Level* levelData);
 
     // gui-triggered event handlers
     bool onQuitBtnClicked(const CEGUI::EventArgs&);
     bool onWindowCloseClicked(const CEGUI::EventArgs&);
     bool onSendBtnClicked(const CEGUI::EventArgs&);
-    bool onConnectBtnClicked(const CEGUI::EventArgs&);
-    bool onListenBtnClicked(const CEGUI::EventArgs&);
+    //bool onConnectBtnClicked(const CEGUI::EventArgs&);
+    //bool onListenBtnClicked(const CEGUI::EventArgs&);
     bool onConsoleClicked(const CEGUI::EventArgs&);
     bool onConsoleInput(const CEGUI::EventArgs&);
 
@@ -72,13 +72,14 @@ public:
 protected:
     CEGUI::GUIContext* m_guiContext;
     osgViewer::Viewer* m_osgApp;
+    osg::ref_ptr<osg::Group> m_rootGroup;
 
     // perhaps this has to be moved somewhere else
     std::shared_ptr<boost::asio::io_service> m_networkService;
     std::shared_ptr<boost::asio::io_service> m_renderThreadService;
     AsioThread m_networkThread;
     
-    Level* m_currentLevel;
+    //Level* m_currentLevel;
     GameInstanceServer* m_gameServer;
     GameInstanceClient* m_gameClient;
     std::vector<std::tuple<std::string, MessagePeer*>> m_availableGameServers;

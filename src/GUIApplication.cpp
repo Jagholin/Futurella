@@ -208,23 +208,24 @@ bool AsioThread::startUdpListener(unsigned int portUDP, std::string& errStr)
     return res;
 }
 
-GUIApplication::GUIApplication(osgViewer::Viewer* osgApp)
+GUIApplication::GUIApplication(osgViewer::Viewer* osgApp, osg::Group* rootGroup)
 {
     m_guiContext = nullptr;
     m_osgApp = osgApp;
     m_networkService = std::make_shared<boost::asio::io_service>();
     m_networkThread.setService(m_networkService);
-    m_currentLevel = nullptr;
+    //m_currentLevel = nullptr;
+    m_rootGroup = rootGroup;
     m_userCreated = false;
     m_gameClient = nullptr;
     m_gameServer = nullptr;
     RemotePeersManager::getManager()->onNewPeerRegistration(std::bind(&GUIApplication::onNewFuturellaPeer, this, std::placeholders::_1), this);
 }
 
-void GUIApplication::setCurrentLevel(Level* levelData)
+/*void GUIApplication::setCurrentLevel(Level* levelData)
 {
     m_currentLevel = levelData;
-}
+}*/
 
 void GUIApplication::registerEvents()
 {
@@ -236,8 +237,8 @@ void GUIApplication::registerEvents()
     addEventHandler("chatWindow/sendBtn", PushButton::EventClicked, Event::Subscriber(&GUIApplication::onSendBtnClicked, this));
     addEventHandler("chatWindow/input", Editbox::EventTextAccepted, Event::Subscriber(&GUIApplication::onSendBtnClicked, this));
 
-    addEventHandler("networkSettings/connectBtn", PushButton::EventClicked, Event::Subscriber(&GUIApplication::onConnectBtnClicked, this));
-    addEventHandler("networkSettings/listenBtn", PushButton::EventClicked, Event::Subscriber(&GUIApplication::onListenBtnClicked, this));
+    //addEventHandler("networkSettings/connectBtn", PushButton::EventClicked, Event::Subscriber(&GUIApplication::onConnectBtnClicked, this));
+    //addEventHandler("networkSettings/listenBtn", PushButton::EventClicked, Event::Subscriber(&GUIApplication::onListenBtnClicked, this));
 
     addEventHandler("console/input", Window::EventMouseClick, Event::Subscriber(&GUIApplication::onConsoleClicked, this));
     addEventHandler("console/output", Window::EventMouseClick, Event::Subscriber(&GUIApplication::onConsoleClicked, this));
@@ -287,7 +288,7 @@ bool GUIApplication::onSendBtnClicked(const EventArgs& args)
     return true;
 }
 
-bool GUIApplication::onConnectBtnClicked(const EventArgs& args)
+/*bool GUIApplication::onConnectBtnClicked(const EventArgs& args)
 {
     Window* addrWindow = m_guiContext->getRootWindow()->getChild("networkSettings/address");
     if (addrWindow)
@@ -316,7 +317,7 @@ bool GUIApplication::onListenBtnClicked(const EventArgs& args)
             m_currentLevel->setServerSide(true);
     }
     return true;
-}
+}*/
 
 bool GUIApplication::onWindowCloseClicked(const EventArgs& args)
 {
@@ -334,7 +335,7 @@ void GUIApplication::onNewFuturellaPeer(const RemoteMessagePeer::pointer& peer)
             msg->serverName = m_gameServer->name();
             peer->send(msg);
         }
-        m_currentLevel->connectLocallyTo(peer);
+        //m_currentLevel->connectLocallyTo(peer);
         std::cout << "peer activated\n";
     }, this);
 
@@ -618,8 +619,8 @@ void GUIApplication::consoleStartNetServer(const std::vector<String>& params, St
         return;
     }
 
-    if (m_currentLevel)
-        m_currentLevel->setServerSide(true);
+    //if (m_currentLevel)
+    //    m_currentLevel->setServerSide(true);
     output = "\ncommand accepted.";
 }
 
@@ -724,7 +725,7 @@ void GUIApplication::consoleConnectGameServer(const std::vector<String>& params,
         return;
     }
 
-    m_gameClient = new GameInstanceClient;
+    m_gameClient = new GameInstanceClient(m_rootGroup);
     m_gameClient->onClientOrphaned(m_renderThreadService->wrap([this](){
         // No server is connected to the game client, so we may just drop it
         delete m_gameClient;

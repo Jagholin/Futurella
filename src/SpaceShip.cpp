@@ -86,7 +86,8 @@ void SpaceShip::setOrientation(osg::Quat o)
     m_orientation = o;
 }
 
-void SpaceShip::setInput(inputType t, bool state){
+void SpaceShip::setInput(inputType t, bool state)
+{
     m_inputState[t] = state;
 }
 

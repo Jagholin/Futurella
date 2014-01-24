@@ -22,16 +22,16 @@ int main()
     std::srand(std::chrono::system_clock::now().time_since_epoch().count());
     // setup CEGUI as OSG drawable
     osgViewer::Viewer viewer;
-    GUIApplication guiApp(&viewer);
 
     osg::ref_ptr<osg::Group> root = new osg::Group;
+    GUIApplication guiApp(&viewer, root);
 
-    osg::ref_ptr<osg::Group> asteroids = new osg::Group;
-    std::shared_ptr<SpaceShip> ship(new SpaceShip);
-    ChaseCam *chaseCam = new ChaseCam(ship.get());
-    Level level(6, 0.5f, 1, asteroids.get());
-    guiApp.setCurrentLevel(&level);
-    level.setMySpaceShip(ship);
+    //osg::ref_ptr<osg::Group> asteroids = new osg::Group;
+    //std::shared_ptr<SpaceShip> ship(new SpaceShip);
+    //ChaseCam *chaseCam = new ChaseCam(ship.get());
+    //Level level(6, 0.5f, 1, asteroids.get());
+    //guiApp.setCurrentLevel(&level);
+    //level.setMySpaceShip(ship);
 
     osg::ref_ptr<osg::Geode> ceguiNode = new osg::Geode;
     osg::ref_ptr<CeguiDrawable> guiSurface = new CeguiDrawable;
@@ -45,22 +45,22 @@ int main()
     postCamera->setClearMask(GL_DEPTH_BUFFER_BIT);
     postCamera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER);
 
-    root->addChild(asteroids);
+    //root->addChild(asteroids);
     postCamera->addChild(ceguiNode);
 
     root->addChild(postCamera);
-    root->addChild(ship->getTransformGroup());
+    //root->addChild(ship->getTransformGroup());
 
     viewer.setSceneData(root.get());
     viewer.setThreadingModel(osgViewer::Viewer::SingleThreaded);
 
     viewer.realize();
-    level.updateField();
+    //level.updateField();
 
     osgViewer::ViewerBase::Windows windowList;
     viewer.getWindows(windowList);
     windowList[0]->useCursor(false);
-    viewer.setCameraManipulator(chaseCam);
+    //viewer.setCameraManipulator(chaseCam);
 //	viewer.setCameraManipulator(new osgGA::TrackballManipulator);
 
     viewer.realize();
@@ -73,7 +73,7 @@ int main()
     while (!viewer.done()){
         start = std::chrono::steady_clock::now();
 
-        ship->update(frameTime.count());
+        //ship->update(frameTime.count());
         viewer.frame();
 
         frameTime = std::chrono::steady_clock::now() - start;

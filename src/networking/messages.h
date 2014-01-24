@@ -158,7 +158,7 @@ public:
 
     // send a message to *this* MessagePeer.
     bool send(const NetMessage::const_pointer& msg, MessagePeer* sender = nullptr);
-protected:
+
     // inform all connected(except yourself) peers about the message
     void broadcastLocally(const NetMessage::const_pointer&);
 private:
