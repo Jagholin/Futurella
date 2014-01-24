@@ -2,8 +2,9 @@
 #include "../gamecommon/GameObject.h"
 #include "../networking/peermanager.h"
 
-GameInstanceClient::GameInstanceClient(osg::Group* rootGroup):
+GameInstanceClient::GameInstanceClient(osg::Group* rootGroup, osgViewer::Viewer* viewer):
 m_rootGraphicsGroup(rootGroup),
+m_viewer(viewer),
 m_connected(false),
 m_orphaned(false)
 {
@@ -47,7 +48,12 @@ bool GameInstanceClient::unknownObjectIdMessage(const GameMessage::const_pointer
 void GameInstanceClient::addExternalSpaceShip(SpaceShipClient::pointer ship)
 {
     if (ship->getOwnerId() == RemotePeersManager::getManager()->getMyId())
+    {
         m_myShip = ship;
+        m_shipCamera = new ChaseCam(m_myShip.get());
+        m_viewer->setCameraManipulator(m_shipCamera);
+        m_viewer->getCamera()->setProjectionMatrixAsPerspective(60, 16.0f / 9.0f, 0.1f, 1000); //TODO: use real aspect ratio
+    }
     else
         m_otherShips.push_back(ship);
 }

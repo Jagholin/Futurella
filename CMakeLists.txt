@@ -76,14 +76,10 @@ add_executable(Futurella
     src/Asteroid.h
     src/AsteroidField.cpp
     src/AsteroidField.h
-    src/Level.cpp
-    src/Level.h
     src/Node.cpp
     src/Node.h
     src/ChaseCam.cpp
-    src/ChaseCam.h
-    src/SpaceShip.cpp
-    src/SpaceShip.h)
+    src/ChaseCam.h)
 
 add_lib(Futurella OPENTHREADS)
 add_lib(Futurella OSG)

@@ -159,6 +159,7 @@ public:
     // send a message to *this* MessagePeer.
     bool send(const NetMessage::const_pointer& msg, MessagePeer* sender = nullptr);
 
+protected:
     // inform all connected(except yourself) peers about the message
     void broadcastLocally(const NetMessage::const_pointer&);
 private:
@@ -186,6 +187,7 @@ public:
     template <typename T>
     static unsigned int regFactory(unsigned int id)
     {
+        assert(msgFactories.count(id) == 0);
         msgFactories[id] = [](const std::string& str) -> NetMessage::const_pointer {
             typename T::pointer tempObj{ new T };
             tempObj->fromRaw(str);

@@ -27,6 +27,7 @@ protected:
     uint16_t m_myObjectId;
     uint32_t m_myOwnerId;
 
+    void messageToPartner(const GameMessage::pointer& msg);
 private:
     static int m_dummy;
 };

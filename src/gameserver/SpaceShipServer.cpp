@@ -27,7 +27,7 @@ END_GAMETORAWMESSAGE_QCONVERT()
 BEGIN_RAWTOGAMEMESSAGE_QCONVERT(SpaceShipCollision)
 END_RAWTOGAMEMESSAGE_QCONVERT()
 
-SpaceShipServer::SpaceShipServer(osg::Vec3f startPos, osg::Vec4f orient, uint32_t ownerId, GameInstanceServer* ctx):
+SpaceShipServer::SpaceShipServer(osg::Vec3f startPos, osg::Quat orient, uint32_t ownerId, GameInstanceServer* ctx):
 GameObject(ownerId, ctx),
 m_pos(startPos),
 m_orientation(orient),
@@ -108,7 +108,7 @@ void SpaceShipServer::timeTick(float dt)
     msg->orient = m_orientation.asVec4();
     msg->velocity = m_velocity;
     msg->objectId = m_myObjectId;
-    m_context->broadcastLocally(msg);
+    messageToPartner(msg);
 }
 
 GameMessage::pointer SpaceShipServer::creationMessage() const

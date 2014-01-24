@@ -25,7 +25,7 @@ void GameInstanceServer::connectLocallyTo(MessagePeer* buddy, bool recursive /*=
     // we have got a new client! Create a SpaceShip just for him
     GameMessagePeer::connectLocallyTo(buddy, recursive);
 
-    SpaceShipServer::pointer hisShip{ new SpaceShipServer(osg::Vec3f(), osg::Vec4f(), RemotePeersManager::getManager()->getPeersId(buddy), this) };
+    SpaceShipServer::pointer hisShip{ new SpaceShipServer(osg::Vec3f(), osg::Quat(0, osg::Vec3f(1, 0, 0)), RemotePeersManager::getManager()->getPeersId(buddy), this) };
     m_peerSpaceShips.insert(std::make_pair(buddy, hisShip));
 
     for (std::pair<MessagePeer*, SpaceShipServer::pointer> aShip : m_peerSpaceShips)

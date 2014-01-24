@@ -2,7 +2,7 @@
 
 #include "../networking/messages.h"
 
-struct GameMessage : public NetMessage, public std::enable_shared_from_this<GameMessage>
+struct GameMessage : public NetMessage
 {
     uint16_t objectId;
 
@@ -36,11 +36,7 @@ protected:
     virtual ~GameMessagePeer();
     virtual bool takeMessage(const NetMessage::const_pointer&, MessagePeer*);
 
-    // this function is to be implemented in all inherited classes
-    //virtual bool takeMessage(const GameMessage::const_pointer&, MessagePeer*) = 0;
-
 public:
-    // ...
 
     // Retrieves owner_id identification of this object.
     virtual uint16_t getOwnerId() const;
@@ -49,7 +45,11 @@ public:
     uint16_t registerGameObject(GameObject*);
     void unregisterGameObject(uint16_t objId);
 
+    friend class GameObject;
 protected:
+    // Sends a message to its partner.
+    // used by GameObject only.
+    void messageToPartner(const GameMessage::const_pointer& msg);
     virtual bool unknownObjectIdMessage(const GameMessage::const_pointer& msg, MessagePeer* sender) = 0;
 
 protected:

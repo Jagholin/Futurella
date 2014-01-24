@@ -54,3 +54,8 @@ void GameMessagePeer::unregisterGameObject(uint16_t objId)
 {
     m_messageListeners.erase(objId);
 }
+
+void GameMessagePeer::messageToPartner(const GameMessage::const_pointer& msg)
+{
+    broadcastLocally(msg);
+}

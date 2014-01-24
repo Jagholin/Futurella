@@ -21,8 +21,15 @@ GameObject(objId, ownerId, ctx)
 
     m_shipNode = d;
     m_transformGroup = new osg::MatrixTransform;
-    m_transformGroup->setMatrix(osg::Matrix::translate(0, 0, 0));
+    setTransform(pos, orient);
     m_transformGroup->addChild(m_shipNode);
+
+    m_rootGroup->addChild(m_transformGroup);
+}
+
+SpaceShipClient::~SpaceShipClient()
+{
+    m_rootGroup->removeChild(m_transformGroup);
 }
 
 SpaceShipClient::pointer SpaceShipClient::createFromGameMessage(const GameMessage::const_pointer& msg, GameMessagePeer* ctx)
@@ -43,7 +50,44 @@ bool SpaceShipClient::takeMessage(const GameMessage::const_pointer& msg, Message
         GameSpaceShipPhysicsUpdateMessage::const_pointer realMsg = msg->as<GameSpaceShipPhysicsUpdateMessage>();
 
         // TODO
+        setTransform(realMsg->pos, realMsg->orient);
+        m_projVelocity = realMsg->velocity;
         return true;
     }
     return false;
+}
+
+void SpaceShipClient::setTransform(osg::Vec3f pos, osg::Vec4f orient)
+{
+    m_lastPosition = pos;
+    m_lastOrientation = orient;
+    m_transformGroup->setMatrix(osg::Matrix::translate(pos));
+    osg::Matrix rotationMatrix;
+    osg::Quat(orient).get(rotationMatrix);
+    m_transformGroup->preMult(rotationMatrix);
+}
+
+void SpaceShipClient::tick(float deltaTime)
+{
+    osg::Vec3f newProjPosition = m_lastPosition + m_projVelocity*deltaTime;
+    setTransform(newProjPosition, m_lastOrientation);
+}
+
+void SpaceShipClient::sendInput(SpaceShipServer::inputType inType, bool isOn)
+{
+    GameSpaceShipControlMessage::pointer msg{ new GameSpaceShipControlMessage };
+    msg->objectId = m_myObjectId;
+    msg->inputType = inType;
+    msg->isOn = isOn;
+    messageToPartner(msg);
+}
+
+osg::Quat SpaceShipClient::getOrientation()
+{
+    return osg::Quat(m_lastOrientation);
+}
+
+osg::Vec3f SpaceShipClient::getPivotLocation()
+{
+    return m_lastPosition;
 }

@@ -39,7 +39,7 @@ public:
         BACK
     };
 
-    SpaceShipServer(osg::Vec3f startPos, osg::Vec4f orient, uint32_t ownerId, GameInstanceServer* context);
+    SpaceShipServer(osg::Vec3f startPos, osg::Quat orient, uint32_t ownerId, GameInstanceServer* context);
 
     virtual bool takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender);
 

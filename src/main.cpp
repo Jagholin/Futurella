@@ -21,10 +21,10 @@ int main()
 {
     std::srand(std::chrono::system_clock::now().time_since_epoch().count());
     // setup CEGUI as OSG drawable
-    osgViewer::Viewer viewer;
+    osgViewer::Viewer *viewer = new osgViewer::Viewer;
 
     osg::ref_ptr<osg::Group> root = new osg::Group;
-    GUIApplication guiApp(&viewer, root);
+    GUIApplication guiApp(viewer, root);
 
     //osg::ref_ptr<osg::Group> asteroids = new osg::Group;
     //std::shared_ptr<SpaceShip> ship(new SpaceShip);
@@ -51,30 +51,30 @@ int main()
     root->addChild(postCamera);
     //root->addChild(ship->getTransformGroup());
 
-    viewer.setSceneData(root.get());
-    viewer.setThreadingModel(osgViewer::Viewer::SingleThreaded);
+    viewer->setSceneData(root.get());
+    //viewer->setThreadingModel(osgViewer::Viewer::SingleThreaded);
 
-    viewer.realize();
+    viewer->realize();
     //level.updateField();
 
     osgViewer::ViewerBase::Windows windowList;
-    viewer.getWindows(windowList);
+    viewer->getWindows(windowList);
     windowList[0]->useCursor(false);
     //viewer.setCameraManipulator(chaseCam);
 //	viewer.setCameraManipulator(new osgGA::TrackballManipulator);
 
-    viewer.realize();
+    //viewer.realize();
 
-    viewer.getCamera()->setProjectionMatrixAsPerspective(60, 16.0f / 9.0f, 0.1f, 1000); //TODO: use real aspect ratio
+    viewer->getCamera()->setProjectionMatrixAsPerspective(60, 16.0f / 9.0f, 0.1f, 1000); //TODO: use real aspect ratio
     
     std::chrono::duration<float> frameTime(0);
     std::chrono::steady_clock::time_point start;
 
-    while (!viewer.done()){
+    while (!viewer->done()){
         start = std::chrono::steady_clock::now();
 
         //ship->update(frameTime.count());
-        viewer.frame();
+        viewer->frame();
 
         frameTime = std::chrono::steady_clock::now() - start;
     }

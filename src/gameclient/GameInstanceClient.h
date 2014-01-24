@@ -2,12 +2,15 @@
 
 #include "../gamecommon/GameMessagePeer.h"
 #include "SpaceShipClient.h"
+#include "../ChaseCam.h"
+
+#include <osgViewer/Viewer>
 
 class GameInstanceClient : public GameMessagePeer
 {
     // TODO
 public:
-    GameInstanceClient(osg::Group* rootGroup);
+    GameInstanceClient(osg::Group* rootGroup, osgViewer::Viewer* viewer);
     //...
 
     // Connect clientOrphaned signal to the given slot.
@@ -27,6 +30,8 @@ public:
 protected:
     addstd::signal<void()> m_clientOrphaned;
     osg::ref_ptr<osg::Group> m_rootGraphicsGroup;
+    osg::ref_ptr<osgViewer::Viewer> m_viewer;
+    osg::ref_ptr<ChaseCam> m_shipCamera;
 
     std::vector<SpaceShipClient::pointer> m_otherShips;
     SpaceShipClient::pointer m_myShip;

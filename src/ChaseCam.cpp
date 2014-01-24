@@ -8,9 +8,9 @@
 using namespace osg;
 using namespace osgGA;
 
-ChaseCam::ChaseCam(SpaceShip* spaceShip) 
+ChaseCam::ChaseCam(SpaceShipClient* spaceShip):
+ship(spaceShip)
 {
-    ship = spaceShip;
     delayRotation.makeRotate(0,osg::Vec3f(1,0,0));
 }
 
@@ -45,27 +45,27 @@ bool ChaseCam::handle(const GUIEventAdapter& ea, GUIActionAdapter& us)
     {
         bool onoff = (et == GUIEventAdapter::KEYDOWN);
         if (ea.getKey() == GUIEventAdapter::KEY_Space) {
-            ship->setInput(SpaceShip::ACCELERATE, onoff);
+            ship->sendInput(SpaceShipServer::ACCELERATE, onoff);
             return true;
         }
         else if (ea.getKey() == GUIEventAdapter::KEY_Left) {
-            ship->setInput(SpaceShip::LEFT, onoff);
+            ship->sendInput(SpaceShipServer::LEFT, onoff);
             return true;
         }
         else if (ea.getKey() == GUIEventAdapter::KEY_Right) {
-            ship->setInput(SpaceShip::RIGHT, onoff);
+            ship->sendInput(SpaceShipServer::RIGHT, onoff);
             return true;
         }
         else if (ea.getKey() == GUIEventAdapter::KEY_Up) {
-            ship->setInput(SpaceShip::UP, onoff);
+            ship->sendInput(SpaceShipServer::UP, onoff);
             return true;
         }
         else if (ea.getKey() == GUIEventAdapter::KEY_Down) {
-            ship->setInput(SpaceShip::DOWN, onoff);
+            ship->sendInput(SpaceShipServer::DOWN, onoff);
             return true;
         }
         else if (ea.getKey() == GUIEventAdapter::KEY_S) {
-            ship->setInput(SpaceShip::BACK, onoff);
+            ship->sendInput(SpaceShipServer::BACK, onoff);
             return true;
         }
     }
@@ -109,7 +109,7 @@ void ChaseCam::computeMatrix()
     delayRotation.slerp(0.05, delayRotation, ship->getOrientation());
     delayRotation.get(shipTransform);
     newCameraMatrix.postMult(shipTransform);
-    shipTransform.makeTranslate(ship->getCenter());
+    shipTransform.makeTranslate(ship->getPivotLocation());
     newCameraMatrix.postMult(shipTransform);
 
     //zoom

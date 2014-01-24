@@ -2,7 +2,8 @@
 #include <osgGA/CameraManipulator>
 #include <osg/Quat>
 
-#include "SpaceShip.h"
+//#include "SpaceShip.h"
+#include "gameclient/SpaceShipClient.h"
 
 /**
 ChaseCam is a camera manipulator which provides functionality to steer the space ship.
@@ -13,7 +14,7 @@ class ChaseCam : public osgGA::CameraManipulator
 {
 public:
 
-    ChaseCam(SpaceShip* spaceShip);
+    ChaseCam(SpaceShipClient* spaceShip);
 
     virtual const char* className() const { return "ChaseCam"; }
 
@@ -45,7 +46,7 @@ public:
     virtual ~ChaseCam();
 
 protected:
-    SpaceShip* ship;
+    SpaceShipClient* ship;
 
     bool intersect(const osg::Vec3d& start, const osg::Vec3d& end, osg::Vec3d& intersection, osg::Vec3d& normal) const;
 

@@ -725,7 +725,7 @@ void GUIApplication::consoleConnectGameServer(const std::vector<String>& params,
         return;
     }
 
-    m_gameClient = new GameInstanceClient(m_rootGroup);
+    m_gameClient = new GameInstanceClient(m_rootGroup, m_osgApp);
     m_gameClient->onClientOrphaned(m_renderThreadService->wrap([this](){
         // No server is connected to the game client, so we may just drop it
         delete m_gameClient;

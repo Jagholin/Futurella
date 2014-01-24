@@ -31,7 +31,7 @@ GameObject::~GameObject()
 
 uint32_t GameObject::getOwnerId() const
 {
-    return m_context->getOwnerId();
+    return m_myOwnerId;
 }
 
 uint16_t GameObject::getObjectId() const
@@ -42,6 +42,12 @@ uint16_t GameObject::getObjectId() const
 GameObject::pointer GameObject::createFromGameMessage(const GameMessage::const_pointer& msg, GameMessagePeer*)
 {
     throw std::runtime_error("Not implemented: GameObject::createFromGameMessage");
+}
+
+void GameObject::messageToPartner(const GameMessage::pointer& msg)
+{
+    msg->objectId = m_myObjectId;
+    m_context->messageToPartner(msg);
 }
 
 GameObject::pointer GameObjectFactory::createFromGameMessage(const GameMessage::const_pointer& msg, GameMessagePeer* ctx)
