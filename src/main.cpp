@@ -27,11 +27,7 @@ int main()
     GUIApplication guiApp(viewer, root);
 
     //osg::ref_ptr<osg::Group> asteroids = new osg::Group;
-    //std::shared_ptr<SpaceShip> ship(new SpaceShip);
-    //ChaseCam *chaseCam = new ChaseCam(ship.get());
     //Level level(6, 0.5f, 1, asteroids.get());
-    //guiApp.setCurrentLevel(&level);
-    //level.setMySpaceShip(ship);
 
     osg::ref_ptr<osg::Geode> ceguiNode = new osg::Geode;
     osg::ref_ptr<CeguiDrawable> guiSurface = new CeguiDrawable;
@@ -49,23 +45,18 @@ int main()
     postCamera->addChild(ceguiNode);
 
     root->addChild(postCamera);
-    //root->addChild(ship->getTransformGroup());
 
     viewer->setSceneData(root.get());
     //viewer->setThreadingModel(osgViewer::Viewer::SingleThreaded);
 
     viewer->realize();
-    //level.updateField();
 
     osgViewer::ViewerBase::Windows windowList;
     viewer->getWindows(windowList);
     windowList[0]->useCursor(false);
-    //viewer.setCameraManipulator(chaseCam);
-//	viewer.setCameraManipulator(new osgGA::TrackballManipulator);
 
-    //viewer.realize();
-
-    viewer->getCamera()->setProjectionMatrixAsPerspective(60, 16.0f / 9.0f, 0.1f, 1000); //TODO: use real aspect ratio
+    //Camera setup: in SpaceShipClient
+    //viewer->getCamera()->setProjectionMatrixAsPerspective(60, 16.0f / 9.0f, 0.1f, 1000); //TODO: use real aspect ratio
     
     std::chrono::duration<float> frameTime(0);
     std::chrono::steady_clock::time_point start;
@@ -73,7 +64,6 @@ int main()
     while (!viewer->done()){
         start = std::chrono::steady_clock::now();
 
-        //ship->update(frameTime.count());
         guiApp.timeTick(frameTime.count());
         viewer->frame();
 

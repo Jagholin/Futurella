@@ -80,3 +80,8 @@ osg::Group* GameInstanceClient::sceneGraphRoot()
 {
     return m_rootGraphicsGroup;
 }
+
+void GameInstanceClient::setAsteroidField(AsteroidFieldClient::pointer asts)
+{
+    m_myAsteroids = asts;
+}

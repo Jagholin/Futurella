@@ -2,7 +2,8 @@
 #include "../networking/peermanager.h"
 
 GameInstanceServer::GameInstanceServer(const std::string &name) :
-m_name(name)
+m_name(name),
+m_asteroidField(new AsteroidFieldServer(10, 0.5f, 1, 0, this))
 {
     // nop
 }
@@ -16,7 +17,7 @@ bool GameInstanceServer::unknownObjectIdMessage(const GameMessage::const_pointer
 {
     // The creation of objects on the client side is not allowed.
 
-    // TODO: terminate the connection
+    std::cerr << "WTF? GameInstanceServer just received a message from an object with non-existing objectId[" << msg->objectId << "]\n";
     return false;
 }
 
@@ -26,13 +27,16 @@ void GameInstanceServer::connectLocallyTo(MessagePeer* buddy, bool recursive /*=
     GameMessagePeer::connectLocallyTo(buddy, recursive);
 
     SpaceShipServer::pointer hisShip{ new SpaceShipServer(osg::Vec3f(), osg::Quat(0, osg::Vec3f(1, 0, 0)), RemotePeersManager::getManager()->getPeersId(buddy), this) };
-    m_peerSpaceShips.insert(std::make_pair(buddy, hisShip));
 
+    GameMessage::pointer constructItMsg = m_asteroidField->creationMessage();
+    buddy->send(constructItMsg);
     for (std::pair<MessagePeer*, SpaceShipServer::pointer> aShip : m_peerSpaceShips)
     {
-        GameMessage::pointer constructItMsg = aShip.second->creationMessage();
+        constructItMsg = aShip.second->creationMessage();
         buddy->send(constructItMsg);
     }
+    broadcastLocally(hisShip->creationMessage());
+    m_peerSpaceShips.insert(std::make_pair(buddy, hisShip));
 }
 
 void GameInstanceServer::disconnectLocallyFrom(MessagePeer* buddy, bool recursive /*= true*/)

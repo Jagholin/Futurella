@@ -102,7 +102,7 @@ void SpaceShipClient::setTransform(osg::Vec3f pos, osg::Vec4f orient)
 void SpaceShipClient::tick(float deltaTime)
 {
     osg::Vec3f newProjPosition = m_lastPosition + m_projVelocity*deltaTime;
-    setTransform(newProjPosition, m_lastOrientation);
+    //setTransform(newProjPosition, m_lastOrientation);
 }
 
 void SpaceShipClient::sendInput(SpaceShipServer::inputType inType, bool isOn)

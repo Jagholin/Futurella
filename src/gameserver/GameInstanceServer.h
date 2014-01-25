@@ -2,6 +2,7 @@
 
 #include "../gamecommon/GameMessagePeer.h"
 #include "SpaceShipServer.h"
+#include "AsteroidFieldServer.h"
 
 class GameInstanceServer : public GameMessagePeer
 {
@@ -20,6 +21,7 @@ public:
 
 protected:
     std::map<MessagePeer*, SpaceShipServer::pointer> m_peerSpaceShips;
+    AsteroidFieldServer::pointer m_asteroidField;
 
     std::string m_name;
 };

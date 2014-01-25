@@ -52,15 +52,12 @@ public:
     void registerEvents();
 
     void setGuiService(const std::shared_ptr<boost::asio::io_service>& service);
-    //void setCurrentLevel(Level* levelData);
     void timeTick(float dt);
 
     // gui-triggered event handlers
     bool onQuitBtnClicked(const CEGUI::EventArgs&);
     bool onWindowCloseClicked(const CEGUI::EventArgs&);
     bool onSendBtnClicked(const CEGUI::EventArgs&);
-    //bool onConnectBtnClicked(const CEGUI::EventArgs&);
-    //bool onListenBtnClicked(const CEGUI::EventArgs&);
     bool onConsoleClicked(const CEGUI::EventArgs&);
     bool onConsoleInput(const CEGUI::EventArgs&);
 
@@ -80,7 +77,6 @@ protected:
     std::shared_ptr<boost::asio::io_service> m_renderThreadService;
     AsioThread m_networkThread;
     
-    //Level* m_currentLevel;
     GameInstanceServer* m_gameServer;
     GameInstanceClient* m_gameClient;
     std::vector<std::tuple<std::string, MessagePeer*>> m_availableGameServers;

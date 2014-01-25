@@ -288,37 +288,6 @@ bool GUIApplication::onSendBtnClicked(const EventArgs& args)
     return true;
 }
 
-/*bool GUIApplication::onConnectBtnClicked(const EventArgs& args)
-{
-    Window* addrWindow = m_guiContext->getRootWindow()->getChild("networkSettings/address");
-    if (addrWindow)
-    {
-        // Create the NetConnection and associated peer
-        NetConnection* newConnection = new NetConnection(*m_networkService);
-        RemoteMessagePeer* myPeer = new RemoteMessagePeer(newConnection, false, *m_networkService);
-
-        newConnection->connectTo(addrWindow->getText().c_str(), 1778);
-        if (!m_networkThread.isRunning())
-            m_networkThread.start();
-    }
-    return true;
-}
-
-bool GUIApplication::onListenBtnClicked(const EventArgs& args)
-{
-    Window* portNumber = m_guiContext->getRootWindow()->getChild("networkSettings/portNumber");
-    if (portNumber)
-    {
-        // Instantiating the server 
-        unsigned int port = boost::lexical_cast<unsigned int>(portNumber->getText());
-        std::string err;
-        bool result = m_networkThread.createAndStartNetServer(port, m_userListensUdpPort, err);
-        if (m_currentLevel)
-            m_currentLevel->setServerSide(true);
-    }
-    return true;
-}*/
-
 bool GUIApplication::onWindowCloseClicked(const EventArgs& args)
 {
     const WindowEventArgs* realArgs = static_cast<const WindowEventArgs*>(&args);
