@@ -12,7 +12,7 @@
 #include "CEGUIDrawable.h"
 #include "GUIApplication.h"
 
-#include "Level.h"
+#include "gameclient/LevelDrawable.h"
 #include "Asteroid.h"
 #include "SpaceShip.h"
 #include "ChaseCam.h"
@@ -25,6 +25,8 @@ int main()
 
     osg::ref_ptr<osg::Group> root = new osg::Group;
     GUIApplication guiApp(viewer, root);
+
+
 
     //osg::ref_ptr<osg::Group> asteroids = new osg::Group;
     //Level level(6, 0.5f, 1, asteroids.get());
@@ -48,6 +50,13 @@ int main()
 
     viewer->setSceneData(root.get());
     //viewer->setThreadingModel(osgViewer::Viewer::SingleThreaded);
+
+    //debug octahedron
+
+    osg::ref_ptr<osg::Drawable> octahedron = new LevelDrawable();
+    osg::ref_ptr<osg::Geode> blabla = new osg::Geode();
+    blabla->addDrawable(octahedron);
+    root->addChild(blabla);
 
     viewer->realize();
 

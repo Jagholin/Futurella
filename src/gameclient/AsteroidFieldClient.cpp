@@ -13,6 +13,7 @@ GameObject(objId, ownId, ctx)
     //int i = 0;
     for (int i = 0; i < createMessage->position.size(); i++)
     {
+		//level drawable erstellen
         osg::Geode * asteroidsGeode = new osg::Geode;
         osg::ref_ptr<osg::Shape> sphere = new osg::Sphere(createMessage->position.at(i), createMessage->radius.at(i));
         osg::ref_ptr<osg::ShapeDrawable> ast = new osg::ShapeDrawable(sphere);

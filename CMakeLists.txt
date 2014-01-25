@@ -83,7 +83,9 @@ add_executable(Futurella
     src/Node.cpp
     src/Node.h
     src/ChaseCam.cpp
-    src/ChaseCam.h)
+    src/ChaseCam.h
+    src/gameclient/LevelDrawable.cpp
+    src/gameclient/LevelDrawable.h)
 
 add_lib(Futurella OPENTHREADS)
 add_lib(Futurella OSG)
