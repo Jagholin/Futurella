@@ -15,6 +15,9 @@ PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray;
 LevelDrawable::LevelDrawable()
 {
     m_initialized = false;
+
+    setUseDisplayList(false);
+    setSupportsDisplayList(false);
 }
 
 

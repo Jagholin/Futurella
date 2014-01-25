@@ -46,7 +46,7 @@ int main()
     //root->addChild(asteroids);
     postCamera->addChild(ceguiNode);
 
-    root->addChild(postCamera);
+    //root->addChild(postCamera);
 
     viewer->setSceneData(root.get());
     //viewer->setThreadingModel(osgViewer::Viewer::SingleThreaded);
