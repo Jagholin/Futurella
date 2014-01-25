@@ -305,7 +305,7 @@ unsigned int NetConnImpl::writeUDP(RawMessage::const_pointer msg)
 
     //unsigned short portToSend = udpEndpoint.port();
     mserv.dispatch([this, toSend](){
-        std::cerr << "Sending to " << udpEndpoint.address().to_string() << ": " << udpEndpoint.port() << " " << toSend->size() << "bytes\n";
+        //std::cerr << "Sending to " << udpEndpoint.address().to_string() << ": " << udpEndpoint.port() << " " << toSend->size() << "bytes\n";
         mySockUDP->async_send_to(asio::buffer(*toSend), udpEndpoint, std::bind(&NetConnImpl::onMsgSentUDP,
             shared_from_this(), toSend,
             std::placeholders::_1, std::placeholders::_2));
@@ -640,7 +640,7 @@ void NetServerImpl::onDatagramReceive(const boost::system::error_code& ec, std::
     if (!ec)
     {
         char* buffer = &(mDatagramBuffer[0]);
-        std::cerr << "Received dg size= " << datagramSize << " bytes\n";
+        //std::cerr << "Received dg size= " << datagramSize << " bytes\n";
         if (datagramSize >= sizeof(uint16_t)+sizeof(uint32_t))
         {
             uint16_t packetSize = ntohs(*reinterpret_cast<uint16_t*>(buffer));

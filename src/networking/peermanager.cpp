@@ -164,7 +164,7 @@ RemoteMessagePeer::~RemoteMessagePeer()
 bool RemoteMessagePeer::takeMessage(const NetMessage::const_pointer& msg,
                                    MessagePeer*)
 {
-    std::cout << "Message send: type=" << msg->gettype() << " ";
+    //std::cout << "Message send: type=" << msg->gettype() << " ";
     // We can't send any messages till we are ready with greetings procedure
     if (m_status == MP_DISCONNECTED)
     {
@@ -173,7 +173,7 @@ bool RemoteMessagePeer::takeMessage(const NetMessage::const_pointer& msg,
     }
     if (m_active)
     {
-        std::cout << "active=true\n";
+        //std::cout << "active=true\n";
         if (msg->prefersUdp())  // TODO: sophisticated udp/tcp choice algorithm?
             m_connectLine->sendAsUDP(msg->toRaw());
         else
@@ -181,7 +181,7 @@ bool RemoteMessagePeer::takeMessage(const NetMessage::const_pointer& msg,
     }
     else
     {
-        std::cout << "active=false\n";
+        //std::cout << "active=false\n";
         m_activationWaitingQueue.push_back(msg);
     }
     return m_active;
@@ -191,12 +191,12 @@ void RemoteMessagePeer::netMessageReceived(RawMessage::pointer msg)
 {
     try
     {
-        std::cout << "Message receive: type=" << msg->msgType << " ";
+        //std::cout << "Message receive: type=" << msg->msgType << " ";
         NetMessage::const_pointer realMsg = MsgFactory::create(*msg);
         // If we are not ready, only greetings messages are allowed
         if (m_active)
         {
-            std::cout << "active=true\n";
+            //std::cout << "active=true\n";
             if (realMsg->gettype() == NetAvailablePeerMessage::type)
             {
                 // Create new tunneling peer object#
@@ -251,7 +251,7 @@ void RemoteMessagePeer::netMessageReceived(RawMessage::pointer msg)
         }
         else
         {
-            std::cout << "active=false\n";
+            //std::cout << "active=false\n";
             std::shared_ptr<const NetHalloMessage> halloMsg = std::dynamic_pointer_cast<const NetHalloMessage>(realMsg);
             if (halloMsg)
                 halloProceed(halloMsg);
