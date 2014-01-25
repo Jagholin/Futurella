@@ -19,6 +19,7 @@
 
 int main()
 {
+
     std::srand(std::chrono::system_clock::now().time_since_epoch().count());
     // setup CEGUI as OSG drawable
     osgViewer::Viewer *viewer = new osgViewer::Viewer;
@@ -52,11 +53,22 @@ int main()
     //viewer->setThreadingModel(osgViewer::Viewer::SingleThreaded);
 
     //debug octahedron
+    osg::ref_ptr<osg::Shader> octahedronVS = new osg::Shader(osg::Shader::VERTEX);
+    osg::ref_ptr<osg::Shader> octahedronFS = new osg::Shader(osg::Shader::FRAGMENT);
+    octahedronVS->loadShaderSourceFromFile("shader/vs_octahedron.txt");
+    octahedronFS->loadShaderSourceFromFile("shader/fs_octahedron.txt");
+
+    osg::ref_ptr<osg::Program> octahedronShader = new osg::Program();
+    octahedronShader->addShader(octahedronVS);
+    octahedronShader->addShader(octahedronFS);
 
     osg::ref_ptr<osg::Drawable> octahedron = new LevelDrawable();
     osg::ref_ptr<osg::Geode> blabla = new osg::Geode();
+    blabla->getOrCreateStateSet()->setAttributeAndModes(octahedronShader, osg::StateAttribute::ON);
     blabla->addDrawable(octahedron);
     root->addChild(blabla);
+
+
 
     viewer->realize();
 
