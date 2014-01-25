@@ -71,6 +71,8 @@ add_executable(Futurella
     src/gameclient/GameInstanceClient.cpp
     src/gameclient/AsteroidFieldClient.h
     src/gameclient/AsteroidFieldClient.cpp
+    src/gameclient/LevelDrawable.cpp
+    src/gameclient/LevelDrawable.h
     src/CEGUIDrawable.h
     src/CEGUIDrawable.cpp
     src/GUIApplication.h
@@ -84,8 +86,8 @@ add_executable(Futurella
     src/Node.h
     src/ChaseCam.cpp
     src/ChaseCam.h
-    src/gameclient/LevelDrawable.cpp
-    src/gameclient/LevelDrawable.h)
+    src/glincludes.h
+    src/glincludes.cpp)
 
 add_lib(Futurella OPENTHREADS)
 add_lib(Futurella OSG)

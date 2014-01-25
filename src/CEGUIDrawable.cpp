@@ -11,10 +11,6 @@
 #include <osg/Timer>
 #include <osg/Depth>
 
-PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
-PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer;
-PFNGLBINDBUFFERPROC glBindBuffer;
-
 class GlobalEventHandler : public osgGA::GUIEventHandler
 {
     std::atomic_bool m_guiHandlesEvents;
@@ -231,6 +227,8 @@ void CeguiDrawable::drawImplementation( osg::RenderInfo& renderInfo ) const
 
     if (!m_initDone)
     {
+        if (!glBindVertexArray)
+            glFuncsInit();
         init();
     }
 
@@ -290,9 +288,6 @@ void CeguiDrawable::init() const
 
     /// HACKS, hacks hacks all around...
     // well, what else can you do here, i have no idea.
-    glBindVertexArray = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(osg::getGLExtensionFuncPtr("glBindVertexArray", "glBindVertexArrayEXT", "glBindVertexArrayARB"));
-    glBindFramebuffer = reinterpret_cast<PFNGLBINDFRAMEBUFFERPROC>(osg::getGLExtensionFuncPtr("glBindFramebuffer"));
-    glBindBuffer = reinterpret_cast<PFNGLBINDBUFFERPROC>(osg::getGLExtensionFuncPtr("glBindBuffer"));
 
     CeguiDrawable* self = const_cast<CeguiDrawable*>(this);
     self->setEventCallback(new GlobalEventHandler);

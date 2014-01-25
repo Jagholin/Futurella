@@ -1,59 +1,37 @@
+#include "../glincludes.h"
 #include "LevelDrawable.h"
 #include <osg/GLExtensions>
+#include <iostream>
 
-
-PFNGLGENBUFFERSPROC glGenBuffers;
-PFNGLBUFFERDATAPROC glBufferData;
-PFNGLDELETEBUFFERSPROC glDeleteBuffers;
-PFNGLGENVERTEXARRAYSPROC glGenVertexArrays;
-PFNGLBINDBUFFERPROC glBindBuffer2;
-PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
-PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
-
-PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray;
-
-LevelDrawable::LevelDrawable()
+LevelDrawable::LevelDrawable():
+m_geometryDirty(true)
 {
-    m_initialized = false;
-
     setUseDisplayList(false);
     setSupportsDisplayList(false);
 }
 
-
 void 
 LevelDrawable::drawImplementation(osg::RenderInfo& renderInfo) const
 {
-    if (!m_initialized) createVertexBuffers();
-    glEnableVertexAttribArray(0);
+    if (m_geometryDirty)
+        initGeometry();
+    glBindVertexArray(vao);
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 24, 2);
+    glBindVertexArray(0);
 
-    glBindBuffer2(GL_ARRAY_BUFFER, basis);
-    glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
-    glDrawArrays(GL_TRIANGLES, 0, 8*3);
-    glBindBuffer2(GL_ARRAY_BUFFER, 0);
-
-    glDisableVertexAttribArray(0);
+    renderInfo.getState()->checkGLErrors("LevelDrawable::drawImplementation");
 } 
 
 void 
-LevelDrawable::createVertexBuffers() const
+LevelDrawable::initGeometry() const
 {
-    /// HACKS, hacks hacks all around...
-    // well, what else can you do here, i have no idea.
-    glGenBuffers = reinterpret_cast<PFNGLGENBUFFERSPROC>(osg::getGLExtensionFuncPtr("glGenBuffers"));
-    glBufferData = reinterpret_cast<PFNGLBUFFERDATAPROC>(osg::getGLExtensionFuncPtr("glBufferData"));
-    glDeleteBuffers = reinterpret_cast<PFNGLDELETEBUFFERSPROC>(osg::getGLExtensionFuncPtr("glDeleteBuffers"));
-    glGenVertexArrays = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(osg::getGLExtensionFuncPtr("glGenVertexArrays"));
-    glBindBuffer2 = reinterpret_cast<PFNGLBINDBUFFERPROC>(osg::getGLExtensionFuncPtr("glBindBuffer"));
-    glVertexAttribPointer = reinterpret_cast<PFNGLVERTEXATTRIBPOINTERPROC>(osg::getGLExtensionFuncPtr("glVertexAttribPointer"));
-    glEnableVertexAttribArray = reinterpret_cast<PFNGLENABLEVERTEXATTRIBARRAYPROC>(osg::getGLExtensionFuncPtr("glEnableVertexAttribArray"));
-    glDisableVertexAttribArray = reinterpret_cast<PFNGLDISABLEVERTEXATTRIBARRAYPROC>(osg::getGLExtensionFuncPtr("glDisableVertexAttribArray"));
-    
+    if (!glGenBuffers)
+        glFuncsInit();
     glGenBuffers(1, &basis);
     glGenBuffers(1, &instanceInfo);
     glGenVertexArrays(1, &vao);
 
-    glBindBuffer2(GL_ARRAY_BUFFER, basis);
+    glBindBuffer(GL_ARRAY_BUFFER, basis);
     float vertices[] = {
         -1, 0, 0,
         0, -1, 0,
@@ -88,7 +66,23 @@ LevelDrawable::createVertexBuffers() const
         0, 0, 1,
     };
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glBindBuffer2(GL_ARRAY_BUFFER, 0);
 
-    m_initialized = true;
+    // While we still have our first VBO active, begin to set VAO up 
+    glBindVertexArray(vao);
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, instanceInfo);
+    float instancePos[] = {
+        0, 0.5, 0,
+        0.5, 0, 0,
+    };
+    glBufferData(GL_ARRAY_BUFFER, sizeof(instancePos), instancePos, GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribDivisor(1, 1);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    m_geometryDirty = false;
 }
