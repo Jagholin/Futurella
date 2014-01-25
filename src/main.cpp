@@ -28,9 +28,6 @@ int main()
     osg::ref_ptr<osg::Group> root = new osg::Group;
     GUIApplication guiApp(viewer, root);
 
-    //osg::ref_ptr<osg::Group> asteroids = new osg::Group;
-    //Level level(6, 0.5f, 1, asteroids.get());
-
     osg::ref_ptr<osg::Geode> ceguiNode = new osg::Geode;
     osg::ref_ptr<CeguiDrawable> guiSurface = new CeguiDrawable;
     guiSurface->setGuiApplication(&guiApp);
@@ -43,32 +40,18 @@ int main()
     postCamera->setClearMask(GL_DEPTH_BUFFER_BIT);
     postCamera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER);
 
-    //root->addChild(asteroids);
     postCamera->addChild(ceguiNode);
 
-    //root->addChild(postCamera);
+    root->addChild(postCamera);
 
     viewer->setSceneData(root.get());
-    //viewer->setThreadingModel(osgViewer::Viewer::SingleThreaded);
 
-    //debug octahedron
-    osg::ref_ptr<osg::Shader> octahedronVS = new osg::Shader(osg::Shader::VERTEX);
-    osg::ref_ptr<osg::Shader> octahedronFS = new osg::Shader(osg::Shader::FRAGMENT);
-    octahedronVS->loadShaderSourceFromFile("shader/vs_octahedron.txt");
-    octahedronFS->loadShaderSourceFromFile("shader/fs_octahedron.txt");
-
-    osg::ref_ptr<osg::Program> octahedronShader = new osg::Program();
-    octahedronShader->addShader(octahedronVS);
-    octahedronShader->addShader(octahedronFS);
-    octahedronShader->addBindAttribLocation("position", 0);
-    octahedronShader->addBindAttribLocation("offset", 1);
-
-    osg::ref_ptr<osg::Drawable> octahedron = new LevelDrawable();
-    osg::ref_ptr<osg::Geode> blabla = new osg::Geode();
-    blabla->getOrCreateStateSet()->setAttributeAndModes(octahedronShader, osg::StateAttribute::ON);
-    blabla->addDrawable(octahedron);
-    root->addChild(blabla);
-    viewer->setCameraManipulator(new osgGA::TrackballManipulator);
+//     osg::ref_ptr<osg::Drawable> octahedron = new LevelDrawable();
+//     osg::ref_ptr<osg::Geode> blabla = new osg::Geode();
+//     blabla->getOrCreateStateSet()->setAttributeAndModes(octahedronShader, osg::StateAttribute::ON);
+//     blabla->addDrawable(octahedron);
+//     root->addChild(blabla);
+    //viewer->setCameraManipulator(new osgGA::TrackballManipulator);
     viewer->realize();
     //viewer->getCamera()->getGraphicsContext()->getState()->setUseModelViewAndProjectionUniforms(true);
 

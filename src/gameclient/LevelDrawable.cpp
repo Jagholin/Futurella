@@ -4,7 +4,9 @@
 #include <iostream>
 
 LevelDrawable::LevelDrawable():
-m_geometryDirty(true)
+basis(0), instanceInfo(0), vao(0),
+m_geometryDirty(true),
+m_asteroidCount(0)
 {
     setUseDisplayList(false);
     setSupportsDisplayList(false);
@@ -16,7 +18,7 @@ LevelDrawable::drawImplementation(osg::RenderInfo& renderInfo) const
     if (m_geometryDirty)
         initGeometry();
     glBindVertexArray(vao);
-    glDrawArraysInstanced(GL_TRIANGLES, 0, 24, 2);
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 24, m_asteroidCount);
     glBindVertexArray(0);
 
     renderInfo.getState()->checkGLErrors("LevelDrawable::drawImplementation");
@@ -27,62 +29,81 @@ LevelDrawable::initGeometry() const
 {
     if (!glGenBuffers)
         glFuncsInit();
-    glGenBuffers(1, &basis);
-    glGenBuffers(1, &instanceInfo);
-    glGenVertexArrays(1, &vao);
+    if (basis == 0)
+    {
+        glGenBuffers(1, &basis);
+        glBindBuffer(GL_ARRAY_BUFFER, basis);
+        float vertices[] = {
+            -1, 0, 0,
+            0, -1, 0,
+            0, 0, -1,
 
-    glBindBuffer(GL_ARRAY_BUFFER, basis);
-    float vertices[] = {
-        -1, 0, 0,
-        0, -1, 0,
-        0, 0, -1,
+            -1, 0, 0,
+            0, -1, 0,
+            0, 0, 1,
 
-        -1, 0, 0,
-        0, -1, 0,
-        0, 0, 1,
+            1, 0, 0,
+            0, -1, 0,
+            0, 0, -1,
 
-        1, 0, 0,
-        0, -1, 0,
-        0, 0, -1,
+            1, 0, 0,
+            0, -1, 0,
+            0, 0, 1,
 
-        1, 0, 0,
-        0, -1, 0,
-        0, 0, 1,
+            -1, 0, 0,
+            0, 1, 0,
+            0, 0, -1,
 
-        -1, 0, 0,
-        0, 1, 0,
-        0, 0, -1,
+            -1, 0, 0,
+            0, 1, 0,
+            0, 0, 1,
 
-        -1, 0, 0,
-        0, 1, 0,
-        0, 0, 1,
+            1, 0, 0,
+            0, 1, 0,
+            0, 0, -1,
 
-        1, 0, 0,
-        0, 1, 0,
-        0, 0, -1,
+            1, 0, 0,
+            0, 1, 0,
+            0, 0, 1,
+        };
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    }
+    else
+        glBindBuffer(GL_ARRAY_BUFFER, basis);
 
-        1, 0, 0,
-        0, 1, 0,
-        0, 0, 1,
-    };
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    if (instanceInfo == 0)
+        glGenBuffers(1, &instanceInfo);
+
+    if (vao == 0)
+        glGenVertexArrays(1, &vao);
 
     // While we still have our first VBO active, begin to set VAO up 
     glBindVertexArray(vao);
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
+
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
     glBindBuffer(GL_ARRAY_BUFFER, instanceInfo);
-    float instancePos[] = {
-        0, 0.5, 0,
-        0.5, 0, 0,
-    };
-    glBufferData(GL_ARRAY_BUFFER, sizeof(instancePos), instancePos, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, m_instanceRawData.size() * sizeof(float), &(m_instanceRawData[0]), GL_DYNAMIC_DRAW);
+
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    //glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (GLvoid*)(3 * sizeof(float)));
     glVertexAttribDivisor(1, 1);
+    //glVertexAttribDivisor(2, 1);
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
     m_geometryDirty = false;
+}
+
+void LevelDrawable::addAsteroid(osg::Vec3f position, float scale)
+{
+    m_instanceRawData.push_back(position.x());
+    m_instanceRawData.push_back(position.y());
+    m_instanceRawData.push_back(position.z());
+    m_instanceRawData.push_back(scale);
+    ++m_asteroidCount;
+    m_geometryDirty = true;
 }

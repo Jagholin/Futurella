@@ -14,9 +14,12 @@ public:
     LevelDrawable();
 
     virtual void drawImplementation(osg::RenderInfo& renderInfo) const;
+    void addAsteroid(osg::Vec3f position, float scale);
 
 private:
     mutable GLuint basis, instanceInfo, vao;
+    std::vector<float> m_instanceRawData;
     mutable bool m_geometryDirty;
+    int m_asteroidCount;
     virtual void initGeometry() const;
 };

@@ -1,5 +1,6 @@
 #include "AsteroidFieldClient.h"
 #include "GameInstanceClient.h"
+#include "LevelDrawable.h"
 
 #include <osg/ShapeDrawable>
 
@@ -11,17 +12,38 @@ GameObject(objId, ownId, ctx)
     m_rootGroup = ctx->sceneGraphRoot();
     m_asteroidsGroup = new osg::Group;
     //int i = 0;
+
+    // compile the shaders
+    osg::ref_ptr<osg::Shader> octahedronVS = new osg::Shader(osg::Shader::VERTEX);
+    osg::ref_ptr<osg::Shader> octahedronFS = new osg::Shader(osg::Shader::FRAGMENT);
+    octahedronVS->loadShaderSourceFromFile("shader/vs_octahedron.txt");
+    octahedronFS->loadShaderSourceFromFile("shader/fs_octahedron.txt");
+
+    osg::ref_ptr<osg::Program> octahedronShader = new osg::Program();
+    octahedronShader->addShader(octahedronVS);
+    octahedronShader->addShader(octahedronFS);
+    octahedronShader->addBindAttribLocation("position", 0);
+    octahedronShader->addBindAttribLocation("offset", 1);
+
+    osg::Geode * asteroidsGeode = new osg::Geode;
+    LevelDrawable* myLevel = new LevelDrawable;
+    asteroidsGeode->addDrawable(myLevel);
+    m_asteroidsGroup->addChild(asteroidsGeode);
+    m_asteroidsGroup->getOrCreateStateSet()->setAttributeAndModes(octahedronShader, osg::StateAttribute::ON);
+    myLevel->addAsteroid(osg::Vec3f(0, 0, 0), 1);
+
     for (int i = 0; i < createMessage->position.size(); i++)
     {
-		//level drawable erstellen
-        osg::Geode * asteroidsGeode = new osg::Geode;
-        osg::ref_ptr<osg::Shape> sphere = new osg::Sphere(createMessage->position.at(i), createMessage->radius.at(i));
-        osg::ref_ptr<osg::ShapeDrawable> ast = new osg::ShapeDrawable(sphere);
-        ast->setUseDisplayList(true);
+        //level drawable erstellen
+        //osg::ref_ptr<osg::Shape> sphere = new osg::Sphere(createMessage->position.at(i), createMessage->radius.at(i));
+        //osg::ref_ptr<osg::ShapeDrawable> ast = new osg::ShapeDrawable(sphere);
+        //ast->setUseDisplayList(true);
         //ast->setUseVertexBufferObjects(true);
-        ast->setColor(osg::Vec4(0.3f, 0.7f, 0.1f, 1));
-        asteroidsGeode->addDrawable(ast);
-        m_asteroidsGroup->addChild(asteroidsGeode);
+        //ast->setColor(osg::Vec4(0.3f, 0.7f, 0.1f, 1));
+        //asteroidsGeode->addDrawable(ast);
+        //m_asteroidsGroup->addChild(asteroidsGeode);
+
+        myLevel->addAsteroid(createMessage->position.at(i), createMessage->radius.at(i));
     }
     m_rootGroup->addChild(m_asteroidsGroup);
 }
