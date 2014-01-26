@@ -17,6 +17,7 @@ using CEGUI::String;
 using CEGUI::Window;
 class GameInstanceServer;
 class GameInstanceClient;
+class ShaderProvider;
 
 class AsioThread : public OpenThreads::Thread
 {
@@ -50,6 +51,14 @@ public:
 
     // register event handlers in CEGUI
     void registerEvents();
+
+    // helper function to register event handlers within CEGUI
+    // windowName = path to the window capturing the event in GUI Layout hierarchy
+    // eventName = String constant which defines the event type.
+    // function = this Event::Subscriber will be called when the event is fired.
+    // It will be most likely called deep within CeguiDrawable::drawImplementation context, so be careful about what you do
+    // and how long it takes.
+    void addEventHandler(const String& windowName, const String& eventName, const CEGUI::Event::Subscriber& function);
 
     void setGuiService(const std::shared_ptr<boost::asio::io_service>& service);
     void timeTick(float dt);
@@ -85,19 +94,12 @@ protected:
     GameInstanceClient* m_gameClient;
     std::vector<std::tuple<std::string, MessagePeer*>> m_availableGameServers;
     std::vector<Window*> m_animHideTargets;
+    std::shared_ptr<ShaderProvider> m_shaderProvider;
 
     // User data =====> TODO: Relocate this to somewhere else, PLEASE!
     bool m_userCreated;
     String m_userName;
     unsigned int m_userListensUdpPort;
-
-    // helper function to register event handlers within CEGUI
-    // windowName = path to the window capturing the event in GUI Layout hierarchy
-    // eventName = String constant which defines the event type.
-    // function = this Event::Subscriber will be called when the event is fired.
-    // It will be most likely called deep within CeguiDrawable::drawImplementation context, so be careful about what you do
-    // and how long it takes.
-    void addEventHandler(const String& windowName, const String& eventName, const CEGUI::Event::Subscriber& function);
 
     void doConsoleCommand(const String& command);
     // Functions replying on console commands
@@ -112,4 +114,5 @@ protected:
     void consoleListGameServers(const std::vector<String>& params, String& output);
     void consoleConnectGameServer(const std::vector<String>& params, String& output);
     void consoleMacroCommand(const std::vector<String>& params, String& output);
+    void consoleOpenShaderEditor(const std::vector<String>& params, String& output);
 };

@@ -56,6 +56,7 @@ protected:
     float m_friction;
 
     bool m_inputState[6];
+    float m_timeSinceLastUpdate;
 
     // event related functions
     void onControlMessage(uint16_t inputType, bool on);

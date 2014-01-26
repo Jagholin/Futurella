@@ -87,7 +87,9 @@ add_executable(Futurella
     src/ChaseCam.cpp
     src/ChaseCam.h
     src/glincludes.h
-    src/glincludes.cpp)
+    src/glincludes.cpp
+    src/ShaderWrapper.h
+    src/ShaderWrapper.cpp)
 
 add_lib(Futurella OPENTHREADS)
 add_lib(Futurella OSG)

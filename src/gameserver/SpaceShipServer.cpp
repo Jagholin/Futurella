@@ -34,7 +34,8 @@ m_orientation(orient),
 m_velocity(osg::Vec3f()),
 m_acceleration(4.0f),
 m_steerability(2.0f),
-m_friction(0.7f)
+m_friction(0.7f),
+m_timeSinceLastUpdate(10000.0f)
 {
     for (unsigned int i = 0; i < 6; ++i) m_inputState[i] = false;
     //GameMessage::pointer crMessage = creationMessage();
@@ -103,12 +104,17 @@ void SpaceShipServer::timeTick(float dt)
     }
 
     // Send update messages
-    GameSpaceShipPhysicsUpdateMessage::pointer msg{ new GameSpaceShipPhysicsUpdateMessage };
-    msg->pos = m_pos;
-    msg->orient = m_orientation.asVec4();
-    msg->velocity = m_velocity;
-    msg->objectId = m_myObjectId;
-    messageToPartner(msg);
+    m_timeSinceLastUpdate += dt;
+    if (m_timeSinceLastUpdate > 0.045f)
+    {
+        m_timeSinceLastUpdate = 0;
+        GameSpaceShipPhysicsUpdateMessage::pointer msg{ new GameSpaceShipPhysicsUpdateMessage };
+        msg->pos = m_pos;
+        msg->orient = m_orientation.asVec4();
+        msg->velocity = m_velocity;
+        msg->objectId = m_myObjectId;
+        messageToPartner(msg);
+    }
 }
 
 GameMessage::pointer SpaceShipServer::creationMessage() const

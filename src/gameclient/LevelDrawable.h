@@ -12,6 +12,7 @@ public:
 
     LevelDrawable(const LevelDrawable & rhs, const osg::CopyOp& op){};
     LevelDrawable();
+    virtual ~LevelDrawable();
 
     virtual osg::BoundingBox computeBound() const;
     virtual void drawImplementation(osg::RenderInfo& renderInfo) const;

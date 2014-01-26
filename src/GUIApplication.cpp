@@ -10,6 +10,8 @@
 #include "gameclient/GameInstanceClient.h"
 #include "gameserver/GameInstanceServer.h"
 
+#include "ShaderWrapper.h"
+
 using namespace CEGUI;
 
 // Some netmessages that inform about existing GameInstanceServers or request a connection
@@ -219,6 +221,8 @@ GUIApplication::GUIApplication(osgViewer::Viewer* osgApp, osg::Group* rootGroup)
     m_userCreated = false;
     m_gameClient = nullptr;
     m_gameServer = nullptr;
+    m_shaderProvider = std::make_shared<ShaderProvider>();
+    ShaderWrapper::setDefaultShaderProvider(m_shaderProvider.get());
     RemotePeersManager::getManager()->onNewPeerRegistration(std::bind(&GUIApplication::onNewFuturellaPeer, this, std::placeholders::_1), this);
 }
 
@@ -243,6 +247,7 @@ void GUIApplication::registerEvents()
     addEventHandler("console/input", Window::EventMouseClick, Event::Subscriber(&GUIApplication::onConsoleClicked, this));
     addEventHandler("console/output", Window::EventMouseClick, Event::Subscriber(&GUIApplication::onConsoleClicked, this));
     addEventHandler("console/input", Editbox::EventTextAccepted, Event::Subscriber(&GUIApplication::onConsoleInput, this));
+    m_shaderProvider->registerEvents(this);
 }
 
 void GUIApplication::setGuiService(const std::shared_ptr<boost::asio::io_service>& service)
@@ -418,6 +423,9 @@ void GUIApplication::doConsoleCommand(const String& command)
         if (s.size() > 0)
             consoleParts.push_back(s);
     }
+    if (consoleParts.empty())
+        return;
+
     typedef std::map < String, std::function<void(const std::vector<String>&, String&)> > consoleFuncsMap;
     auto consoleHelpProcedure = [](const consoleFuncsMap& funcs, const std::vector<String>&, String& out){
         out = "\nKnown console commands include:";
@@ -437,7 +445,8 @@ void GUIApplication::doConsoleCommand(const String& command)
         { "game", std::bind(&GUIApplication::consoleGameServerCommand, this, std::placeholders::_1, std::placeholders::_2) },
         { "connect", std::bind(&GUIApplication::consoleConnect, this, std::placeholders::_1, std::placeholders::_2) },
         { "help", std::bind(consoleHelpProcedure, std::cref(consoleFuncs), std::placeholders::_1, std::placeholders::_2) },
-        { "macro", std::bind(&GUIApplication::consoleMacroCommand, this, std::placeholders::_1, std::placeholders::_2) }
+        { "macro", std::bind(&GUIApplication::consoleMacroCommand, this, std::placeholders::_1, std::placeholders::_2) },
+        { "shaders", std::bind(&GUIApplication::consoleOpenShaderEditor, this, std::placeholders::_1, std::placeholders::_2) }
     };
 
     // Append the command first, in different color
@@ -758,7 +767,8 @@ void GUIApplication::hudLostFocus()
     Window *targets[] = {
         m_guiContext->getRootWindow()->getChild("console"),
         m_guiContext->getRootWindow()->getChild("chatWindow"),
-        m_guiContext->getRootWindow()->getChild("networkSettings")
+        m_guiContext->getRootWindow()->getChild("networkSettings"),
+        m_guiContext->getRootWindow()->getChild("shaderEditor")
     };
 
     AnimationManager& animManager = AnimationManager::getSingleton();
@@ -790,4 +800,11 @@ void GUIApplication::hudGotFocus()
     m_guiContext->getRootWindow()->getChild("console")->show();
     Editbox* inputBox = static_cast<Editbox*>(m_guiContext->getRootWindow()->getChild("console/input"));
     inputBox->activate();
+}
+
+void GUIApplication::consoleOpenShaderEditor(const std::vector<String>& params, String& output)
+{
+    Window* target = m_guiContext->getRootWindow()->getChild("shaderEditor");
+    target->show();
+    target->activate();
 }

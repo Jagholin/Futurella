@@ -13,6 +13,11 @@ m_asteroidCount(0)
     setSupportsDisplayList(false);
 }
 
+LevelDrawable::~LevelDrawable()
+{
+    // nop
+}
+
 void 
 LevelDrawable::drawImplementation(osg::RenderInfo& renderInfo) const
 {
