@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <Animations>
     <AnimationDefinition name="Example1A" duration="0.3" replayMode="once">
-        <Affector property="Alpha" interpolator="float">
+        <Affector property="Area" interpolator="URect">
             <KeyFrame position="0" value="1" />
             <KeyFrame position="0.3" value="0.66" progression="quadratic decelerating" />
         </Affector>

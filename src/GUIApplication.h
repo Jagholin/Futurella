@@ -94,6 +94,7 @@ protected:
     // and how long it takes.
     void addEventHandler(const String& windowName, const String& eventName, const CEGUI::Event::Subscriber& function);
 
+    void doConsoleCommand(const String& command);
     // Functions replying on console commands
     void consoleCreateUser(const std::vector<String>& params, String& output);
     void consoleShowNetwork(const std::vector<String>& params, String& output);
@@ -105,4 +106,5 @@ protected:
     void consoleStartGameServer(const std::vector<String>& params, String& output);
     void consoleListGameServers(const std::vector<String>& params, String& output);
     void consoleConnectGameServer(const std::vector<String>& params, String& output);
+    void consoleMacroCommand(const std::vector<String>& params, String& output);
 };

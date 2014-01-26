@@ -53,10 +53,11 @@ int main()
 //     root->addChild(blabla);
     //viewer->setCameraManipulator(new osgGA::TrackballManipulator);
     viewer->realize();
-    //viewer->getCamera()->getGraphicsContext()->getState()->setUseModelViewAndProjectionUniforms(true);
+    viewer->getCamera()->getGraphicsContext()->getState()->setUseModelViewAndProjectionUniforms(true);
 
     osgViewer::ViewerBase::Windows windowList;
     viewer->getWindows(windowList);
+    //windowList[0]->setWindowRectangle(10, 10, 500, 500);
     windowList[0]->useCursor(false);
 
     //Camera setup: in SpaceShipClient

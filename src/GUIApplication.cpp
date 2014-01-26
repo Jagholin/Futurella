@@ -1,6 +1,7 @@
 #include "GUIApplication.h"
 
 #include <CEGUI/CEGUI.h>
+#include <fstream>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -395,10 +396,19 @@ bool GUIApplication::onConsoleClicked(const CEGUI::EventArgs& a)
 bool GUIApplication::onConsoleInput(const CEGUI::EventArgs&)
 {
     Editbox* inputBox = static_cast<Editbox*>(m_guiContext->getRootWindow()->getChild("console/input"));
-    Window* outputBox = m_guiContext->getRootWindow()->getChild("console/output");
     String consoleCommand = inputBox->getText();
     inputBox->setText("");
 
+    doConsoleCommand(consoleCommand);
+
+    return true;
+}
+
+void GUIApplication::doConsoleCommand(const String& command)
+{
+    Window* outputBox = m_guiContext->getRootWindow()->getChild("console/output");
+
+    String consoleCommand = command;
     std::vector<String> rawParts, consoleParts;
     boost::trim(consoleCommand);
     boost::split(rawParts, consoleCommand, boost::is_space());
@@ -417,15 +427,21 @@ bool GUIApplication::onConsoleInput(const CEGUI::EventArgs&)
         }
     };
 
-    static const consoleFuncsMap consoleFuncs {
+    static const consoleFuncsMap consoleFuncs{
         { "login", std::bind(&GUIApplication::consoleCreateUser, this, std::placeholders::_1, std::placeholders::_2) },
         { "show_network", std::bind(&GUIApplication::consoleShowNetwork, this, std::placeholders::_1, std::placeholders::_2) },
         { "clear", std::bind(&GUIApplication::consoleClear, this, std::placeholders::_1, std::placeholders::_2) },
         { "netserver", std::bind(&GUIApplication::consoleNetServerCommand, this, std::placeholders::_1, std::placeholders::_2) },
+        { "net", std::bind(&GUIApplication::consoleNetServerCommand, this, std::placeholders::_1, std::placeholders::_2) },
         { "gameserver", std::bind(&GUIApplication::consoleGameServerCommand, this, std::placeholders::_1, std::placeholders::_2) },
+        { "game", std::bind(&GUIApplication::consoleGameServerCommand, this, std::placeholders::_1, std::placeholders::_2) },
         { "connect", std::bind(&GUIApplication::consoleConnect, this, std::placeholders::_1, std::placeholders::_2) },
-        { "help", std::bind(consoleHelpProcedure, std::cref(consoleFuncs), std::placeholders::_1, std::placeholders::_2) }
+        { "help", std::bind(consoleHelpProcedure, std::cref(consoleFuncs), std::placeholders::_1, std::placeholders::_2) },
+        { "macro", std::bind(&GUIApplication::consoleMacroCommand, this, std::placeholders::_1, std::placeholders::_2) }
     };
+
+    // Append the command first, in different color
+    outputBox->appendText("\n[colour='ff00ff00']>> " + consoleCommand + "[colour='ffffffff']");
 
     if (consoleFuncs.count(consoleParts[0]) > 0)
     {
@@ -435,7 +451,6 @@ bool GUIApplication::onConsoleInput(const CEGUI::EventArgs&)
     }
     else
         outputBox->appendText(String("\nunknown command: ") + consoleParts[0]);
-    return true;
 }
 
 void GUIApplication::consoleCreateUser(const std::vector<String>& params, String& output)
@@ -551,6 +566,7 @@ void GUIApplication::consoleNetServerCommand(const std::vector<String>& params, 
 
     static const consoleFuncsMap consoleFuncs {
         { "start", std::bind(&GUIApplication::consoleStartNetServer, this, std::placeholders::_1, std::placeholders::_2) },
+        { "listen", std::bind(&GUIApplication::consoleStartNetServer, this, std::placeholders::_1, std::placeholders::_2) },
         { "help", std::bind(consoleHelpProcedure, std::cref(consoleFuncs), std::placeholders::_1, std::placeholders::_2) }
     };
 
@@ -618,7 +634,9 @@ void GUIApplication::consoleGameServerCommand(const std::vector<String>& params,
 
     static const consoleFuncsMap consoleFuncs {
         { "start", std::bind(&GUIApplication::consoleStartGameServer, this, std::placeholders::_1, std::placeholders::_2) },
+        { "create", std::bind(&GUIApplication::consoleStartGameServer, this, std::placeholders::_1, std::placeholders::_2) },
         { "connect", std::bind(&GUIApplication::consoleConnectGameServer, this, std::placeholders::_1, std::placeholders::_2) },
+        { "join", std::bind(&GUIApplication::consoleConnectGameServer, this, std::placeholders::_1, std::placeholders::_2) },
         { "list", std::bind(&GUIApplication::consoleListGameServers, this, std::placeholders::_1, std::placeholders::_2) },
         { "help", std::bind(consoleHelpProcedure, std::cref(consoleFuncs), std::placeholders::_1, std::placeholders::_2) }
     };
@@ -714,4 +732,22 @@ void GUIApplication::timeTick(float dt)
 {
     if (m_gameServer)
         m_gameServer->physicsTick(dt);
+}
+
+void GUIApplication::consoleMacroCommand(const std::vector<String>& params, String& output)
+{
+    if (params.size() < 2)
+    {
+        output = "Usage: macro <filename>";
+        return;
+    }
+    std::string macroFileName = params[1].c_str() + std::string(".txt");
+    std::ifstream macroFile(macroFileName);
+    std::string commandLine;
+
+    while (!macroFile.fail() && !macroFile.eof())
+    {
+        std::getline(macroFile, commandLine);
+        doConsoleCommand(String(commandLine));
+    }
 }

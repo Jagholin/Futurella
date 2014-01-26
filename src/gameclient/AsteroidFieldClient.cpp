@@ -24,13 +24,13 @@ GameObject(objId, ownId, ctx)
     octahedronShader->addShader(octahedronFS);
     octahedronShader->addBindAttribLocation("position", 0);
     octahedronShader->addBindAttribLocation("offset", 1);
+    octahedronShader->addBindAttribLocation("scale", 2);
 
     osg::Geode * asteroidsGeode = new osg::Geode;
     LevelDrawable* myLevel = new LevelDrawable;
     asteroidsGeode->addDrawable(myLevel);
     m_asteroidsGroup->addChild(asteroidsGeode);
     m_asteroidsGroup->getOrCreateStateSet()->setAttributeAndModes(octahedronShader, osg::StateAttribute::ON);
-    myLevel->addAsteroid(osg::Vec3f(0, 0, 0), 1);
 
     for (int i = 0; i < createMessage->position.size(); i++)
     {
@@ -45,6 +45,7 @@ GameObject(objId, ownId, ctx)
 
         myLevel->addAsteroid(createMessage->position.at(i), createMessage->radius.at(i));
     }
+    myLevel->addAsteroid(osg::Vec3f(0, 0, 0), 1.f);
     m_rootGroup->addChild(m_asteroidsGroup);
 }
 
