@@ -120,6 +120,10 @@ CeguiDrawable::CeguiDrawable() :
 
     m_keyboardMap = std::map<int, CEGUI::Key::Scan> { { osgGA::GUIEventAdapter::KEY_Return, CEGUI::Key::Return },
     { osgGA::GUIEventAdapter::KEY_BackSpace, CEGUI::Key::Backspace },
+    { osgGA::GUIEventAdapter::KEY_Left, CEGUI::Key::ArrowLeft },
+    { osgGA::GUIEventAdapter::KEY_Up, CEGUI::Key::ArrowUp },
+    { osgGA::GUIEventAdapter::KEY_Down, CEGUI::Key::ArrowDown },
+    { osgGA::GUIEventAdapter::KEY_Right, CEGUI::Key::ArrowRight },
     { osgGA::GUIEventAdapter::KEY_Tab, CEGUI::Key::Tab } };
 }
 
