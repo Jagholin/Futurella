@@ -40,7 +40,6 @@ GameObject(objId, ownId, ctx)
     {
         myLevel->addAsteroid(createMessage->position.at(i), createMessage->radius.at(i));
     }
-    myLevel->addAsteroid(osg::Vec3f(0, 0, 0), 1.f);
     m_rootGroup->addChild(m_asteroidsGroup);
 }
 

@@ -3,20 +3,26 @@
 layout(vertices = 3) out;
 in PerVertex {
     vec3 position;
+    vec3 offset;
+    float scale;
 } inVertex[];
 
 out PerVertexTess {
     vec3 position;
+    vec3 offset;
+    float scale;
 } outVertex[];
 
 void main()
 {
     outVertex[gl_InvocationID].position = inVertex[gl_InvocationID].position;
+    outVertex[gl_InvocationID].offset = inVertex[gl_InvocationID].offset;
+    outVertex[gl_InvocationID].scale = inVertex[gl_InvocationID].scale;
     
-    gl_TessLevelInner[0] = 3;
-    gl_TessLevelInner[1] = 3;
-    gl_TessLevelOuter[0] = 3;
-    gl_TessLevelOuter[1] = 3;
-    gl_TessLevelOuter[2] = 3;
-    gl_TessLevelOuter[3] = 3;
+    gl_TessLevelInner[0] = 5;
+    gl_TessLevelInner[1] = 5;
+    gl_TessLevelOuter[0] = 5;
+    gl_TessLevelOuter[1] = 5;
+    gl_TessLevelOuter[2] = 5;
+    gl_TessLevelOuter[3] = 5;
 }

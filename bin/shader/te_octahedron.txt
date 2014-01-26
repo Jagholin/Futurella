@@ -4,6 +4,8 @@ layout(triangles) in;
 
 in PerVertexTess {
     vec3 position;
+    vec3 offset;
+    float scale;
 } inVertex[];
 
 uniform mat4 osg_ModelViewProjectionMatrix;
@@ -13,6 +15,8 @@ void main()
     vec3 point = gl_TessCoord.x * inVertex[0].position
         + gl_TessCoord.y * inVertex[1].position
         + gl_TessCoord.z * inVertex[2].position;
+        
+    point = normalize(point) * inVertex[0].scale + inVertex[0].offset;
         
     gl_Position = osg_ModelViewProjectionMatrix * vec4(point, 1);
 }

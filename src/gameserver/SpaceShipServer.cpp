@@ -105,7 +105,7 @@ void SpaceShipServer::timeTick(float dt)
 
     // Send update messages
     m_timeSinceLastUpdate += dt;
-    if (m_timeSinceLastUpdate > 0.045f)
+    if (m_timeSinceLastUpdate > 0.02f)
     {
         m_timeSinceLastUpdate = 0;
         GameSpaceShipPhysicsUpdateMessage::pointer msg{ new GameSpaceShipPhysicsUpdateMessage };

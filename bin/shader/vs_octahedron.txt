@@ -6,12 +6,16 @@ in float scale;
 
 out PerVertex {
     vec3 position;
+    vec3 offset;
+    float scale;
 } outVertex;
 
 uniform mat4 osg_ModelViewProjectionMatrix;
 
 void main()
 {
-    outVertex.position = scale*position + offset;
-    gl_Position = osg_ModelViewProjectionMatrix * vec4(outVertex.position, 1.0f);
+    outVertex.position = position;
+    outVertex.offset = offset;
+    outVertex.scale = scale;
+    gl_Position = osg_ModelViewProjectionMatrix * vec4(position*scale + offset, 1.0f);
 }

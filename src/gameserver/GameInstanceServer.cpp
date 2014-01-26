@@ -3,7 +3,7 @@
 
 GameInstanceServer::GameInstanceServer(const std::string &name) :
 m_name(name),
-m_asteroidField(new AsteroidFieldServer(50, 0.5f, 1, 0, this))
+m_asteroidField(new AsteroidFieldServer(200, 0.5f, 1, 0, this))
 {
     // nop
 }
