@@ -14,10 +14,12 @@
 class GlobalEventHandler : public osgGA::GUIEventHandler
 {
     std::atomic_bool m_guiHandlesEvents;
+    GUIApplication* m_guiApp;
 public:
 
-    GlobalEventHandler()
+    GlobalEventHandler(GUIApplication* app)
     {
+        m_guiApp = app;
         m_guiHandlesEvents = true;
 
         using namespace CEGUI;
@@ -46,6 +48,7 @@ public:
                 m_guiHandlesEvents = true;
                 GUIContext & gui = System::getSingleton().getDefaultGUIContext();
                 gui.getMouseCursor().show();
+                m_guiApp->hudGotFocus();
                 return true;
             }
             if (!m_guiHandlesEvents)
@@ -66,6 +69,7 @@ public:
         using CEGUI::GUIContext;
         GUIContext & gui = CEGUI::System::getSingleton().getDefaultGUIContext();
         gui.getMouseCursor().hide();
+        m_guiApp->hudLostFocus();
         return true;
     }
 };
@@ -269,12 +273,14 @@ void CeguiDrawable::init() const
     rp->setResourceGroupDirectory("fonts", "./cegui/fonts/");
     rp->setResourceGroupDirectory("looknfeels", "./cegui/looknfeel/");
     rp->setResourceGroupDirectory("layouts", "./cegui/layouts/");
+    rp->setResourceGroupDirectory("anims", "./cegui/animations/");
 
     CEGUI::ImageManager::setImagesetDefaultResourceGroup("imagesets");
     CEGUI::Font::setDefaultResourceGroup("fonts");
     CEGUI::Scheme::setDefaultResourceGroup("schemes");
     CEGUI::WidgetLookManager::setDefaultResourceGroup("looknfeels");
     CEGUI::WindowManager::setDefaultResourceGroup("layouts");
+    CEGUI::AnimationManager::setDefaultResourceGroup("anims");
 
     CEGUI::SchemeManager::getSingleton().createFromFile("TaharezLook.scheme");
 
@@ -286,11 +292,13 @@ void CeguiDrawable::init() const
     Window* myRoot = WindowManager::getSingleton().loadLayoutFromFile("test.layout");
     System::getSingleton().getDefaultGUIContext().setRootWindow(myRoot);
 
+    AnimationManager::getSingleton().loadAnimationsFromXML("example.anims");
+
     /// HACKS, hacks hacks all around...
     // well, what else can you do here, i have no idea.
 
     CeguiDrawable* self = const_cast<CeguiDrawable*>(this);
-    self->setEventCallback(new GlobalEventHandler);
+    self->setEventCallback(new GlobalEventHandler(m_guiApp));
     self->setUpdateCallback(new TickEvents);
     self->m_guiApp->registerEvents();
 

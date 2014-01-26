@@ -751,3 +751,43 @@ void GUIApplication::consoleMacroCommand(const std::vector<String>& params, Stri
         doConsoleCommand(String(commandLine));
     }
 }
+
+void GUIApplication::hudLostFocus()
+{
+    // Hide all windows in Root
+    Window *targets[] = {
+        m_guiContext->getRootWindow()->getChild("console"),
+        m_guiContext->getRootWindow()->getChild("chatWindow"),
+        m_guiContext->getRootWindow()->getChild("networkSettings")
+    };
+
+    AnimationManager& animManager = AnimationManager::getSingleton();
+    m_animHideTargets.clear();
+    for (Window* w : targets)
+    {
+        if (! w->isVisible())
+            continue;
+        m_animHideTargets.push_back(w);
+        AnimationInstance* myAnimInstance = animManager.instantiateAnimation("AreaAnimationHide");
+        myAnimInstance->setTargetWindow(w);
+        myAnimInstance->start();
+    }
+}
+
+void GUIApplication::hudGotFocus()
+{
+    AnimationManager& animManager = AnimationManager::getSingleton();
+    for (Window* w : m_animHideTargets)
+    {
+        if (!w->isVisible())
+            continue;
+        AnimationInstance* myAnimInstance = animManager.instantiateAnimation("AreaAnimationShow");
+        myAnimInstance->setTargetWindow(w);
+        myAnimInstance->start();
+    }
+    m_animHideTargets.clear();
+
+    m_guiContext->getRootWindow()->getChild("console")->show();
+    Editbox* inputBox = static_cast<Editbox*>(m_guiContext->getRootWindow()->getChild("console/input"));
+    inputBox->activate();
+}

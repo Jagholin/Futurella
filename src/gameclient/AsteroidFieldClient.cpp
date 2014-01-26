@@ -11,9 +11,7 @@ GameObject(objId, ownId, ctx)
 {
     m_rootGroup = ctx->sceneGraphRoot();
     m_asteroidsGroup = new osg::Group;
-    //int i = 0;
 
-    // compile the shaders
     osg::ref_ptr<osg::Shader> octahedronVS = new osg::Shader(osg::Shader::VERTEX);
     osg::ref_ptr<osg::Shader> octahedronFS = new osg::Shader(osg::Shader::FRAGMENT);
     octahedronVS->loadShaderSourceFromFile("shader/vs_octahedron.txt");
@@ -34,15 +32,6 @@ GameObject(objId, ownId, ctx)
 
     for (int i = 0; i < createMessage->position.size(); i++)
     {
-        //level drawable erstellen
-        //osg::ref_ptr<osg::Shape> sphere = new osg::Sphere(createMessage->position.at(i), createMessage->radius.at(i));
-        //osg::ref_ptr<osg::ShapeDrawable> ast = new osg::ShapeDrawable(sphere);
-        //ast->setUseDisplayList(true);
-        //ast->setUseVertexBufferObjects(true);
-        //ast->setColor(osg::Vec4(0.3f, 0.7f, 0.1f, 1));
-        //asteroidsGeode->addDrawable(ast);
-        //m_asteroidsGroup->addChild(asteroidsGeode);
-
         myLevel->addAsteroid(createMessage->position.at(i), createMessage->radius.at(i));
     }
     myLevel->addAsteroid(osg::Vec3f(0, 0, 0), 1.f);

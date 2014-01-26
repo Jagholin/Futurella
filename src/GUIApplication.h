@@ -14,7 +14,7 @@
 #include "networking/peermanager.h"
 
 using CEGUI::String;
-class Level;
+using CEGUI::Window;
 class GameInstanceServer;
 class GameInstanceClient;
 
@@ -54,6 +54,10 @@ public:
     void setGuiService(const std::shared_ptr<boost::asio::io_service>& service);
     void timeTick(float dt);
 
+    // These Functions are called when CEGUI surface loses or regains input focus
+    void hudLostFocus();
+    void hudGotFocus();
+
     // gui-triggered event handlers
     bool onQuitBtnClicked(const CEGUI::EventArgs&);
     bool onWindowCloseClicked(const CEGUI::EventArgs&);
@@ -80,6 +84,7 @@ protected:
     GameInstanceServer* m_gameServer;
     GameInstanceClient* m_gameClient;
     std::vector<std::tuple<std::string, MessagePeer*>> m_availableGameServers;
+    std::vector<Window*> m_animHideTargets;
 
     // User data =====> TODO: Relocate this to somewhere else, PLEASE!
     bool m_userCreated;

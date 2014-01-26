@@ -1,13 +1,19 @@
 <?xml version="1.0" ?>
 <Animations>
-    <AnimationDefinition name="Example1A" duration="0.3" replayMode="once">
-        <Affector property="Area" interpolator="URect">
-            <KeyFrame position="0" value="1" />
-            <KeyFrame position="0.3" value="0.66" progression="quadratic decelerating" />
+    <AnimationDefinition name="AreaAnimationHide" duration="0.6" replayMode="once">
+        <Affector property="Area" interpolator="URect" applicationMethod="relative">
+            <KeyFrame position="0" value="{{0, 0}, {0, 0}, {0, 0}, {0, 0}}" />
+            <KeyFrame position="0.6" value="{{0, 0}, {-1, 0}, {0, 0}, {-1, 0}}" progression="linear" />
         </Affector>
-        <Subscription event="MouseLeavesArea" action="Start" />
     </AnimationDefinition>
 
+    <AnimationDefinition name="AreaAnimationShow" duration="0.6" replayMode="once">
+        <Affector property="Area" interpolator="URect" applicationMethod="relative">
+            <KeyFrame position="0" value="{{0, 0}, {0, 0}, {0, 0}, {0, 0}}" />
+            <KeyFrame position="0.6" value="{{0, 0}, {1, 0}, {0, 0}, {1, 0}}" progression="linear" />
+        </Affector>
+    </AnimationDefinition>
+    
     <AnimationDefinition name="Example1B" duration="0.3" replayMode="once">
         <Affector property="Alpha" interpolator="float">
             <KeyFrame position="0" value="0.66" />
