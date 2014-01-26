@@ -4,10 +4,11 @@ Futurella
 A game of fast delivery
 
 - OpenSceneGraph 3
-- PhysX
 - CMake
-- FMod
+- FMod (not yet)
 - boost::asio
+- CEGUI
+- BulletPhysics (not yet)
 
 
 How to build
@@ -15,7 +16,7 @@ How to build
 
 Windows:
 
-1. You will need CMake, an already built OpenSceneGraph 3(perhaps from sources), and VisualStudio 2012+.
+1. You will need CMake, an already built OpenSceneGraph 3(perhaps from sources), CEGUI, and VisualStudio 2013+.
 
 2. Edit _configure.bat to contain paths to the library directories on your computer
 
@@ -44,3 +45,9 @@ Linux:
 MacOS:
 
 1. We don't support this system. It may well run, but we won't make any promises.
+
+
+Also
+=========
+
+In March/April we'll drop OpenSceneGraph in favor of a more appropriate Framework, it will be perhaps Ogre3d.
