@@ -13,6 +13,7 @@ PFNGLDELETEBUFFERSPROC glDeleteBuffers = nullptr;
 PFNGLGENVERTEXARRAYSPROC glGenVertexArrays = nullptr;
 PFNGLVERTEXATTRIBDIVISORPROC glVertexAttribDivisor = nullptr;
 PFNGLDRAWARRAYSINSTANCEDPROC glDrawArraysInstanced = nullptr;
+PFNGLPATCHPARAMETERIPROC glPatchParameteri = nullptr;
 
 void glFuncsInit()
 {
@@ -28,4 +29,5 @@ void glFuncsInit()
     glBindFramebuffer = reinterpret_cast<PFNGLBINDFRAMEBUFFERPROC>(osg::getGLExtensionFuncPtr("glBindFramebuffer"));
     glVertexAttribDivisor = reinterpret_cast<PFNGLVERTEXATTRIBDIVISORPROC>(osg::getGLExtensionFuncPtr("glVertexAttribDivisor"));
     glDrawArraysInstanced = reinterpret_cast<PFNGLDRAWARRAYSINSTANCEDPROC>(osg::getGLExtensionFuncPtr("glDrawArraysInstanced"));
+    glPatchParameteri = reinterpret_cast<PFNGLPATCHPARAMETERIPROC>(osg::getGLExtensionFuncPtr("glPatchParameteri"));
 }

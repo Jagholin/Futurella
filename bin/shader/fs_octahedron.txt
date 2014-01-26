@@ -1,10 +1,8 @@
 #version 440
 
-in float v_depth;
 out vec4 fragColor;
 
 void main()
 {
-	float mydepth = (v_depth/2.0) + 0.5;
-	fragColor = vec4(1, 1, 0, 1);
+    fragColor = vec4(1, 1, 0, 1);
 }

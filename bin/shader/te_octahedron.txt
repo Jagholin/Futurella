@@ -1,0 +1,18 @@
+#version 440
+
+layout(triangles) in;
+
+in PerVertexTess {
+    vec3 position;
+} inVertex[];
+
+uniform mat4 osg_ModelViewProjectionMatrix;
+
+void main()
+{
+    vec3 point = gl_TessCoord.x * inVertex[0].position
+        + gl_TessCoord.y * inVertex[1].position
+        + gl_TessCoord.z * inVertex[2].position;
+        
+    gl_Position = osg_ModelViewProjectionMatrix * vec4(point, 1);
+}

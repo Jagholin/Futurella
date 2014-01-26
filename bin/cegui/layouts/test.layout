@@ -88,7 +88,7 @@ To see the list of available commands, try "help".</Property>
             </Window>
             <Window type="TaharezLook/MultiLineEditbox" name="source">
                 <Property name="Area" value="{{0, 124}, {0, 4}, {1, -4}, {1, -4}}" />
-                <Property name="Font" value="Jura-10" />
+                <Property name="BlinkCaret" value="true" />
                 
 				<Window type="TaharezLook/ImageButton" name="save" >
 					<Property name="NormalImage" value="Figures/square" />

@@ -4,12 +4,14 @@ in vec3 position;
 in vec3 offset;
 in float scale;
 
-out float v_depth;
+out PerVertex {
+    vec3 position;
+} outVertex;
 
 uniform mat4 osg_ModelViewProjectionMatrix;
 
 void main()
 {
-	gl_Position = osg_ModelViewProjectionMatrix * vec4(scale*position + offset, 1.0);
-	v_depth = gl_Position.z / gl_Position.w;
+    outVertex.position = scale*position + offset;
+    gl_Position = osg_ModelViewProjectionMatrix * vec4(outVertex.position, 1.0f);
 }

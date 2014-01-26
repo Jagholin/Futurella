@@ -23,6 +23,8 @@ GameObject(objId, ownId, ctx)
     //octahedronShader->addShader(octahedronFS);
     ShaderWrapper* octahedronShader = new ShaderWrapper;
     octahedronShader->load(osg::Shader::VERTEX, "shader/vs_octahedron.txt");
+    octahedronShader->load(osg::Shader::TESSCONTROL, "shader/tc_octahedron.txt");
+    octahedronShader->load(osg::Shader::TESSEVALUATION, "shader/te_octahedron.txt");
     octahedronShader->load(osg::Shader::FRAGMENT, "shader/fs_octahedron.txt");
     octahedronShader->addBindAttribLocation("position", 0);
     octahedronShader->addBindAttribLocation("offset", 1);

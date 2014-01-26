@@ -24,7 +24,9 @@ LevelDrawable::drawImplementation(osg::RenderInfo& renderInfo) const
     if (m_geometryDirty)
         initGeometry();
     glBindVertexArray(vao);
-    glDrawArraysInstanced(GL_TRIANGLES, 0, 24, m_asteroidCount);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glDrawArraysInstanced(GL_PATCHES, 0, 24, m_asteroidCount);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glBindVertexArray(0);
 
     renderInfo.getState()->checkGLErrors("LevelDrawable::drawImplementation");
@@ -91,6 +93,7 @@ LevelDrawable::initGeometry() const
     glEnableVertexAttribArray(2);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glPatchParameteri(GL_PATCH_VERTICES, 3);
 
     glBindBuffer(GL_ARRAY_BUFFER, instanceInfo);
     glBufferData(GL_ARRAY_BUFFER, m_instanceRawData.size() * sizeof(float), &(m_instanceRawData[0]), GL_DYNAMIC_DRAW);
