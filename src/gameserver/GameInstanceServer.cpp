@@ -1,11 +1,28 @@
 #include "GameInstanceServer.h"
 #include "../networking/peermanager.h"
+#include <btBulletDynamicsCommon.h>
 
 GameInstanceServer::GameInstanceServer(const std::string &name) :
 m_name(name),
-m_asteroidField(new AsteroidFieldServer(200, 0.5f, 1, 0, this))
+m_asteroidField(new AsteroidFieldServer(200, 0.5f, 1, 0, this)),
+m_collisionConfig(new btDefaultCollisionConfiguration),
+m_collisionDispatcher(new btCollisionDispatcher(m_collisionConfig)),
+m_broadphase(new btDbvtBroadphase),
+m_constraintSolver(new btSequentialImpulseConstraintSolver)
 {
     // nop
+
+    m_physicsWorld = new btDiscreteDynamicsWorld(m_collisionDispatcher, m_broadphase, m_constraintSolver, m_collisionConfig);
+    m_physicsWorld->setGravity(btVector3(0, 0, 0));
+}
+
+GameInstanceServer::~GameInstanceServer()
+{
+    delete m_physicsWorld;
+    delete m_constraintSolver;
+    delete m_broadphase;
+    delete m_collisionDispatcher;
+    delete m_collisionConfig;
 }
 
 std::string GameInstanceServer::name() const
