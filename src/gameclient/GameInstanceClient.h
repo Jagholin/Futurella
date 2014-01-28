@@ -9,9 +9,9 @@
 
 class GameInstanceClient : public GameMessagePeer
 {
-    // TODO
 public:
     GameInstanceClient(osg::Group* rootGroup, osgViewer::Viewer* viewer);
+    virtual ~GameInstanceClient();
     //...
 
     // Connect clientOrphaned signal to the given slot.

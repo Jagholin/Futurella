@@ -23,7 +23,7 @@ int main()
 
     std::srand(std::chrono::system_clock::now().time_since_epoch().count());
     // setup CEGUI as OSG drawable
-    osgViewer::Viewer *viewer = new osgViewer::Viewer;
+    osg::ref_ptr<osgViewer::Viewer> viewer = new osgViewer::Viewer;
 
     osg::ref_ptr<osg::Group> root = new osg::Group;
     GUIApplication guiApp(viewer, root);

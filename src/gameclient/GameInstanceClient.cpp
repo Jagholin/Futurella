@@ -2,6 +2,8 @@
 #include "../gamecommon/GameObject.h"
 #include "../networking/peermanager.h"
 
+#include <osgGA/TrackballManipulator>
+
 GameInstanceClient::GameInstanceClient(osg::Group* rootGroup, osgViewer::Viewer* viewer):
 m_rootGraphicsGroup(rootGroup),
 m_viewer(viewer),
@@ -9,6 +11,11 @@ m_connected(false),
 m_orphaned(false)
 {
     // nop
+}
+
+GameInstanceClient::~GameInstanceClient()
+{
+    m_viewer->setCameraManipulator(new osgGA::TrackballManipulator);
 }
 
 void GameInstanceClient::connectLocallyTo(MessagePeer* buddy, bool recursive /*= true*/)
