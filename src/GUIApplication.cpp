@@ -148,6 +148,16 @@ bool AsioThread::createAndStartNetServer(unsigned int portNumber, unsigned int p
     {
         if (!isRunning())
             res = (start() == 0);
+        m_guiService->post([portNumber, portNumberUDP](){
+            GUIContext& gui = System::getSingleton().getDefaultGUIContext();
+            Window* window = gui.getRootWindow()->getChild("console/output");
+
+            if (window)
+            {
+                window->appendText("\nNetServer listens at tcp port = " + boost::lexical_cast<std::string>(portNumber)
+                    +", and udp port = " + boost::lexical_cast<std::string>(portNumberUDP));
+            }
+        });
     }
     return res;
 }

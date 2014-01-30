@@ -135,11 +135,11 @@ void CeguiDrawable::setGuiApplication(GUIApplication* app)
 
 void CeguiDrawable::addEvent(const osgGA::GUIEventAdapter& e)
 {
-    if (e.getEventType() & (osgGA::GUIEventAdapter::RELEASE | osgGA::GUIEventAdapter::PUSH))
+    /*if (e.getEventType() & (osgGA::GUIEventAdapter::RELEASE | osgGA::GUIEventAdapter::PUSH))
     {
         passEvent(e);
         return;
-    }
+    }*/
     // Yep OSG does multi threaded render by default in my case.
     // So this sync is vital.
     m_eventMutex.lock();

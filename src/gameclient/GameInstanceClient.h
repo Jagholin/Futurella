@@ -39,6 +39,8 @@ protected:
     SpaceShipClient::pointer m_myShip;
     AsteroidFieldClient::pointer m_myAsteroids;
 
+    osg::ref_ptr<osg::Uniform> m_viewportSizeUniform;
+
     bool m_connected;
     bool m_orphaned;
 };

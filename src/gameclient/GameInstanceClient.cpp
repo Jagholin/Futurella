@@ -11,6 +11,16 @@ m_connected(false),
 m_orphaned(false)
 {
     // nop
+    m_viewportSizeUniform = new osg::Uniform("viewportSize", osg::Vec2f(800, 600));
+    osg::Viewport* myViewport = m_viewer->getCamera()->getViewport();
+    m_viewportSizeUniform->set(osg::Vec2f(myViewport->width(), myViewport->height()));
+    m_rootGraphicsGroup->getOrCreateStateSet()->addUniform(m_viewportSizeUniform);
+
+}
+
+GameInstanceClient::~GameInstanceClient()
+{
+    m_viewer->setCameraManipulator(new osgGA::TrackballManipulator);
 }
 
 GameInstanceClient::~GameInstanceClient()
@@ -59,7 +69,7 @@ void GameInstanceClient::addExternalSpaceShip(SpaceShipClient::pointer ship)
         m_myShip = ship;
         m_shipCamera = new ChaseCam(m_myShip.get());
         m_viewer->setCameraManipulator(m_shipCamera);
-        m_viewer->getCamera()->setProjectionMatrixAsPerspective(60, 16.0f / 9.0f, 0.1f, 100000.0f); //TODO: use real aspect ratio
+        m_viewer->getCamera()->setProjectionMatrixAsPerspective(60, m_viewer->getCamera()->getViewport()->aspectRatio(), 0.1f, 100000.0f);
     }
     else
         m_otherShips.push_back(ship);

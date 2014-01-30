@@ -1,4 +1,4 @@
-#version 440
+#version 400
 
 layout(vertices = 3) out;
 in PerVertex {
@@ -13,16 +13,39 @@ out PerVertexTess {
     float scale;
 } outVertex[];
 
+uniform mat4 osg_ModelViewProjectionMatrix;
+uniform vec2 viewportSize;
+
 void main()
 {
     outVertex[gl_InvocationID].position = inVertex[gl_InvocationID].position;
     outVertex[gl_InvocationID].offset = inVertex[gl_InvocationID].offset;
     outVertex[gl_InvocationID].scale = inVertex[gl_InvocationID].scale;
     
-    gl_TessLevelInner[0] = 5;
-    gl_TessLevelInner[1] = 5;
-    gl_TessLevelOuter[0] = 5;
-    gl_TessLevelOuter[1] = 5;
-    gl_TessLevelOuter[2] = 5;
-    gl_TessLevelOuter[3] = 5;
+    // Take the sides
+    vec4 p1 = vec4(inVertex[0].position * inVertex[0].scale + inVertex[0].offset, 1);
+    p1 = osg_ModelViewProjectionMatrix * p1;
+    vec4 p2 = vec4(inVertex[1].position * inVertex[1].scale + inVertex[1].offset, 1);
+    p2 = osg_ModelViewProjectionMatrix * p2;
+    vec4 p3 = vec4(inVertex[2].position * inVertex[2].scale + inVertex[2].offset, 1); 
+    p3 = osg_ModelViewProjectionMatrix * p3;
+    p1 = p1 / p1.w;
+    p2 = p2 / p2.w;
+    p3 = p3 / p3.w;
+    vec2 line1 = (p1 - p2).xy * 0.5f * viewportSize;
+    vec2 line2 = (p2 - p3).xy * 0.5f * viewportSize;
+    vec2 line3 = (p3 - p1).xy * 0.5f * viewportSize;
+    float l1 = length(line1);
+    float l2 = length(line2);
+    float l3 = length(line3);
+
+    if (gl_InvocationID == 0)
+    {
+        gl_TessLevelInner[0] = clamp(max(l1, max(l2, l3)) * 0.1f, 1, 50);
+        //gl_TessLevelInner[1] = 5;
+        gl_TessLevelOuter[0] = clamp(l1 * 0.1f, 1, 50);
+        gl_TessLevelOuter[1] = clamp(l2 * 0.1f, 1, 50);
+        gl_TessLevelOuter[2] = clamp(l3 * 0.1f, 1, 50);
+        //gl_TessLevelOuter[3] = 5;
+    }
 }
