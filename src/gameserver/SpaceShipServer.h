@@ -24,6 +24,8 @@ BEGIN_DECLGAMEMESSAGE(SpaceShipCollision, 5005, true)
 END_DECLGAMEMESSAGE()
 
 class GameInstanceServer;
+class PhysicsEngine;
+class ShipPhysicsActor;
 
 class SpaceShipServer : public GameObject
 {
@@ -45,7 +47,9 @@ public:
 
     GameMessage::pointer creationMessage() const;
 
-    void timeTick(float deltaTime);
+    void addToPhysicsEngine(const std::shared_ptr<PhysicsEngine>& engine);
+
+    //void timeTick(float deltaTime);
 
 protected:
     osg::Vec3f m_pos;
@@ -57,7 +61,11 @@ protected:
 
     bool m_inputState[6];
     float m_timeSinceLastUpdate;
+    std::shared_ptr<PhysicsEngine> m_engine;
+    ShipPhysicsActor* m_actor;
+    unsigned int m_physicsId;
 
     // event related functions
     void onControlMessage(uint16_t inputType, bool on);
+    void onPhysicsUpdate(const osg::Vec3f& newPos, const osg::Quat& newRot);
 };

@@ -9,13 +9,14 @@ uint32_t ownerId;
 END_DECLGAMEMESSAGE()
 
 class GameInstanceServer;
+class PhysicsEngine;
 
 class AsteroidFieldServer : public GameObject
 {
 public:
     typedef std::shared_ptr<AsteroidFieldServer> pointer;
 
-    AsteroidFieldServer(int numOfAsteroids, float turbulence, float density, uint32_t ownerId, GameInstanceServer* ctx);
+    AsteroidFieldServer(int numOfAsteroids, float turbulence, float density, uint32_t ownerId, GameInstanceServer* ctx, PhysicsEngine* engine);
 
     GameMessage::pointer creationMessage() const;
 

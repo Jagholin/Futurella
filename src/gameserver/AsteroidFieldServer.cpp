@@ -1,6 +1,7 @@
 #include "AsteroidFieldServer.h"
 #include "GameInstanceServer.h"
 #include "../Asteroid.h"
+#include "../gamecommon/PhysicsEngine.h"
 
 #include <random>
 
@@ -29,7 +30,7 @@ END_GAMETORAWMESSAGE_QCONVERT()
 
 REGISTER_GAMEMESSAGE(AsteroidFieldData)
 
-AsteroidFieldServer::AsteroidFieldServer(int asteroidNumber, float turbulence, float density, uint32_t ownerId, GameInstanceServer* ctx):
+AsteroidFieldServer::AsteroidFieldServer(int asteroidNumber, float turbulence, float density, uint32_t ownerId, GameInstanceServer* ctx, PhysicsEngine* engine):
 GameObject(ownerId, ctx)
 {
     std::random_device randDevice;
@@ -76,6 +77,13 @@ GameObject(ownerId, ctx)
 
     }
     delete scatteredAsteroids;
+
+    // Add asteroids as collision bodies to the engine
+    for (unsigned int i = 0; i < m_asteroids->getLength(); ++i)
+    {
+        Asteroid* currentAst = m_asteroids->getAsteroid(i);
+        //engine->addCollisionSphere(currentAst->getPosition(), currentAst->getRadius());
+    }
 }
 
 GameMessage::pointer AsteroidFieldServer::creationMessage() const

@@ -69,7 +69,7 @@ int main()
     while (!viewer->done()){
         start = std::chrono::steady_clock::now();
 
-        guiApp.timeTick(frameTime.count());
+        guiApp.timeTick(std::chrono::duration_cast<std::chrono::milliseconds>(frameTime).count());
         viewer->frame();
 
         frameTime = std::chrono::steady_clock::now() - start;

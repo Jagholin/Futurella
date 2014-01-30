@@ -4,11 +4,7 @@
 #include "SpaceShipServer.h"
 #include "AsteroidFieldServer.h"
 
-class btDynamicsWorld;
-class btDefaultCollisionConfiguration;
-class btCollisionDispatcher;
-class btBroadphaseInterface;
-class btSequentialImpulseConstraintSolver;
+class PhysicsEngine;
 
 class GameInstanceServer : public GameMessagePeer
 {
@@ -27,16 +23,9 @@ public:
     void physicsTick(float timeInterval);
 
 protected:
+    std::shared_ptr<PhysicsEngine> m_physicsEngine;
+
     std::map<MessagePeer*, SpaceShipServer::pointer> m_peerSpaceShips;
     AsteroidFieldServer::pointer m_asteroidField;
-
-    // Physics main world
-    btDynamicsWorld* m_physicsWorld;
-
-    btDefaultCollisionConfiguration* m_collisionConfig;
-    btCollisionDispatcher* m_collisionDispatcher;
-    btBroadphaseInterface* m_broadphase;
-    btSequentialImpulseConstraintSolver* m_constraintSolver;
-
     std::string m_name;
 };

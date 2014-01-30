@@ -808,3 +808,18 @@ void GUIApplication::consoleOpenShaderEditor(const std::vector<String>& params, 
     target->show();
     target->activate();
 }
+
+std::shared_ptr<PhysicsEngine> GUIApplication::getOrCreatePhysicsEngine()
+{
+    std::shared_ptr<PhysicsEngine> result;
+    if (m_physicsEngine.expired())
+    {
+        result = std::make_shared<PhysicsEngine>();
+        m_physicsEngine = result;
+    }
+    else
+    {
+        result = m_physicsEngine.lock();
+    }
+    return result;
+}

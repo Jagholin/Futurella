@@ -1,28 +1,16 @@
 #include "GameInstanceServer.h"
 #include "../networking/peermanager.h"
-#include <btBulletDynamicsCommon.h>
+#include "../gamecommon/PhysicsEngine.h"
 
 GameInstanceServer::GameInstanceServer(const std::string &name) :
-m_name(name),
-m_asteroidField(new AsteroidFieldServer(200, 0.5f, 1, 0, this)),
-m_collisionConfig(new btDefaultCollisionConfiguration),
-m_collisionDispatcher(new btCollisionDispatcher(m_collisionConfig)),
-m_broadphase(new btDbvtBroadphase),
-m_constraintSolver(new btSequentialImpulseConstraintSolver)
+m_physicsEngine(new PhysicsEngine),
+m_name(name)
 {
-    // nop
-
-    m_physicsWorld = new btDiscreteDynamicsWorld(m_collisionDispatcher, m_broadphase, m_constraintSolver, m_collisionConfig);
-    m_physicsWorld->setGravity(btVector3(0, 0, 0));
+    m_asteroidField = std::make_shared<AsteroidFieldServer>(200, 0.5f, 1, 0, this, m_physicsEngine.get());
 }
 
 GameInstanceServer::~GameInstanceServer()
 {
-    delete m_physicsWorld;
-    delete m_constraintSolver;
-    delete m_broadphase;
-    delete m_collisionDispatcher;
-    delete m_collisionConfig;
 }
 
 std::string GameInstanceServer::name() const
@@ -43,7 +31,10 @@ void GameInstanceServer::connectLocallyTo(MessagePeer* buddy, bool recursive /*=
     // we have got a new client! Create a SpaceShip just for him
     GameMessagePeer::connectLocallyTo(buddy, recursive);
 
-    SpaceShipServer::pointer hisShip{ new SpaceShipServer(osg::Vec3f(), osg::Quat(0, osg::Vec3f(1, 0, 0)), RemotePeersManager::getManager()->getPeersId(buddy), this) };
+    SpaceShipServer::pointer hisShip{ 
+        new SpaceShipServer(osg::Vec3f(), osg::Quat(0, osg::Vec3f(1, 0, 0)), RemotePeersManager::getManager()->getPeersId(buddy), this) };
+
+    hisShip->addToPhysicsEngine(m_physicsEngine);
 
     GameMessage::pointer constructItMsg = m_asteroidField->creationMessage();
     buddy->send(constructItMsg);
@@ -70,8 +61,9 @@ void GameInstanceServer::disconnectLocallyFrom(MessagePeer* buddy, bool recursiv
 
 void GameInstanceServer::physicsTick(float timeInterval)
 {
-    for (auto aShip : m_peerSpaceShips)
+    /*for (auto aShip : m_peerSpaceShips)
     {
         aShip.second->timeTick(timeInterval);
-    }
+    }*/
+    m_physicsEngine->physicsTick(timeInterval);
 }

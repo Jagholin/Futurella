@@ -62,6 +62,10 @@ add_executable(Futurella
     src/gamecommon/GameMessagePeer.cpp
     src/gamecommon/GameObject.h
     src/gamecommon/GameObject.cpp
+    src/gamecommon/PhysicsEngine.h
+    src/gamecommon/PhysicsEngine.cpp
+    src/gamecommon/ShipPhysicsActor.h
+    src/gamecommon/ShipPhysicsActor.cpp
     src/gameserver/SpaceShipServer.h
     src/gameserver/SpaceShipServer.cpp
     src/gameserver/GameInstanceServer.h
@@ -92,7 +96,8 @@ add_executable(Futurella
     src/glincludes.h
     src/glincludes.cpp
     src/ShaderWrapper.h
-    src/ShaderWrapper.cpp)
+    src/ShaderWrapper.cpp
+    )
 
 add_lib(Futurella OPENTHREADS)
 add_lib(Futurella OSG)

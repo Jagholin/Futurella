@@ -1,5 +1,6 @@
 #include "GameInstanceServer.h"
 #include "SpaceShipServer.h"
+#include "../gamecommon/PhysicsEngine.h"
 
 BEGIN_GAMETORAWMESSAGE_QCONVERT(SpaceShipConstructionData)
 out << pos << orient << ownerId;
@@ -35,7 +36,9 @@ m_velocity(osg::Vec3f()),
 m_acceleration(4.0f),
 m_steerability(2.0f),
 m_friction(0.7f),
-m_timeSinceLastUpdate(10000.0f)
+m_timeSinceLastUpdate(10000.0f),
+m_actor(nullptr),
+m_physicsId(0)
 {
     for (unsigned int i = 0; i < 6; ++i) m_inputState[i] = false;
     //GameMessage::pointer crMessage = creationMessage();
@@ -59,7 +62,7 @@ void SpaceShipServer::onControlMessage(uint16_t inputType, bool on)
         m_inputState[inputType] = on;
 }
 
-void SpaceShipServer::timeTick(float dt)
+/*void SpaceShipServer::timeTick(float dt)
 {
     //position update
     m_pos += m_velocity*dt;
@@ -115,7 +118,7 @@ void SpaceShipServer::timeTick(float dt)
         msg->objectId = m_myObjectId;
         messageToPartner(msg);
     }
-}
+}*/
 
 GameMessage::pointer SpaceShipServer::creationMessage() const
 {
@@ -125,6 +128,28 @@ GameMessage::pointer SpaceShipServer::creationMessage() const
     msg->objectId = m_myObjectId;
     msg->ownerId = m_myOwnerId;
     return msg;
+}
+
+void SpaceShipServer::addToPhysicsEngine(const std::shared_ptr<PhysicsEngine>& engine)
+{
+    m_engine = engine;
+    m_physicsId = engine->addUserVehicle(m_pos, osg::Vec3f(0.1f, 0.1f, 0.3f), osg::Quat(), 10.0f);
+    engine->addMotionCallback(m_physicsId, std::bind(&SpaceShipServer::onPhysicsUpdate, this, std::placeholders::_1, std::placeholders::_2));
+    m_actor = engine->getActorById(m_physicsId);
+}
+
+void SpaceShipServer::onPhysicsUpdate(const osg::Vec3f& newPos, const osg::Quat& newRot)
+{
+    if (true)
+    {
+        m_timeSinceLastUpdate = 0;
+        GameSpaceShipPhysicsUpdateMessage::pointer msg{ new GameSpaceShipPhysicsUpdateMessage };
+        msg->pos = newPos;
+        msg->orient = newRot.asVec4();
+        msg->velocity = m_velocity;
+        msg->objectId = m_myObjectId;
+        messageToPartner(msg);
+    }
 }
 
 REGISTER_GAMEMESSAGE(SpaceShipConstructionData)
