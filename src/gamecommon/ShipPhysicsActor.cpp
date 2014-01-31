@@ -19,11 +19,11 @@ ShipPhysicsActor::~ShipPhysicsActor()
 
 void ShipPhysicsActor::updateAction(btCollisionWorld* collisionWorld, btScalar deltaTimeStep)
 {
-    m_slaveBody->clearForces();
+    //m_slaveBody->clearForces();
     if (m_torqueVec.fuzzyZero() && !m_torqueNulled)
     {
-        m_slaveBody->setAngularVelocity(m_torqueVec);
-        m_torqueNulled = true;
+        //m_slaveBody->setAngularVelocity(m_torqueVec);
+        //m_torqueNulled = true;
     }
     if (m_forceVec.fuzzyZero() && m_torqueVec.fuzzyZero())
         return;

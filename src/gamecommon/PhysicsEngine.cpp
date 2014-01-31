@@ -102,12 +102,17 @@ void PhysicsEngine::addCollisionSphere(osg::Vec3f pos, float radius, float mass)
     initialTransform.setIdentity();
     initialTransform.setOrigin(btVector3(pos.x(), pos.y(), pos.z()));
 
+    btMotionState* motionState = new btDefaultMotionState(initialTransform);
+    btVector3 inertia;
+    newShape->calculateLocalInertia(0.0, inertia);
+
     // TODO: upgrade to the rigid body status?
     btCollisionObject* newBody = new btCollisionObject;
     newBody->setCollisionShape(newShape);
     newBody->setWorldTransform(initialTransform);
 
-    m_physicsWorld->addCollisionObject(newBody, 0x1, 0x2);
+
+    m_physicsWorld->addCollisionObject(newBody);
 }
 
 unsigned int PhysicsEngine::addUserVehicle(const osg::Vec3f& pos, const osg::Vec3f& sizes, const osg::Quat& orient, float mass)
@@ -129,7 +134,7 @@ unsigned int PhysicsEngine::addUserVehicle(const osg::Vec3f& pos, const osg::Vec
     m_vehicleMotionObservers.push_back(motionState);
     ++m_nextUsedId;
 
-    body->setDamping(0.5f, 0);
+    body->setDamping(0.5f, 0.7f);
     m_physicsWorld->addRigidBody(body);
 
     return m_nextUsedId - 1;
@@ -158,6 +163,6 @@ void PhysicsEngine::addMotionCallback(unsigned int id, const t_motionFunc& cb)
 
 void PhysicsEngine::physicsTick(float msDelta)
 {
-    m_physicsWorld->stepSimulation(msDelta / 1000.0f, 150, 1. / 120.);
+    m_physicsWorld->stepSimulation(msDelta / 1000.0f, 10, 1. / 120.);
 }
 
