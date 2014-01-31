@@ -3,6 +3,8 @@
 #include "../networking/peermanager.h"
 
 #include <osgGA/TrackballManipulator>
+#include <osg/TextureCubeMap>
+#include <osgDB/ReadFile>
 
 GameInstanceClient::GameInstanceClient(osg::Group* rootGroup, osgViewer::Viewer* viewer):
 m_rootGraphicsGroup(rootGroup),
@@ -15,6 +17,26 @@ m_orphaned(false)
     osg::Viewport* myViewport = m_viewer->getCamera()->getViewport();
     m_viewportSizeUniform->set(osg::Vec2f(myViewport->width(), myViewport->height()));
     m_rootGraphicsGroup->getOrCreateStateSet()->addUniform(m_viewportSizeUniform);
+    // Create a cube with texture cubemap
+
+    osg::TextureCubeMap *skyboxTexture = new osg::TextureCubeMap;
+    osg::Image *cubeMapFaces[6];
+    std::string cubeFileNames[] = {
+        "textures/skybox1_right1.png",
+        "textures/skybox1_left2.png",
+        "textures/skybox1_top3.png",
+        "textures/skybox1_bottom4.png",
+        "textures/skybox1_front5.png",
+        "textures/skybox1_back6.png"
+    };
+    for (unsigned int i = 0; i < 6; ++i)
+    {
+        cubeMapFaces[i] = osgDB::readImageFile(cubeFileNames[i]);
+        assert(cubeMapFaces[i]);
+        skyboxTexture->setImage(osg::TextureCubeMap::POSITIVE_X + i, cubeMapFaces[i]);
+    }
+
+    // Create simple node and geode for the skybox
 
 }
 
