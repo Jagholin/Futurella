@@ -1,10 +1,14 @@
 #include "GameInstanceClient.h"
 #include "../gamecommon/GameObject.h"
 #include "../networking/peermanager.h"
+#include "../ShaderWrapper.h"
 
 #include <osgGA/TrackballManipulator>
 #include <osg/TextureCubeMap>
 #include <osgDB/ReadFile>
+#include <osg/ShapeDrawable>
+#include <osg/Geode>
+#include <osgUtil/CullVisitor>
 
 GameInstanceClient::GameInstanceClient(osg::Group* rootGroup, osgViewer::Viewer* viewer):
 m_rootGraphicsGroup(rootGroup),
@@ -20,12 +24,15 @@ m_orphaned(false)
     // Create a cube with texture cubemap
 
     osg::TextureCubeMap *skyboxTexture = new osg::TextureCubeMap;
+    skyboxTexture->setWrap(osg::Texture::WRAP_R, osg::Texture::CLAMP_TO_EDGE);
+    skyboxTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
+    skyboxTexture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
     osg::Image *cubeMapFaces[6];
     std::string cubeFileNames[] = {
         "textures/skybox1_right1.png",
         "textures/skybox1_left2.png",
-        "textures/skybox1_top3.png",
         "textures/skybox1_bottom4.png",
+        "textures/skybox1_top3.png",
         "textures/skybox1_front5.png",
         "textures/skybox1_back6.png"
     };
@@ -36,8 +43,34 @@ m_orphaned(false)
         skyboxTexture->setImage(osg::TextureCubeMap::POSITIVE_X + i, cubeMapFaces[i]);
     }
 
-    // Create simple node and geode for the skybox
+    m_viewer->getCamera()->setClearMask(GL_DEPTH_BUFFER_BIT);
 
+    ShaderWrapper *myProgram = new ShaderWrapper;
+    myProgram->load(osg::Shader::VERTEX, "shader/vs_skybox.txt");
+    myProgram->load(osg::Shader::FRAGMENT, "shader/fs_skybox.txt");
+
+    // Create simple node and geode for the skybox
+    // First create new prerender camera
+    osg::Camera* skyboxCamera = new osg::Camera;
+    skyboxCamera->setRenderOrder(osg::Camera::PRE_RENDER);
+    skyboxCamera->setClearMask(GL_DEPTH_BUFFER_BIT);
+    skyboxCamera->setReferenceFrame(osg::Transform::RELATIVE_RF);
+    skyboxCamera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER);
+    skyboxCamera->setCullingActive(false);
+    // IMPORTANT: OSG will still clamp the projection matrix with culling disabled, and
+    // we don't want it to do it here.
+    // So disable near/far planes calculation.
+    skyboxCamera->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
+
+    osg::Geode* skyboxBox = new osg::Geode;
+    skyboxBox->addDrawable(new osg::ShapeDrawable(new osg::Box(osg::Vec3f(0, 0, 0), 10.0f)));
+    skyboxBox->getOrCreateStateSet()->setAttributeAndModes(myProgram, osg::StateAttribute::ON);
+    skyboxBox->getOrCreateStateSet()->setTextureAttributeAndModes(0, skyboxTexture, osg::StateAttribute::ON);
+    skyboxBox->getOrCreateStateSet()->addUniform(new osg::Uniform("skyboxTex", 0));
+    skyboxBox->setCullingActive(false);
+    skyboxCamera->addChild(skyboxBox);
+
+    rootGroup->addChild(skyboxCamera);
 }
 
 GameInstanceClient::~GameInstanceClient()

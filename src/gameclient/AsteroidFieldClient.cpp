@@ -13,14 +13,6 @@ GameObject(objId, ownId, ctx)
     m_rootGroup = ctx->sceneGraphRoot();
     m_asteroidsGroup = new osg::Group;
 
-    //osg::ref_ptr<osg::Shader> octahedronVS = new osg::Shader(osg::Shader::VERTEX);
-    //osg::ref_ptr<osg::Shader> octahedronFS = new osg::Shader(osg::Shader::FRAGMENT);
-    //octahedronVS->loadShaderSourceFromFile("shader/vs_octahedron.txt");
-    //octahedronFS->loadShaderSourceFromFile("shader/fs_octahedron.txt");
-
-    //osg::ref_ptr<osg::Program> octahedronShader = new osg::Program();
-    //octahedronShader->addShader(octahedronVS);
-    //octahedronShader->addShader(octahedronFS);
     ShaderWrapper* octahedronShader = new ShaderWrapper;
     octahedronShader->load(osg::Shader::VERTEX, "shader/vs_octahedron.txt");
     octahedronShader->load(osg::Shader::TESSCONTROL, "shader/tc_octahedron.txt");

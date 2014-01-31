@@ -1,0 +1,14 @@
+#version 400
+
+in vec3 outPosition;
+out vec4 fragColor;
+
+uniform samplerCube skyboxTex;
+
+void main()
+{
+    vec3 texCoord = outPosition * 0.2;
+    vec4 texColor = texture(skyboxTex, texCoord);
+    //fragColor = vec4((outPosition + vec3(5.0,5.0,5.0))*0.1, 1.0);
+    fragColor = texColor;
+}
