@@ -129,6 +129,7 @@ unsigned int PhysicsEngine::addUserVehicle(const osg::Vec3f& pos, const osg::Vec
     m_vehicleMotionObservers.push_back(motionState);
     ++m_nextUsedId;
 
+    body->setDamping(0.5f, 0);
     m_physicsWorld->addRigidBody(body);
 
     return m_nextUsedId - 1;
@@ -157,6 +158,6 @@ void PhysicsEngine::addMotionCallback(unsigned int id, const t_motionFunc& cb)
 
 void PhysicsEngine::physicsTick(float msDelta)
 {
-    m_physicsWorld->stepSimulation(msDelta / 1000.0f, 6);
+    m_physicsWorld->stepSimulation(msDelta / 1000.0f, 150, 1. / 120.);
 }
 

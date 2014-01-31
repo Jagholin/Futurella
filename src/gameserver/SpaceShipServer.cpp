@@ -1,6 +1,7 @@
 #include "GameInstanceServer.h"
 #include "SpaceShipServer.h"
 #include "../gamecommon/PhysicsEngine.h"
+#include "../gamecommon/ShipPhysicsActor.h"
 
 BEGIN_GAMETORAWMESSAGE_QCONVERT(SpaceShipConstructionData)
 out << pos << orient << ownerId;
@@ -33,8 +34,8 @@ GameObject(ownerId, ctx),
 m_pos(startPos),
 m_orientation(orient),
 m_velocity(osg::Vec3f()),
-m_acceleration(4.0f),
-m_steerability(2.0f),
+m_acceleration(20.0f),
+m_steerability(0.9f),
 m_friction(0.7f),
 m_timeSinceLastUpdate(10000.0f),
 m_actor(nullptr),
@@ -59,7 +60,27 @@ bool SpaceShipServer::takeMessage(const GameMessage::const_pointer& msg, Message
 void SpaceShipServer::onControlMessage(uint16_t inputType, bool on)
 {
     if (inputType < 6)
+    {
         m_inputState[inputType] = on;
+        if (m_inputState[ACCELERATE] != m_inputState[BACK])
+        {
+            //Set force vector
+            m_actor->setForceVector(osg::Vec3f(0, 0, m_inputState[ACCELERATE] ? -m_acceleration : m_acceleration));
+        }
+        else
+            m_actor->setForceVector(osg::Vec3f(0, 0, 0));
+        // build torque vector
+        osg::Vec3f torque(0, 0, 0);
+        if (m_inputState[LEFT] != m_inputState[RIGHT])
+        {
+            torque += osg::Vec3f(0, m_inputState[LEFT] ? m_steerability : -m_steerability, 0);
+        }
+        if (m_inputState[UP] != m_inputState[DOWN])
+        {
+            torque += osg::Vec3f(m_inputState[UP] ? -m_steerability : m_steerability, 0, 0);
+        }
+        m_actor->setRotationAxis(torque);
+    }
 }
 
 /*void SpaceShipServer::timeTick(float dt)
@@ -133,7 +154,7 @@ GameMessage::pointer SpaceShipServer::creationMessage() const
 void SpaceShipServer::addToPhysicsEngine(const std::shared_ptr<PhysicsEngine>& engine)
 {
     m_engine = engine;
-    m_physicsId = engine->addUserVehicle(m_pos, osg::Vec3f(0.1f, 0.1f, 0.3f), osg::Quat(), 10.0f);
+    m_physicsId = engine->addUserVehicle(m_pos, osg::Vec3f(1.f, 1.f, 3.f), osg::Quat(), 10.0f);
     engine->addMotionCallback(m_physicsId, std::bind(&SpaceShipServer::onPhysicsUpdate, this, std::placeholders::_1, std::placeholders::_2));
     m_actor = engine->getActorById(m_physicsId);
 }

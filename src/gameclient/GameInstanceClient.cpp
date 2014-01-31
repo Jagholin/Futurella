@@ -23,11 +23,6 @@ GameInstanceClient::~GameInstanceClient()
     m_viewer->setCameraManipulator(new osgGA::TrackballManipulator);
 }
 
-GameInstanceClient::~GameInstanceClient()
-{
-    m_viewer->setCameraManipulator(new osgGA::TrackballManipulator);
-}
-
 void GameInstanceClient::connectLocallyTo(MessagePeer* buddy, bool recursive /*= true*/)
 {
     // Only one single connection to the server makes sense.

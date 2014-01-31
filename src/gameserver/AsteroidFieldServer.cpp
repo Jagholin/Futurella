@@ -82,7 +82,7 @@ GameObject(ownerId, ctx)
     for (unsigned int i = 0; i < m_asteroids->getLength(); ++i)
     {
         Asteroid* currentAst = m_asteroids->getAsteroid(i);
-        //engine->addCollisionSphere(currentAst->getPosition(), currentAst->getRadius());
+        engine->addCollisionSphere(currentAst->getPosition(), currentAst->getRadius());
     }
 }
 
