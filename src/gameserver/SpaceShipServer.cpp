@@ -29,21 +29,20 @@ END_GAMETORAWMESSAGE_QCONVERT()
 BEGIN_RAWTOGAMEMESSAGE_QCONVERT(SpaceShipCollision)
 END_RAWTOGAMEMESSAGE_QCONVERT()
 
-SpaceShipServer::SpaceShipServer(osg::Vec3f startPos, osg::Quat orient, uint32_t ownerId, GameInstanceServer* ctx):
+SpaceShipServer::SpaceShipServer(osg::Vec3f startPos, osg::Quat orient, uint32_t ownerId, GameInstanceServer* ctx, const std::shared_ptr<PhysicsEngine>& eng):
 GameObject(ownerId, ctx),
-m_pos(startPos),
-m_orientation(orient),
-m_velocity(osg::Vec3f()),
 m_acceleration(30.0f),
 m_steerability(0.1f),
-m_friction(0.7f),
 m_timeSinceLastUpdate(10000.0f),
 m_actor(nullptr),
 m_physicsId(0)
 {
     for (unsigned int i = 0; i < 6; ++i) m_inputState[i] = false;
-    //GameMessage::pointer crMessage = creationMessage();
-    //m_context->broadcastLocally(crMessage);
+
+    m_engine = eng;
+    m_physicsId = eng->addUserVehicle(startPos, osg::Vec3f(0.1f, 0.1f, 0.3f), orient, 10.0f);
+    eng->addMotionCallback(m_physicsId, std::bind(&SpaceShipServer::onPhysicsUpdate, this, std::placeholders::_1, std::placeholders::_2));
+    m_actor = eng->getActorById(m_physicsId);
 }
 
 bool SpaceShipServer::takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender)
@@ -73,7 +72,7 @@ void SpaceShipServer::onControlMessage(uint16_t inputType, bool on)
         osg::Vec3f torque(0, 0, 0);
         if (m_inputState[LEFT] != m_inputState[RIGHT])
         {
-            torque += osg::Vec3f(0, m_inputState[LEFT] ? m_steerability : -m_steerability, 0);
+            torque += osg::Vec3f(0, 0, m_inputState[LEFT] ? m_steerability : -m_steerability);
         }
         if (m_inputState[UP] != m_inputState[DOWN])
         {
@@ -83,80 +82,19 @@ void SpaceShipServer::onControlMessage(uint16_t inputType, bool on)
     }
 }
 
-/*void SpaceShipServer::timeTick(float dt)
-{
-    //position update
-    m_pos += m_velocity*dt;
-
-    //Friction
-    m_velocity *= pow(m_friction, dt);
-
-    //handle input
-    if (m_inputState[ACCELERATE] != m_inputState[BACK])
-    {
-        if (m_inputState[ACCELERATE])
-            m_velocity += m_orientation*osg::Vec3f(0, 0, -m_acceleration * dt);
-        else
-            m_velocity += m_orientation*osg::Vec3f(0, 0, m_acceleration * dt);
-    }
-
-    if (m_inputState[LEFT] != m_inputState[RIGHT]){
-        float amount = m_steerability * dt;
-        if (m_inputState[LEFT]){
-            //roll left
-            osg::Quat q(amount, osg::Vec3f(0, 0, 1));
-            m_orientation = q * m_orientation;
-        }
-        else{
-            //roll right
-            osg::Quat q(-amount, osg::Vec3f(0, 0, 1));
-            m_orientation = q * m_orientation;
-        }
-    }
-    if (m_inputState[UP] != m_inputState[DOWN]){
-        float amount = m_steerability * dt;
-        if (m_inputState[UP]){
-            //rear up
-            osg::Quat q(-amount, osg::Vec3f(1, 0, 0));
-            m_orientation = q * m_orientation;
-        }
-        else{
-            //rear down
-            osg::Quat q(amount, osg::Vec3f(1, 0, 0));
-            m_orientation = q * m_orientation;
-        }
-    }
-
-    // Send update messages
-    m_timeSinceLastUpdate += dt;
-    if (m_timeSinceLastUpdate > 0.02f)
-    {
-        m_timeSinceLastUpdate = 0;
-        GameSpaceShipPhysicsUpdateMessage::pointer msg{ new GameSpaceShipPhysicsUpdateMessage };
-        msg->pos = m_pos;
-        msg->orient = m_orientation.asVec4();
-        msg->velocity = m_velocity;
-        msg->objectId = m_myObjectId;
-        messageToPartner(msg);
-    }
-}*/
-
 GameMessage::pointer SpaceShipServer::creationMessage() const
 {
     GameSpaceShipConstructionDataMessage::pointer msg{ new GameSpaceShipConstructionDataMessage };
-    msg->pos = m_pos;
-    msg->orient = m_orientation.asVec4();
+    btTransform trans;
+    m_engine->getBodyById(m_physicsId)->getMotionState()->getWorldTransform(trans);
+    btVector3 translate(trans.getOrigin());
+    btQuaternion rotate(trans.getRotation());
+
+    msg->pos.set(translate.x(), translate.y(), translate.z());
+    msg->orient.set(rotate.x(), rotate.y(), rotate.z(), rotate.w());
     msg->objectId = m_myObjectId;
     msg->ownerId = m_myOwnerId;
     return msg;
-}
-
-void SpaceShipServer::addToPhysicsEngine(const std::shared_ptr<PhysicsEngine>& engine)
-{
-    m_engine = engine;
-    m_physicsId = engine->addUserVehicle(m_pos, osg::Vec3f(0.1f, 0.1f, 0.3f), osg::Quat(), 10.0f);
-    engine->addMotionCallback(m_physicsId, std::bind(&SpaceShipServer::onPhysicsUpdate, this, std::placeholders::_1, std::placeholders::_2));
-    m_actor = engine->getActorById(m_physicsId);
 }
 
 void SpaceShipServer::onPhysicsUpdate(const osg::Vec3f& newPos, const osg::Quat& newRot)
@@ -167,10 +105,15 @@ void SpaceShipServer::onPhysicsUpdate(const osg::Vec3f& newPos, const osg::Quat&
         GameSpaceShipPhysicsUpdateMessage::pointer msg{ new GameSpaceShipPhysicsUpdateMessage };
         msg->pos = newPos;
         msg->orient = newRot.asVec4();
-        msg->velocity = m_velocity;
+        msg->velocity.set(0, 0, 0);
         msg->objectId = m_myObjectId;
         messageToPartner(msg);
     }
+}
+
+SpaceShipServer::~SpaceShipServer()
+{
+    m_engine->removeVehicle(m_physicsId);
 }
 
 REGISTER_GAMEMESSAGE(SpaceShipConstructionData)

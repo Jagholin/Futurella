@@ -19,5 +19,4 @@ protected:
     btRigidBody* m_slaveBody;
 
     btVector3 m_forceVec, m_torqueVec;
-    bool m_forceNulled, m_torqueNulled;
 };

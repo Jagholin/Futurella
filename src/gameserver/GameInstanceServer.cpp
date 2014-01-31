@@ -32,9 +32,7 @@ void GameInstanceServer::connectLocallyTo(MessagePeer* buddy, bool recursive /*=
     GameMessagePeer::connectLocallyTo(buddy, recursive);
 
     SpaceShipServer::pointer hisShip{ 
-        new SpaceShipServer(osg::Vec3f(), osg::Quat(0, osg::Vec3f(1, 0, 0)), RemotePeersManager::getManager()->getPeersId(buddy), this) };
-
-    hisShip->addToPhysicsEngine(m_physicsEngine);
+        new SpaceShipServer(osg::Vec3f(), osg::Quat(0, osg::Vec3f(1, 0, 0)), RemotePeersManager::getManager()->getPeersId(buddy), this, m_physicsEngine) };
 
     GameMessage::pointer constructItMsg = m_asteroidField->creationMessage();
     buddy->send(constructItMsg);
@@ -61,9 +59,5 @@ void GameInstanceServer::disconnectLocallyFrom(MessagePeer* buddy, bool recursiv
 
 void GameInstanceServer::physicsTick(float timeInterval)
 {
-    /*for (auto aShip : m_peerSpaceShips)
-    {
-        aShip.second->timeTick(timeInterval);
-    }*/
     m_physicsEngine->physicsTick(timeInterval);
 }

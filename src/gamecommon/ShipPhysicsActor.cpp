@@ -8,8 +8,6 @@ ShipPhysicsActor::ShipPhysicsActor(btRigidBody* slave)
     m_forceVec.setZero();
     m_torqueVec.setZero();
     m_slaveBody = slave;
-    m_forceNulled = true;
-    m_torqueNulled = true;
 }
 
 ShipPhysicsActor::~ShipPhysicsActor()
@@ -19,12 +17,6 @@ ShipPhysicsActor::~ShipPhysicsActor()
 
 void ShipPhysicsActor::updateAction(btCollisionWorld* collisionWorld, btScalar deltaTimeStep)
 {
-    //m_slaveBody->clearForces();
-    if (m_torqueVec.fuzzyZero() && !m_torqueNulled)
-    {
-        //m_slaveBody->setAngularVelocity(m_torqueVec);
-        //m_torqueNulled = true;
-    }
     if (m_forceVec.fuzzyZero() && m_torqueVec.fuzzyZero())
         return;
 
@@ -45,17 +37,11 @@ void ShipPhysicsActor::updateAction(btCollisionWorld* collisionWorld, btScalar d
 
     if (!m_forceVec.fuzzyZero())
     {
-        //std::cerr << deltaTimeStep << "\n";
         m_slaveBody->applyCentralForce(myForce);
-        m_forceNulled = false;
     }
     if (!m_torqueVec.fuzzyZero())
     {
-        //std::cerr << m_slaveBody->getAngularFactor().x() << "\n";
         m_slaveBody->applyTorque(myTorque);
-        //m_slaveBody->setAngularVelocity(m_torqueVec);
-        //std::cerr << m_slaveBody->getAngularVelocity().x() << " " << m_slaveBody->getAngularVelocity().y() << " " << m_slaveBody->getAngularVelocity().z() << " " << m_slaveBody->getTotalTorque().x() << " " << m_slaveBody->getTotalTorque().y() << " " << m_slaveBody->getTotalTorque().z() << "\n";
-        m_torqueNulled = false;
     }
     m_slaveBody->activate(true);
 }

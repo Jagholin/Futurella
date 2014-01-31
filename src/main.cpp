@@ -10,6 +10,7 @@
 #include <map>
 #include <osgGA/TrackballManipulator>
 #include <iostream>
+#include <OpenThreads/Thread>
 
 #include "CEGUIDrawable.h"
 #include "GUIApplication.h"
@@ -73,5 +74,13 @@ int main()
         viewer->frame();
 
         frameTime = std::chrono::steady_clock::now() - start;
+        // Add sleeping
+        std::chrono::milliseconds msFrameTime = std::chrono::duration_cast<std::chrono::milliseconds>(frameTime);
+        if (msFrameTime.count() < 1000. / 70.)
+        {
+            OpenThreads::Thread::microSleep((1000. / 70. - msFrameTime.count()) * 1000.);
+        }
+        else
+            OpenThreads::Thread::microSleep(0);
     }
 }

@@ -48,6 +48,7 @@ m_constraintSolver(new btSequentialImpulseConstraintSolver)
 {
     m_physicsWorld = new btDiscreteDynamicsWorld(m_collisionDispatcher, m_broadphase, m_constraintSolver, m_collisionConfig);
     m_physicsWorld->setGravity(btVector3(0, 0, 0));
+    m_vehicleShape = nullptr;
     m_nextUsedId = 0;
 }
 
@@ -77,7 +78,6 @@ PhysicsEngine::~PhysicsEngine()
     }
     collObjects.clear();
     m_vehicles.clear();
-    m_vehicleMotionObservers.clear();
 
     for (int i = 0; i < m_collisionShapes.size(); ++i)
     {
@@ -85,6 +85,7 @@ PhysicsEngine::~PhysicsEngine()
         delete shape;
     }
     m_collisionShapes.clear();
+    delete m_vehicleShape;
 
     delete m_physicsWorld;
     delete m_constraintSolver;
@@ -102,23 +103,23 @@ void PhysicsEngine::addCollisionSphere(osg::Vec3f pos, float radius, float mass)
     initialTransform.setIdentity();
     initialTransform.setOrigin(btVector3(pos.x(), pos.y(), pos.z()));
 
-    btMotionState* motionState = new btDefaultMotionState(initialTransform);
-    btVector3 inertia;
-    newShape->calculateLocalInertia(0.0, inertia);
+    //btMotionState* motionState = new btDefaultMotionState(initialTransform);
+    //btVector3 inertia;
+    //newShape->calculateLocalInertia(0.0, inertia);
 
     // TODO: upgrade to the rigid body status?
     btCollisionObject* newBody = new btCollisionObject;
     newBody->setCollisionShape(newShape);
     newBody->setWorldTransform(initialTransform);
 
-
-    m_physicsWorld->addCollisionObject(newBody);
+    m_physicsWorld->addCollisionObject(newBody, COLLISION_ASTEROIDGROUP, COLLISION_SHIPGROUP);
 }
 
 unsigned int PhysicsEngine::addUserVehicle(const osg::Vec3f& pos, const osg::Vec3f& sizes, const osg::Quat& orient, float mass)
 {
-    btBoxShape* vehicleShape = new btBoxShape(btVector3(sizes.x() / 2, sizes.y() / 2, sizes.z() / 2));
-    m_collisionShapes.push_back(vehicleShape);
+    if (! m_vehicleShape)
+        m_vehicleShape = new btBoxShape(btVector3(sizes.x() / 2, sizes.y() / 2, sizes.z() / 2));
+    //m_collisionShapes.push_back(m_vehicleShape);
 
     btTransform startTransform;
     startTransform.setIdentity();
@@ -127,15 +128,14 @@ unsigned int PhysicsEngine::addUserVehicle(const osg::Vec3f& pos, const osg::Vec
 
     VehicleMotionState* motionState = new VehicleMotionState(this, m_nextUsedId, startTransform);
     btVector3 inertia;
-    vehicleShape->calculateLocalInertia(mass, inertia);
+    m_vehicleShape->calculateLocalInertia(mass, inertia);
 
-    btRigidBody* body = new btRigidBody(mass, motionState, vehicleShape, inertia);
+    btRigidBody* body = new btRigidBody(mass, motionState, m_vehicleShape, inertia);
     m_vehicles[m_nextUsedId] = body;
-    m_vehicleMotionObservers.push_back(motionState);
     ++m_nextUsedId;
 
     body->setDamping(0.5f, 0.7f);
-    m_physicsWorld->addRigidBody(body);
+    m_physicsWorld->addRigidBody(body, COLLISION_SHIPGROUP, COLLISION_SHIPGROUP | COLLISION_ASTEROIDGROUP);
 
     return m_nextUsedId - 1;
 }
@@ -164,5 +164,29 @@ void PhysicsEngine::addMotionCallback(unsigned int id, const t_motionFunc& cb)
 void PhysicsEngine::physicsTick(float msDelta)
 {
     m_physicsWorld->stepSimulation(msDelta / 1000.0f, 10, 1. / 120.);
+}
+
+void PhysicsEngine::removeVehicle(unsigned int id)
+{
+    std::cerr << "Removing a vehicle\n";
+    btRigidBody* rigBody = getBodyById(id);
+
+    // remove an associated actor, if one exists
+    if (m_actors.count(id) > 0)
+    {
+        ShipPhysicsActor* act = m_actors[id];
+        m_physicsWorld->removeAction(act);
+        delete act;
+        m_actors.erase(id);
+    }
+
+    m_physicsWorld->removeRigidBody(rigBody);
+
+    // erase motion state
+    if (rigBody->getMotionState())
+        delete rigBody->getMotionState();
+    delete rigBody;
+    m_vehicles.erase(id);
+    m_motionCallbacks.erase(id);
 }
 

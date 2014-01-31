@@ -41,23 +41,16 @@ public:
         BACK
     };
 
-    SpaceShipServer(osg::Vec3f startPos, osg::Quat orient, uint32_t ownerId, GameInstanceServer* context);
+    SpaceShipServer(osg::Vec3f startPos, osg::Quat orient, uint32_t ownerId, GameInstanceServer* context, const std::shared_ptr<PhysicsEngine>& eng);
+    virtual ~SpaceShipServer();
 
     virtual bool takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender);
 
     GameMessage::pointer creationMessage() const;
 
-    void addToPhysicsEngine(const std::shared_ptr<PhysicsEngine>& engine);
-
-    //void timeTick(float deltaTime);
-
 protected:
-    osg::Vec3f m_pos;
-    osg::Quat m_orientation;
-    osg::Vec3f m_velocity;
     float m_acceleration;
     float m_steerability;
-    float m_friction;
 
     bool m_inputState[6];
     float m_timeSinceLastUpdate;
