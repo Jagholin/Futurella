@@ -5,6 +5,7 @@
 
 #include <osgGA/TrackballManipulator>
 #include <osg/TextureCubeMap>
+#include <osg/Texture2DArray>
 #include <osgDB/ReadFile>
 #include <osg/ShapeDrawable>
 #include <osg/Geode>
@@ -16,7 +17,6 @@ m_viewer(viewer),
 m_connected(false),
 m_orphaned(false)
 {
-    // nop
     m_viewportSizeUniform = new osg::Uniform("viewportSize", osg::Vec2f(800, 600));
     osg::Viewport* myViewport = m_viewer->getCamera()->getViewport();
     m_viewportSizeUniform->set(osg::Vec2f(myViewport->width(), myViewport->height()));
@@ -71,6 +71,8 @@ m_orphaned(false)
     skyboxCamera->addChild(skyboxBox);
 
     rootGroup->addChild(skyboxCamera);
+
+    createTextureArrays();
 }
 
 GameInstanceClient::~GameInstanceClient()
@@ -151,4 +153,27 @@ osg::Group* GameInstanceClient::sceneGraphRoot()
 void GameInstanceClient::setAsteroidField(AsteroidFieldClient::pointer asts)
 {
     m_myAsteroids = asts;
+}
+
+void GameInstanceClient::createTextureArrays()
+{
+    osg::ref_ptr<osg::Texture2DArray> myTex512Array = new osg::Texture2DArray;
+
+    const unsigned int textures = 1;
+    std::string textureNames[] = {
+        "textures/spherical_noise.png"
+    };
+    myTex512Array->setTextureHeight(512);
+    myTex512Array->setTextureWidth(512);
+    myTex512Array->setTextureDepth(textures);
+
+    myTex512Array->setWrap(osg::Texture::WRAP_R, osg::Texture::CLAMP_TO_EDGE);
+    myTex512Array->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
+    for (int i = 0; i < textures; ++i)
+    {
+        myTex512Array->setImage(i, osgDB::readImageFile(textureNames[i]));
+    }
+
+    m_rootGraphicsGroup->getOrCreateStateSet()->setTextureAttribute(1, myTex512Array);
+    m_rootGraphicsGroup->getOrCreateStateSet()->addUniform(new osg::Uniform("array512Tex", 1));
 }

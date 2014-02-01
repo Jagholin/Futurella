@@ -1,86 +1,86 @@
 <?xml version="1.0" ?>
 <GUILayout version = "4">
     <Window type="DefaultWindow" name="root">
-		<!-- Chat window follows
-		-->
+        <!-- Chat window follows
+        -->
         <Window type="TaharezLook/FrameWindow" name="chatWindow">
             <Property name="Text" value="Chat" />
-			<Property name="Size" value="{{0, 210}, {0, 450}}" />
-			<Property name="MinSize" value="{{0, 200}, {0, 450}}" />
-			
-			<Window type="TaharezLook/MultiLineEditbox" name="output">
-				<Property name="Area" value="{{0,0},{0,0},{1,0},{0.8,0}}" />
-				<Property name="Font" value="Jura-10" />
-			</Window>
-			
-			<Window type="TaharezLook/Editbox" name="input">
-				<Property name="Area" value="{{0,0},{0.81,0},{1,0},{0.81,30}}" />
-				<Property name="TooltipText" value="Enter something here" />
-			</Window>
-			
-			<Window type="TaharezLook/Button" name="sendBtn">
-				<Property name="Position" value="{{0, 0},{0.81, 30}}" />
-				<Property name="Text">Send</Property>
-			</Window>
-			
-			<Window type="TaharezLook/Button" name="quitBtn">
-				<Property name="Position" value="{{0.5, 0},{0.81, 30}}" />
-				<Property name="Text">Quit</Property>
-			</Window>
-			
-			<Property name="Visible" value="false" />
+            <Property name="Size" value="{{0, 210}, {0, 450}}" />
+            <Property name="MinSize" value="{{0, 200}, {0, 450}}" />
+            
+            <Window type="TaharezLook/MultiLineEditbox" name="output">
+                <Property name="Area" value="{{0,0},{0,0},{1,0},{0.8,0}}" />
+                <Property name="Font" value="Jura-10" />
+            </Window>
+            
+            <Window type="TaharezLook/Editbox" name="input">
+                <Property name="Area" value="{{0,0},{0.81,0},{1,0},{0.81,30}}" />
+                <Property name="TooltipText" value="Enter something here" />
+            </Window>
+            
+            <Window type="TaharezLook/Button" name="sendBtn">
+                <Property name="Position" value="{{0, 0},{0.81, 30}}" />
+                <Property name="Text">Send</Property>
+            </Window>
+            
+            <Window type="TaharezLook/Button" name="quitBtn">
+                <Property name="Position" value="{{0.5, 0},{0.81, 30}}" />
+                <Property name="Text">Quit</Property>
+            </Window>
+            
+            <Property name="Visible" value="false" />
         </Window>
-		
-		<!-- Network window
-		-->
-		<Window type="TaharezLook/FrameWindow" name="networkSettings">
-			<Property name="Text" value="Network" />
-			<Property name="MinSize" value="{{0, 200}, {0, 300}}" />
-			<Property name="Size" value="{{0, 210}, {0, 310}}" />
-			<Property name="Position" value="{{0.45, 0}, {0.45, 0}}" />
-			
-			<Window type="TaharezLook/Editbox" name="portNumber">
-				<Property name="Area" value="{{0,0},{0,5},{1,0},{0,35}}" />
-				<Property name="ValidationString" value="[0-9]*" />
-			</Window>
-			
-			<Window type="TaharezLook/Button" name="listenBtn">
-				<Property name="Position" value="{{0,0},{0,36}}" />
-				<Property name="Text" value="Listen" />
-			</Window>
-			
-			<Window type="TaharezLook/Editbox" name="address">
-				<Property name="Area" value="{{0,0},{0,67},{1,0},{0,102}}" />
-			</Window>
-			
-			<Window type="TaharezLook/Button" name="connectBtn">
-				<Property name="Position" value="{{0,0},{0,103}}" />
-				<Property name="Text" value="Connect" />
-			</Window>
-			
-			<Window type="TaharezLook/MultiLineEditbox" name="console">
-				<Property name="Area" value="{{0,0}, {0,134}, {1, 0}, {1, -5}}" />
-			</Window>
-			<Property name="Visible" value="false" />
-		</Window>
-		
-		<!-- Console window
-		-->
-		<Window type="TaharezLook/FrameWindow" name="console">
-			<Window type="TaharezLook/StaticText" name="output">
-				<Property name="Area" value="{{0, 4}, {0, 4}, {1, -4}, {1, -40}}" />
-				<Property name="VertFormatting" value="BottomAligned" />
-				<Property name="Font" value="Jura-10" />
-				<Property name="Text">Welcome.
+        
+        <!-- Network window
+        -->
+        <Window type="TaharezLook/FrameWindow" name="networkSettings">
+            <Property name="Text" value="Network" />
+            <Property name="MinSize" value="{{0, 200}, {0, 300}}" />
+            <Property name="Size" value="{{0, 210}, {0, 310}}" />
+            <Property name="Position" value="{{0.45, 0}, {0.45, 0}}" />
+            
+            <Window type="TaharezLook/Editbox" name="portNumber">
+                <Property name="Area" value="{{0,0},{0,5},{1,0},{0,35}}" />
+                <Property name="ValidationString" value="[0-9]*" />
+            </Window>
+            
+            <Window type="TaharezLook/Button" name="listenBtn">
+                <Property name="Position" value="{{0,0},{0,36}}" />
+                <Property name="Text" value="Listen" />
+            </Window>
+            
+            <Window type="TaharezLook/Editbox" name="address">
+                <Property name="Area" value="{{0,0},{0,67},{1,0},{0,102}}" />
+            </Window>
+            
+            <Window type="TaharezLook/Button" name="connectBtn">
+                <Property name="Position" value="{{0,0},{0,103}}" />
+                <Property name="Text" value="Connect" />
+            </Window>
+            
+            <Window type="TaharezLook/MultiLineEditbox" name="console">
+                <Property name="Area" value="{{0,0}, {0,134}, {1, 0}, {1, -5}}" />
+            </Window>
+            <Property name="Visible" value="false" />
+        </Window>
+        
+        <!-- Console window
+        -->
+        <Window type="TaharezLook/FrameWindow" name="console">
+            <Window type="TaharezLook/StaticText" name="output">
+                <Property name="Area" value="{{0, 4}, {0, 4}, {1, -4}, {1, -40}}" />
+                <Property name="VertFormatting" value="BottomAligned" />
+                <Property name="Font" value="Jura-10" />
+                <Property name="Text">Welcome.
 To see the list of available commands, try "help".</Property>
-			</Window>
-			<Window type="TaharezLook/Editbox" name="input">
-				<Property name="Area" value="{{0, 4}, {1, -40}, {1, -4}, {1, -4}}" /> 
-				<Property name="Font" value="Jura-10" />
-			</Window>
-			<Property name="Text" value="Console" />
-			<Property name="Area" value="{{0, 0}, {0, 0}, {1, 0}, {0.6, 0}}" />
-		</Window>
+            </Window>
+            <Window type="TaharezLook/Editbox" name="input">
+                <Property name="Area" value="{{0, 4}, {1, -40}, {1, -4}, {1, -4}}" /> 
+                <Property name="Font" value="Jura-10" />
+            </Window>
+            <Property name="Text" value="Console" />
+            <Property name="Area" value="{{0, 0}, {0, 0}, {1, 0}, {0.6, 0}}" />
+        </Window>
         
         <Window type="TaharezLook/FrameWindow" name="shaderEditor">
             <Window type="TaharezLook/Listbox" name="list">
@@ -90,15 +90,16 @@ To see the list of available commands, try "help".</Property>
                 <Property name="Area" value="{{0, 124}, {0, 4}, {1, -4}, {1, -4}}" />
                 <Property name="BlinkCaret" value="true" />
                 
-				<Window type="TaharezLook/ImageButton" name="save" >
-					<Property name="NormalImage" value="Figures/square" />
-					<Property name="PushedImage" value="Figures/red_square" />
-					<Property name="HoverImage" value="Figures/green_square" />
-					<Property name="Area" value="{{1, -32}, {0, 0}, {1, 0}, {0, 32}}" />
-				</Window>
+                <Window type="TaharezLook/ImageButton" name="save" >
+                    <Property name="NormalImage" value="Figures/square" />
+                    <Property name="PushedImage" value="Figures/red_square" />
+                    <Property name="HoverImage" value="Figures/green_square" />
+                    <Property name="Area" value="{{1, -32}, {0, 0}, {1, 0}, {0, 32}}" />
+                </Window>
             </Window>
             <Property name="Text" value="In-Game Shader Editor" />
             <Property name="MinSize" value="{{0, 200}, {0, 75}}" />
+            <Property name="Size" value="{{0, 270}, {0, 120}}" />
             <Property name="Visible" value="false" />
         </Window>
     </Window>

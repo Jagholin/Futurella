@@ -1,6 +1,6 @@
 #version 400
 
-layout(triangles) in;
+layout(triangles, equal_spacing, ccw) in;
 
 in PerVertexTess {
     vec3 position;
@@ -8,15 +8,39 @@ in PerVertexTess {
     float scale;
 } inVertex[];
 
+out vec3 vNormal;
+out vec2 vTexCoord;
+
 uniform mat4 osg_ModelViewProjectionMatrix;
+uniform mat4 osg_ModelMatrix;
+uniform sampler2DArray array512Tex;
+
+const float PI = 3.14159f;
+const float DU = 1.1 / 512.0;
+const float DV = 1.1 / 512.0;
 
 void main()
 {
     vec3 point = gl_TessCoord.x * inVertex[0].position
         + gl_TessCoord.y * inVertex[1].position
         + gl_TessCoord.z * inVertex[2].position;
+    point = normalize(point);
+    float v = asin(point.y) / (PI * 0.5); // v in [-1, 1]
+    float lon = acos(normalize(point.xz)).x;
+    if (point.z > 0)
+        lon = 2 * PI - lon;
+    float u = lon / (2*PI);
+    v = (v + 1.0) * 0.5;
+    vTexCoord = vec2(u, v);
+
+    vec4 scaleFromTex = texture(array512Tex, vec3(u, v, 0));
+    float addScale = scaleFromTex.x;
+    addScale = (addScale - 0.5) * 0.5 + 1.0;
+
+    vec2 dscaleTex = vec2( texture(array512Tex, vec3(u + DU, v, 0)).x, 
+        texture(array512Tex, vec3(u, v + DV, 0)).x );
         
-    point = normalize(point) * inVertex[0].scale + inVertex[0].offset;
+    point = point * inVertex[0].scale * addScale + inVertex[0].offset;
         
     gl_Position = osg_ModelViewProjectionMatrix * vec4(point, 1);
 }
