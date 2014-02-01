@@ -18,9 +18,6 @@ GameObject(objId, ownId, ctx)
     octahedronShader->load(osg::Shader::TESSCONTROL, "shader/tc_octahedron.txt");
     octahedronShader->load(osg::Shader::TESSEVALUATION, "shader/te_octahedron.txt");
     octahedronShader->load(osg::Shader::FRAGMENT, "shader/fs_octahedron.txt");
-    octahedronShader->addBindAttribLocation("position", 0);
-    octahedronShader->addBindAttribLocation("offset", 1);
-    octahedronShader->addBindAttribLocation("scale", 2);
 
     osg::Geode * asteroidsGeode = new osg::Geode;
     LevelDrawable* myLevel = new LevelDrawable;

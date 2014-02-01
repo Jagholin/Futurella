@@ -44,37 +44,37 @@ LevelDrawable::initGeometry() const
         glGenBuffers(1, &basis);
         glBindBuffer(GL_ARRAY_BUFFER, basis);
         float vertices[] = {
-            -1, 0, 0,
-            0, 0, -1,
-            0, -1, 0,
+            -1, 0, 0, 0,
+            0, 0, -1, 0,
+            0, -1, 0, 0,
 
-            -1, 0, 0,
-            0, -1, 0,
-            0, 0, 1,
+            -1, 0, 0, 1,
+            0, -1, 0, 1,
+            0, 0, 1, 1,
 
-            1, 0, 0,
-            0, -1, 0,
-            0, 0, -1,
+            1, 0, 0, 0, 
+            0, -1, 0, 0, 
+            0, 0, -1, 0,
 
-            1, 0, 0,
-            0, 0, 1,
-            0, -1, 0,
+            1, 0, 0, 0,
+            0, 0, 1, 0, //<<
+            0, -1, 0, 0,
 
-            -1, 0, 0,
-            0, 1, 0,
-            0, 0, -1,
+            -1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, -1, 0,
 
-            -1, 0, 0,
-            0, 0, 1,
-            0, 1, 0,
+            -1, 0, 0, 1,
+            0, 0, 1, 1,
+            0, 1, 0, 1,
 
-            1, 0, 0,
-            0, 0, -1,
-            0, 1, 0,
+            1, 0, 0, 0,
+            0, 0, -1, 0,
+            0, 1, 0, 0,
 
-            1, 0, 0,
-            0, 1, 0,
-            0, 0, 1,
+            1, 0, 0, 0,
+            0, 1, 0, 0, //<<
+            0, 0, 1, 0,
         };
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     }
@@ -92,17 +92,19 @@ LevelDrawable::initGeometry() const
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(3);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (GLvoid*)(3 * sizeof(float)));
     glPatchParameteri(GL_PATCH_VERTICES, 3);
 
     glBindBuffer(GL_ARRAY_BUFFER, instanceInfo);
     glBufferData(GL_ARRAY_BUFFER, m_instanceRawData.size() * sizeof(float), &(m_instanceRawData[0]), GL_DYNAMIC_DRAW);
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (GLvoid*)(3 * sizeof(float)));
-    glVertexAttribDivisor(1, 1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (GLvoid*)(3 * sizeof(float)));
     glVertexAttribDivisor(2, 1);
+    glVertexAttribDivisor(3, 1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);

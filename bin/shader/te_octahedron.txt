@@ -6,16 +6,18 @@
 // github.com/Jagholin
 ///
 
-layout(triangles, equal_spacing, ccw) in;
+layout(triangles) in;
 
 in PerVertexTess {
     vec3 position;
     vec3 offset;
     float scale;
+    float uvGenMode;
 } inVertex[];
 
 out vec3 vNormal;
 out vec2 vTexCoord;
+out vec3 vPos;
 
 uniform mat4 osg_ModelViewProjectionMatrix;
 uniform mat4 osg_ModelMatrix;
@@ -31,15 +33,19 @@ void main()
         + gl_TessCoord.y * inVertex[1].position
         + gl_TessCoord.z * inVertex[2].position;
     point = normalize(point);
+    vPos = point;
 
     // Transform point coordinates into latitude/longitude, and then to the
     // u/v spherically mapped texture coordinates.
-    float lat = asin(point.y);
+    float lat = asin(clamp(point.y, -0.999f, 0.999f));
     float v = lat / (PI * 0.5); // v still in [-1, 1]
-    float lon = acos(normalize(point.xz)).x;
-    if (point.z > 0) // case when lon > 180deg, we have to keep these trigonometry tricks in mind
-        lon = 2 * PI - lon;
-    float u = lon / (2*PI);
+    //float lon = acos(clamp(normalize(point.xz).x, -0.999f, 0.999f));
+    float lon = atan(- point.z, point.x);
+    //if (isinf(lon) || isnan(lon))
+    //    lon = mix(-PI/2.0, PI/2.0, step(0, point.z));
+    if (inVertex[0].uvGenMode > 0.5 && lon > 0)
+        lon -= 2*PI;
+    float u = (lon + PI) / (2*PI);
     v = (v + 1.0) * 0.5; // map v to [0, 1]
     vTexCoord = vec2(u, v);
 

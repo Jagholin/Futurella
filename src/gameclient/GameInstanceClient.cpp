@@ -161,14 +161,14 @@ void GameInstanceClient::createTextureArrays()
 
     const unsigned int textures = 1;
     std::string textureNames[] = {
-        "textures/spherical_noise.png"
+        "textures/spherical_noise2.png"
     };
     myTex512Array->setTextureHeight(512);
     myTex512Array->setTextureWidth(512);
     myTex512Array->setTextureDepth(textures);
 
-    myTex512Array->setWrap(osg::Texture::WRAP_R, osg::Texture::CLAMP_TO_EDGE);
-    myTex512Array->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
+    myTex512Array->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
+    myTex512Array->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
     for (int i = 0; i < textures; ++i)
     {
         myTex512Array->setImage(i, osgDB::readImageFile(textureNames[i]));
