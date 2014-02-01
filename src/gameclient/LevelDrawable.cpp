@@ -25,9 +25,9 @@ LevelDrawable::drawImplementation(osg::RenderInfo& renderInfo) const
     if (m_geometryDirty)
         initGeometry();
     glBindVertexArray(vao);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glDrawArraysInstanced(GL_PATCHES, 0, 24, m_asteroidCount);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glBindVertexArray(0);
     glDisable(GL_CULL_FACE);
 

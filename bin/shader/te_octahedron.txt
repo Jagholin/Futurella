@@ -1,5 +1,11 @@
 #version 400
 
+/// 
+// Tess Evaluation shader for the asteroid surface, using height map for reference
+// By Jagholin, 2014
+// github.com/Jagholin
+///
+
 layout(triangles, equal_spacing, ccw) in;
 
 in PerVertexTess {
@@ -25,22 +31,42 @@ void main()
         + gl_TessCoord.y * inVertex[1].position
         + gl_TessCoord.z * inVertex[2].position;
     point = normalize(point);
-    float v = asin(point.y) / (PI * 0.5); // v in [-1, 1]
+
+    // Transform point coordinates into latitude/longitude, and then to the
+    // u/v spherically mapped texture coordinates.
+    float lat = asin(point.y);
+    float v = lat / (PI * 0.5); // v still in [-1, 1]
     float lon = acos(normalize(point.xz)).x;
-    if (point.z > 0)
+    if (point.z > 0) // case when lon > 180deg, we have to keep these trigonometry tricks in mind
         lon = 2 * PI - lon;
     float u = lon / (2*PI);
-    v = (v + 1.0) * 0.5;
+    v = (v + 1.0) * 0.5; // map v to [0, 1]
     vTexCoord = vec2(u, v);
 
+    // Read height at (u, v) from the texture array
     vec4 scaleFromTex = texture(array512Tex, vec3(u, v, 0));
     float addScale = scaleFromTex.x;
     addScale = (addScale - 0.5) * 0.5 + 1.0;
 
+    // In the next step we need to calculate normal vector to the perturbed surface.
+    // First, reading heights from neighbour points
     vec2 dscaleTex = vec2( texture(array512Tex, vec3(u + DU, v, 0)).x, 
         texture(array512Tex, vec3(u, v + DV, 0)).x );
-        
+
+    // Create tangential vectors, in basis (r, u, v) 
+    // where r - usual normal vector to the sphere, u and v - tangential vectors to the sphere
+    vec3 tanu = normalize(vec3(dscaleTex.x - scaleFromTex.x, DU, 0));
+    vec3 tanv = normalize(vec3(dscaleTex.y - scaleFromTex.y, 0, DV));
+
+    // Calculate normal vector from tangent vectors, and convert it into world space
+    mat3 tanToWorldSpace = mat3(point, 
+        normalize(vec3(point.z, 0, -point.x)), 
+        normalize(vec3(point.y*cos(lon), cos(lat), point.y*sin(lon)))
+      );
+
+    vNormal = tanToWorldSpace * cross(tanu, tanv);
+
     point = point * inVertex[0].scale * addScale + inVertex[0].offset;
-        
+
     gl_Position = osg_ModelViewProjectionMatrix * vec4(point, 1);
 }

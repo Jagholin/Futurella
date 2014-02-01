@@ -1,8 +1,14 @@
 #version 400
 
+in vec2 vTexCoord;
+in vec3 vNormal;
 out vec4 fragColor;
+
+uniform sampler2DArray array512Tex;
 
 void main()
 {
-    fragColor = vec4(0, 1, 1, 1);
+    fragColor = vec4((vNormal + vec3(1.0))*0.5, 1.0);
+    //fragColor = texture(array512Tex, vec3(vTexCoord, 0));
+    //fragColor = vec4(0, 1, 1, 1);
 }
