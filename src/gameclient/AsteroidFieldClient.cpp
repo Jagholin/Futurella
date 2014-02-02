@@ -13,17 +13,10 @@ GameObject(objId, ownId, ctx)
     m_rootGroup = ctx->sceneGraphRoot();
     m_asteroidsGroup = new osg::Group;
 
-    ShaderWrapper* octahedronShader = new ShaderWrapper;
-    octahedronShader->load(osg::Shader::VERTEX, "shader/vs_octahedron.txt");
-    octahedronShader->load(osg::Shader::TESSCONTROL, "shader/tc_octahedron.txt");
-    octahedronShader->load(osg::Shader::TESSEVALUATION, "shader/te_octahedron.txt");
-    octahedronShader->load(osg::Shader::FRAGMENT, "shader/fs_octahedron.txt");
-
     osg::Geode * asteroidsGeode = new osg::Geode;
     LevelDrawable* myLevel = new LevelDrawable;
     asteroidsGeode->addDrawable(myLevel);
     m_asteroidsGroup->addChild(asteroidsGeode);
-    m_asteroidsGroup->getOrCreateStateSet()->setAttributeAndModes(octahedronShader, osg::StateAttribute::ON);
 
     for (int i = 0; i < createMessage->position.size(); i++)
     {

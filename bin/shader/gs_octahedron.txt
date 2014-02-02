@@ -1,0 +1,36 @@
+#version 400
+
+layout(triangles) in;
+layout(triangle_strip, max_vertices = 6) out;
+
+in GeometryOut {
+    vec3 vNormal;
+    vec2 vTexCoord;
+    vec3 vPos;
+} inVertex[];
+
+out vec3 vNormal;
+out vec2 vTexCoord;
+out vec4 vPos;
+
+out vec3 tfPos;
+out vec3 tfNormal;
+
+uniform mat4 osg_ModelViewProjectionMatrix;
+
+void main()
+{
+    for (int i = 0; i < 3; ++i)
+    {
+        vNormal = inVertex[i].vNormal;
+        vTexCoord = inVertex[i].vTexCoord;
+        vPos = osg_ModelViewProjectionMatrix * vec4(inVertex[i].vPos, 1.0);
+
+        tfPos = inVertex[i].vPos;
+        tfNormal = inVertex[i].vNormal;
+        gl_Position = vPos;
+        EmitVertex();
+
+    }
+    EndPrimitive();
+}

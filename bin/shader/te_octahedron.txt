@@ -15,9 +15,11 @@ in PerVertexTess {
     float uvGenMode;
 } inVertex[];
 
-out vec3 vNormal;
-out vec2 vTexCoord;
-out vec3 vPos;
+out GeometryOut {
+    vec3 vNormal;
+    vec2 vTexCoord;
+    vec3 vPos;
+};
 
 uniform mat4 osg_ModelViewProjectionMatrix;
 uniform mat4 osg_ModelMatrix;
@@ -33,7 +35,6 @@ void main()
         + gl_TessCoord.y * inVertex[1].position
         + gl_TessCoord.z * inVertex[2].position;
     point = normalize(point);
-    vPos = point;
 
     // Transform point coordinates into latitude/longitude, and then to the
     // u/v spherically mapped texture coordinates.
@@ -74,5 +75,6 @@ void main()
 
     point = point * inVertex[0].scale * addScale + inVertex[0].offset;
 
-    gl_Position = osg_ModelViewProjectionMatrix * vec4(point, 1);
+    vPos = point;
+    //gl_Position = osg_ModelViewProjectionMatrix * vec4(point, 1);
 }

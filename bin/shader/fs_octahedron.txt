@@ -2,7 +2,7 @@
 
 in vec2 vTexCoord;
 in vec3 vNormal;
-in vec3 vPos;
+in vec4 vPos;
 out vec4 fragColor;
 
 uniform sampler2DArray array512Tex;
@@ -16,6 +16,6 @@ void main()
     //else if (vTexCoord.s > 0.98)
     //    fragColor = vec4(0, 1, 0, 1);
     //else 
-        fragColor = texture(array512Tex, vec3(vTexCoord, 0));
+        fragColor = vec4(vTexCoord, 0, 1);
     //fragColor = vec4(0, 1, 1, 1);
 }
