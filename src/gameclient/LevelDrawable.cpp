@@ -348,6 +348,10 @@ void LevelDrawable::releaseGLObjects(osg::State* s) const
 
 void LevelDrawable::onUpdatePhase()
 {
+    // TODO: if u want to keep this,
+    // keep in mind that the rendering of the same LevelDrawable runs in parallel in 
+    // a separate thread!!!!!!
+
     if (m_feedbackMode != GEN_TRANSFORM_FEEDBACK || !m_graphicsObjects.hasFeedback())
         return;
     float *tessResults = m_graphicsObjects.getTessFeedback();
