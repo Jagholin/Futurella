@@ -14,6 +14,19 @@ PFNGLGENVERTEXARRAYSPROC glGenVertexArrays = nullptr;
 PFNGLVERTEXATTRIBDIVISORPROC glVertexAttribDivisor = nullptr;
 PFNGLDRAWARRAYSINSTANCEDPROC glDrawArraysInstanced = nullptr;
 PFNGLPATCHPARAMETERIPROC glPatchParameteri = nullptr;
+PFNGLTRANSFORMFEEDBACKVARYINGSPROC glTransformFeedbackVaryings = nullptr;
+PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays = nullptr;
+PFNGLBINDBUFFERBASEPROC glBindBufferBase = nullptr;
+PFNGLGENQUERIESPROC glGenQueries = nullptr;
+PFNGLBEGINQUERYPROC glBeginQuery = nullptr;
+PFNGLENDQUERYPROC glEndQuery = nullptr;
+PFNGLDELETEQUERIESPROC glDeleteQueries = nullptr;
+PFNGLGETQUERYOBJECTIVPROC glGetQueryObjectiv = nullptr;
+PFNGLBEGINTRANSFORMFEEDBACKPROC glBeginTransformFeedback = nullptr;
+PFNGLENDTRANSFORMFEEDBACKPROC glEndTransformFeedback = nullptr;
+PFNGLGETBUFFERSUBDATAPROC glGetBufferSubData = nullptr;
+
+#define LOADGLFUNC(funcname, type) funcname = reinterpret_cast<type>(osg::getGLExtensionFuncPtr(#funcname))
 
 void glFuncsInit()
 {
@@ -30,4 +43,15 @@ void glFuncsInit()
     glVertexAttribDivisor = reinterpret_cast<PFNGLVERTEXATTRIBDIVISORPROC>(osg::getGLExtensionFuncPtr("glVertexAttribDivisor"));
     glDrawArraysInstanced = reinterpret_cast<PFNGLDRAWARRAYSINSTANCEDPROC>(osg::getGLExtensionFuncPtr("glDrawArraysInstanced"));
     glPatchParameteri = reinterpret_cast<PFNGLPATCHPARAMETERIPROC>(osg::getGLExtensionFuncPtr("glPatchParameteri"));
+    glTransformFeedbackVaryings = reinterpret_cast<PFNGLTRANSFORMFEEDBACKVARYINGSPROC>(osg::getGLExtensionFuncPtr("glTransformFeedbackVaryings"));
+    glDeleteVertexArrays = reinterpret_cast<PFNGLDELETEVERTEXARRAYSPROC>(osg::getGLExtensionFuncPtr("glDeleteVertexArrays"));
+    glBindBufferBase = reinterpret_cast<PFNGLBINDBUFFERBASEPROC>(osg::getGLExtensionFuncPtr("glBindBufferBase"));
+    LOADGLFUNC(glGenQueries, PFNGLGENQUERIESPROC);
+    LOADGLFUNC(glBeginQuery, PFNGLBEGINQUERYPROC);
+    LOADGLFUNC(glEndQuery, PFNGLENDQUERYPROC);
+    LOADGLFUNC(glDeleteQueries, PFNGLDELETEQUERIESPROC);
+    LOADGLFUNC(glBeginTransformFeedback, PFNGLBEGINTRANSFORMFEEDBACKPROC);
+    LOADGLFUNC(glEndTransformFeedback, PFNGLENDTRANSFORMFEEDBACKPROC);
+    LOADGLFUNC(glGetQueryObjectiv, PFNGLGETQUERYOBJECTIVPROC);
+    LOADGLFUNC(glGetBufferSubData, PFNGLGETBUFFERSUBDATAPROC);
 }

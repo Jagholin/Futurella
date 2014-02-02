@@ -1,8 +1,21 @@
 #version 400
 
+in vec2 vTexCoord;
+in vec3 vNormal;
+in vec4 vPos;
 out vec4 fragColor;
+
+uniform sampler2DArray array512Tex;
 
 void main()
 {
-    fragColor = vec4(0, 1, 1, 1);
+    //fragColor = vec4((vPos + vec3(1))*0.5, 1);
+    //fragColor = vec4((vNormal + vec3(1.0))*0.5, 1.0);
+    //if (vTexCoord.s < 0.02)
+    //    fragColor = vec4(1, 0, 0, 1);
+    //else if (vTexCoord.s > 0.98)
+    //    fragColor = vec4(0, 1, 0, 1);
+    //else 
+        fragColor = vec4(vTexCoord, 0, 1);
+    //fragColor = vec4(0, 1, 1, 1);
 }

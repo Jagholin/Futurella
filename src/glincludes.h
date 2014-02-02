@@ -23,5 +23,16 @@ extern PFNGLGENVERTEXARRAYSPROC glGenVertexArrays;
 extern PFNGLVERTEXATTRIBDIVISORPROC glVertexAttribDivisor;
 extern PFNGLDRAWARRAYSINSTANCEDPROC glDrawArraysInstanced;
 extern PFNGLPATCHPARAMETERIPROC glPatchParameteri;
+extern PFNGLTRANSFORMFEEDBACKVARYINGSPROC glTransformFeedbackVaryings;
+extern PFNGLBINDBUFFERBASEPROC glBindBufferBase;
+extern PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
+extern PFNGLGENQUERIESPROC glGenQueries;
+extern PFNGLBEGINQUERYPROC glBeginQuery;
+extern PFNGLENDQUERYPROC glEndQuery;
+extern PFNGLDELETEQUERIESPROC glDeleteQueries;
+extern PFNGLGETQUERYOBJECTIVPROC glGetQueryObjectiv;
+extern PFNGLBEGINTRANSFORMFEEDBACKPROC glBeginTransformFeedback;
+extern PFNGLENDTRANSFORMFEEDBACKPROC glEndTransformFeedback;
+extern PFNGLGETBUFFERSUBDATAPROC glGetBufferSubData;
 
 void glFuncsInit();

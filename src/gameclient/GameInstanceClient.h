@@ -41,6 +41,8 @@ protected:
 
     osg::ref_ptr<osg::Uniform> m_viewportSizeUniform;
 
+    void createTextureArrays();
+
     bool m_connected;
     bool m_orphaned;
 };

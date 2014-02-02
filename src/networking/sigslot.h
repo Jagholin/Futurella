@@ -138,7 +138,7 @@ public:
 
         if (!funcCalled && !m_name.empty())
         {
-            std::cout << "slot called without receiver: " << m_name << "\n";
+            std::cerr << "slot called without receiver: " << m_name << "\n";
         }
 
         m_slots.swap(newSlots);
@@ -175,7 +175,7 @@ public:
 
         if (!funcCalled && !m_name.empty())
         {
-            std::cout << "slot called without receiver: " << m_name << "\n";
+            std::cerr << "slot called without receiver: " << m_name << "\n";
         }
 
         m_slots.swap(newSlots);

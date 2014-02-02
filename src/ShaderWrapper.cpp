@@ -1,3 +1,4 @@
+#include "glincludes.h"
 #include "ShaderWrapper.h"
 #include "GUIApplication.h"
 
@@ -54,6 +55,31 @@ ShaderProvider* ShaderWrapper::shaderProvider()
     if (m_shaderProvider)
         return m_shaderProvider;
     return s_defaultProvider;
+}
+
+void ShaderWrapper::compileGLObjects(osg::State& state) const
+{
+    osg::Program::PerContextProgram* pcp = getPCP(state.getContextID());
+
+    // Setting transform feedback, if we need one.
+    if (! (pcp->isLinked() || m_feedback.empty()))
+    {
+        const GLchar** vars = new const GLchar*[m_feedback.size()];
+        for (int i = 0; i < m_feedback.size(); ++i)
+        {
+            vars[i] = m_feedback[i].c_str();
+        }
+
+        glTransformFeedbackVaryings(pcp->getHandle(), m_feedback.size(), vars, GL_INTERLEAVED_ATTRIBS);
+        delete[] vars;
+    }
+
+    osg::Program::compileGLObjects(state);
+}
+
+void ShaderWrapper::addTransformFeedbackVarying(const std::string& varName)
+{
+    m_feedback.push_back(varName);
 }
 
 ShaderProvider::ShaderProvider()

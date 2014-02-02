@@ -21,6 +21,8 @@ public:
     void load(osg::Shader::Type type, const std::string& fileName);
 
     static void setDefaultShaderProvider(ShaderProvider*);
+    virtual void compileGLObjects(osg::State& state) const override;
+    void addTransformFeedbackVarying(const std::string& varName);
 
 protected:
     friend class ShaderProvider;
@@ -31,6 +33,7 @@ protected:
     static ShaderProvider* s_defaultProvider;
     ShaderProvider* m_shaderProvider;
     std::vector<osg::ref_ptr<osg::Shader>> m_shaders;
+    std::vector<std::string> m_feedback;
 };
 
 class ShaderProvider
