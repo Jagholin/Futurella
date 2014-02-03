@@ -42,6 +42,7 @@ protected:
     osg::ref_ptr<osg::Uniform> m_viewportSizeUniform;
 
     void createTextureArrays();
+    void setupPPPipeline();
 
     bool m_connected;
     bool m_orphaned;

@@ -6,9 +6,11 @@
 #include <osgGA/TrackballManipulator>
 #include <osg/TextureCubeMap>
 #include <osg/Texture2DArray>
+#include <osg/Texture2D>
 #include <osgDB/ReadFile>
 #include <osg/ShapeDrawable>
 #include <osg/Geode>
+#include <osg/BlendFunc>
 #include <osgUtil/CullVisitor>
 
 GameInstanceClient::GameInstanceClient(osg::Group* rootGroup, osgViewer::Viewer* viewer):
@@ -17,6 +19,8 @@ m_viewer(viewer),
 m_connected(false),
 m_orphaned(false)
 {
+    setupPPPipeline();
+
     m_viewportSizeUniform = new osg::Uniform("viewportSize", osg::Vec2f(800, 600));
     osg::Viewport* myViewport = m_viewer->getCamera()->getViewport();
     m_viewportSizeUniform->set(osg::Vec2f(myViewport->width(), myViewport->height()));
@@ -55,7 +59,7 @@ m_orphaned(false)
     skyboxCamera->setRenderOrder(osg::Camera::PRE_RENDER);
     skyboxCamera->setClearMask(GL_DEPTH_BUFFER_BIT);
     skyboxCamera->setReferenceFrame(osg::Transform::RELATIVE_RF);
-    skyboxCamera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER);
+    //skyboxCamera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER);
     skyboxCamera->setCullingActive(false);
     // IMPORTANT: OSG will still clamp the projection matrix with culling disabled, and
     // we don't want it to do it here.
@@ -176,4 +180,66 @@ void GameInstanceClient::createTextureArrays()
 
     m_rootGraphicsGroup->getOrCreateStateSet()->setTextureAttribute(1, myTex512Array);
     m_rootGraphicsGroup->getOrCreateStateSet()->addUniform(new osg::Uniform("array512Tex", 1));
+}
+
+void GameInstanceClient::setupPPPipeline()
+{
+    osg::ref_ptr<osg::Group> realRoot = m_rootGraphicsGroup;
+    //m_rootGraphicsGroup = new osg::Group;
+
+    osg::ref_ptr<osg::Texture2D> m_normalsTexture, m_colorTexture/*, m_backgroundColor*/;
+
+    m_normalsTexture = new osg::Texture2D;
+    m_colorTexture = new osg::Texture2D;
+    //m_backgroundColor = new osg::Texture2D;
+    osg::Texture2D* textures[] = {
+        m_colorTexture, m_normalsTexture, //m_backgroundColor
+    };
+    for (osg::Texture2D* tex : textures)
+    {
+        tex->setTextureSize(m_viewer->getCamera()->getViewport()->width(), 
+            m_viewer->getCamera()->getViewport()->height());
+        tex->setInternalFormat(GL_RGBA);
+        tex->setBorderWidth(0);
+        tex->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
+        tex->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
+    }
+    // create RTT Camera
+    osg::ref_ptr<osg::Camera> sceneCamera = new osg::Camera;
+    m_rootGraphicsGroup = sceneCamera;
+    sceneCamera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
+    sceneCamera->setRenderOrder(osg::Camera::PRE_RENDER);
+    sceneCamera->setClearColor(osg::Vec4(0, 0, 0, 0));
+    sceneCamera->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //sceneCamera->attach(osg::Camera::COLOR_BUFFER0, m_backgroundColor);
+    sceneCamera->attach(osg::Camera::COLOR_BUFFER0, m_colorTexture);
+    sceneCamera->attach(osg::Camera::COLOR_BUFFER1, m_normalsTexture);
+    sceneCamera->attach(osg::Camera::DEPTH_BUFFER, GL_DEPTH_COMPONENT16);
+
+    realRoot->addChild(sceneCamera);
+
+    osg::ref_ptr<osg::Geode> m_screenQuad = new osg::Geode;
+    osg::ref_ptr<osg::Geometry> m_drawableQuad = new osg::Geometry;
+    osg::Vec2 verts[] = {
+        osg::Vec2(-1, -1), osg::Vec2(-1, 1), osg::Vec2(1, -1), osg::Vec2(1, 1)
+    };
+    m_drawableQuad->setVertexAttribArray(0, new osg::Vec2Array(4, verts), osg::Array::BIND_PER_VERTEX);
+    m_drawableQuad->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+
+    osg::ref_ptr<ShaderWrapper> screenQuadProgram = new ShaderWrapper;
+    screenQuadProgram->load(osg::Shader::VERTEX, "shader/vs_screenquad.txt");
+    screenQuadProgram->load(osg::Shader::FRAGMENT, "shader/fs_screenquad.txt");
+
+    m_screenQuad->addDrawable(m_drawableQuad);
+    m_screenQuad->getOrCreateStateSet()->setTextureAttributeAndModes(0, m_colorTexture, osg::StateAttribute::ON);
+    m_screenQuad->getOrCreateStateSet()->setTextureAttributeAndModes(1, m_normalsTexture, osg::StateAttribute::ON);
+    m_screenQuad->getOrCreateStateSet()->addUniform(new osg::Uniform("texColor", 0));
+    m_screenQuad->getOrCreateStateSet()->addUniform(new osg::Uniform("texNormals", 1));
+    m_screenQuad->getOrCreateStateSet()->setAttributeAndModes(screenQuadProgram);
+    m_screenQuad->getOrCreateStateSet()->setAttributeAndModes(new osg::BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
+    m_screenQuad->setCullingActive(false);
+    realRoot->addChild(m_screenQuad);
+
+    m_viewer->getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
+    //m_drawableQuad->addPrimitiveSet(osg::)
 }

@@ -1,0 +1,15 @@
+#version 400
+
+in vec2 texCoord;
+
+layout(location = 0) out vec4 fragColor;
+
+uniform sampler2D texColor;
+uniform sampler2D texNormals;
+
+void main()
+{
+    fragColor = texture(texColor, texCoord);
+    fragColor.rgb += texture(texNormals, texCoord).rgb;
+    fragColor.rgb /= 2.0;
+}
