@@ -1,19 +1,19 @@
 #pragma once
 
-#include "../gameserver/AsteroidFieldServer.h"
+#include "../gameserver/AsteroidFieldChunkServer.h"
 #include "../gamecommon/GameObject.h"
 
 #include <osg/Group>
 
 class GameInstanceClient;
 
-class AsteroidFieldClient : public GameObject
+class AsteroidFieldChunkClient : public GameObject
 {
 public:
-    typedef std::shared_ptr<AsteroidFieldClient> pointer;
+    typedef std::shared_ptr<AsteroidFieldChunkClient> pointer;
 
-    AsteroidFieldClient(const GameAsteroidFieldDataMessage::const_pointer& createMessage, uint16_t objId, uint32_t ownId, GameInstanceClient* ctx);
-    ~AsteroidFieldClient();
+    AsteroidFieldChunkClient(const GameAsteroidFieldDataMessage::const_pointer& createMessage, uint16_t objId, uint32_t ownId, GameInstanceClient* ctx);
+    ~AsteroidFieldChunkClient();
 
     static pointer createFromGameMessage(const GameMessage::const_pointer& msg, GameMessagePeer* ctx);
 

@@ -154,7 +154,7 @@ osg::Group* GameInstanceClient::sceneGraphRoot()
     return m_rootGraphicsGroup;
 }
 
-void GameInstanceClient::setAsteroidField(AsteroidFieldClient::pointer asts)
+void GameInstanceClient::setAsteroidField(AsteroidFieldChunkClient::pointer asts)
 {
     m_myAsteroids = asts;
 }
@@ -241,5 +241,4 @@ void GameInstanceClient::setupPPPipeline()
     realRoot->addChild(m_screenQuad);
 
     m_viewer->getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
-    //m_drawableQuad->addPrimitiveSet(osg::)
 }

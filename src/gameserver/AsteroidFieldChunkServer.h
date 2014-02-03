@@ -10,12 +10,12 @@ END_DECLGAMEMESSAGE()
 
 class GameInstanceServer;
 
-class AsteroidFieldServer : public GameObject
+class AsteroidFieldChunkServer : public GameObject
 {
 public:
-    typedef std::shared_ptr<AsteroidFieldServer> pointer;
+    typedef std::shared_ptr<AsteroidFieldChunkServer> pointer;
 
-    AsteroidFieldServer(int numOfAsteroids, float turbulence, float density, uint32_t ownerId, GameInstanceServer* ctx);
+    AsteroidFieldChunkServer(int numOfAsteroids, float density, uint32_t ownerId, GameInstanceServer* ctx);
 
     GameMessage::pointer creationMessage() const;
 

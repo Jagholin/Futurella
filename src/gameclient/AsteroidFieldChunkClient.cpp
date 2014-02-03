@@ -1,13 +1,13 @@
-#include "AsteroidFieldClient.h"
+#include "AsteroidFieldChunkClient.h"
 #include "GameInstanceClient.h"
 #include "LevelDrawable.h"
 #include "../ShaderWrapper.h"
 
 #include <osg/ShapeDrawable>
 
-REGISTER_GAMEOBJECT_TYPE(AsteroidFieldClient, 5001);
+REGISTER_GAMEOBJECT_TYPE(AsteroidFieldChunkClient, 5001);
 
-AsteroidFieldClient::AsteroidFieldClient(const GameAsteroidFieldDataMessage::const_pointer& createMessage, uint16_t objId, uint32_t ownId, GameInstanceClient* ctx):
+AsteroidFieldChunkClient::AsteroidFieldChunkClient(const GameAsteroidFieldDataMessage::const_pointer& createMessage, uint16_t objId, uint32_t ownId, GameInstanceClient* ctx):
 GameObject(objId, ownId, ctx)
 {
     m_rootGroup = ctx->sceneGraphRoot();
@@ -25,22 +25,22 @@ GameObject(objId, ownId, ctx)
     m_rootGroup->addChild(m_asteroidsGroup);
 }
 
-AsteroidFieldClient::~AsteroidFieldClient()
+AsteroidFieldChunkClient::~AsteroidFieldChunkClient()
 {
     m_rootGroup->removeChild(m_asteroidsGroup);
 }
 
-AsteroidFieldClient::pointer AsteroidFieldClient::createFromGameMessage(const GameMessage::const_pointer& msg, GameMessagePeer* ctx)
+AsteroidFieldChunkClient::pointer AsteroidFieldChunkClient::createFromGameMessage(const GameMessage::const_pointer& msg, GameMessagePeer* ctx)
 {
     GameAsteroidFieldDataMessage::const_pointer realMsg = msg->as<GameAsteroidFieldDataMessage>();
     GameInstanceClient* context = static_cast<GameInstanceClient*>(ctx);
-    AsteroidFieldClient::pointer result{ new AsteroidFieldClient(realMsg, realMsg->objectId, realMsg->ownerId, context) };
+    AsteroidFieldChunkClient::pointer result{ new AsteroidFieldChunkClient(realMsg, realMsg->objectId, realMsg->ownerId, context) };
 
     context->setAsteroidField(result);
     return result;
 }
 
-bool AsteroidFieldClient::takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender)
+bool AsteroidFieldChunkClient::takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender)
 {
     return false;
 }

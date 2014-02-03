@@ -2,7 +2,7 @@
 
 #include "../gamecommon/GameMessagePeer.h"
 #include "SpaceShipClient.h"
-#include "AsteroidFieldClient.h"
+#include "AsteroidFieldChunkClient.h"
 #include "../ChaseCam.h"
 
 #include <osgViewer/Viewer>
@@ -24,7 +24,7 @@ public:
     virtual bool unknownObjectIdMessage(const GameMessage::const_pointer& msg, MessagePeer* sender);
 
     void addExternalSpaceShip(SpaceShipClient::pointer ship);
-    void setAsteroidField(AsteroidFieldClient::pointer asts);
+    void setAsteroidField(AsteroidFieldChunkClient::pointer asts);
     osg::Group* sceneGraphRoot();
 
     virtual bool takeMessage(const NetMessage::const_pointer&, MessagePeer*);
@@ -37,7 +37,7 @@ protected:
 
     std::vector<SpaceShipClient::pointer> m_otherShips;
     SpaceShipClient::pointer m_myShip;
-    AsteroidFieldClient::pointer m_myAsteroids;
+    AsteroidFieldChunkClient::pointer m_myAsteroids;
 
     osg::ref_ptr<osg::Uniform> m_viewportSizeUniform;
 

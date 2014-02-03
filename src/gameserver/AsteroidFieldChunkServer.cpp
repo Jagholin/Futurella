@@ -1,8 +1,9 @@
-#include "AsteroidFieldServer.h"
+#include "AsteroidFieldChunkServer.h"
 #include "GameInstanceServer.h"
 #include "../Asteroid.h"
 
 #include <random>
+#include <memory>
 
 BEGIN_RAWTOGAMEMESSAGE_QCONVERT(AsteroidFieldData)
 uint16_t size;
@@ -29,17 +30,17 @@ END_GAMETORAWMESSAGE_QCONVERT()
 
 REGISTER_GAMEMESSAGE(AsteroidFieldData)
 
-AsteroidFieldServer::AsteroidFieldServer(int asteroidNumber, float turbulence, float density, uint32_t ownerId, GameInstanceServer* ctx):
+AsteroidFieldChunkServer::AsteroidFieldChunkServer(int asteroidNumber, float chunkSideLength, uint32_t ownerId, GameInstanceServer* ctx):
 GameObject(ownerId, ctx)
 {
     std::random_device randDevice;
 
     //Generate Asteroid Field
     //step 1: scatter asteroids. save to AsteroidField
-    AsteroidField *scatteredAsteroids = new AsteroidField();
+    std::shared_ptr<AsteroidField> scatteredAsteroids = std::make_shared<AsteroidField>();
     float astSizeDif = m_astMaxSize - m_astMinSize;
-    float asteroidSpaceCubeSidelength = m_astMaxSize * (2 + 2 - density * 2);
-    float asteroidFieldSpaceCubeSideLength = pow(pow(asteroidSpaceCubeSidelength, 3)*asteroidNumber, 0.333f);
+    float asteroidSpaceCubeSidelength = m_astMaxSize * 2;
+    float asteroidFieldSpaceCubeSideLength = chunkSideLength;
     float radius;
     osg::Vec3f pos;
     for (int i = 0; i < asteroidNumber; i++)
@@ -75,10 +76,9 @@ GameObject(ownerId, ctx)
         m_asteroids->addAsteroid(scatteredAsteroids->getAsteroid(i)->getPosition() + shift, scatteredAsteroids->getAsteroid(i)->getRadius());
 
     }
-    delete scatteredAsteroids;
 }
 
-GameMessage::pointer AsteroidFieldServer::creationMessage() const
+GameMessage::pointer AsteroidFieldChunkServer::creationMessage() const
 {
     GameAsteroidFieldDataMessage::pointer msg{ new GameAsteroidFieldDataMessage };
     for (unsigned int i = 0; i < m_asteroids->getLength(); ++i)
@@ -90,7 +90,7 @@ GameMessage::pointer AsteroidFieldServer::creationMessage() const
     return msg;
 }
 
-bool AsteroidFieldServer::takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender)
+bool AsteroidFieldChunkServer::takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender)
 {
     return false;
 }
