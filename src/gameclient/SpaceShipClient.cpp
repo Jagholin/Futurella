@@ -83,6 +83,8 @@ bool SpaceShipClient::takeMessage(const GameMessage::const_pointer& msg, Message
 
         // TODO
         setTransform(realMsg->pos, realMsg->orient);
+        GameInstanceClient* context = static_cast<GameInstanceClient*>(m_context);
+        context->shipChangedPosition(realMsg->pos, this);
         m_projVelocity = realMsg->velocity;
         return true;
     }

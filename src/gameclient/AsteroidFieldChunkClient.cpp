@@ -4,6 +4,7 @@
 #include "../ShaderWrapper.h"
 
 #include <osg/ShapeDrawable>
+#include <osg/MatrixTransform>
 
 REGISTER_GAMEOBJECT_TYPE(AsteroidFieldChunkClient, 5001);
 
@@ -11,8 +12,8 @@ AsteroidFieldChunkClient::AsteroidFieldChunkClient(const GameAsteroidFieldDataMe
 GameObject(objId, ownId, ctx)
 {
     m_rootGroup = ctx->sceneGraphRoot();
-    m_asteroidsGroup = new osg::Group;
-
+    m_chunkCoord = createMessage->chunkCoord;
+    m_asteroidsGroup = new osg::MatrixTransform(osg::Matrix::translate(GameInstanceServer::chunkToPosition(m_chunkCoord)));
     osg::Geode * asteroidsGeode = new osg::Geode;
     LevelDrawable* myLevel = new LevelDrawable;
     asteroidsGeode->addDrawable(myLevel);
@@ -36,7 +37,7 @@ AsteroidFieldChunkClient::pointer AsteroidFieldChunkClient::createFromGameMessag
     GameInstanceClient* context = static_cast<GameInstanceClient*>(ctx);
     AsteroidFieldChunkClient::pointer result{ new AsteroidFieldChunkClient(realMsg, realMsg->objectId, realMsg->ownerId, context) };
 
-    context->setAsteroidField(result);
+    context->addAsteroidFieldChunk(realMsg->chunkCoord, result);
     return result;
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../gamecommon/GameMessagePeer.h"
+#include "../gameserver/GameInstanceServer.h"
 #include "SpaceShipClient.h"
 #include "AsteroidFieldChunkClient.h"
 #include "../ChaseCam.h"
@@ -10,6 +11,8 @@
 class GameInstanceClient : public GameMessagePeer
 {
 public:
+    typedef GameInstanceServer::ChunkCoordinates ChunkCoordinates;
+
     GameInstanceClient(osg::Group* rootGroup, osgViewer::Viewer* viewer);
     virtual ~GameInstanceClient();
     //...
@@ -24,11 +27,11 @@ public:
     virtual bool unknownObjectIdMessage(const GameMessage::const_pointer& msg, MessagePeer* sender);
 
     void addExternalSpaceShip(SpaceShipClient::pointer ship);
-    void setAsteroidField(AsteroidFieldChunkClient::pointer asts);
+    void addAsteroidFieldChunk(ChunkCoordinates coord, AsteroidFieldChunkClient::pointer asts);
     osg::Group* sceneGraphRoot();
 
     virtual bool takeMessage(const NetMessage::const_pointer&, MessagePeer*);
-
+    void shipChangedPosition(const osg::Vec3f& pos, SpaceShipClient* ship);
 protected:
     addstd::signal<void()> m_clientOrphaned;
     osg::ref_ptr<osg::Group> m_rootGraphicsGroup;
@@ -37,7 +40,9 @@ protected:
 
     std::vector<SpaceShipClient::pointer> m_otherShips;
     SpaceShipClient::pointer m_myShip;
-    AsteroidFieldChunkClient::pointer m_myAsteroids;
+    //AsteroidFieldChunkClient::pointer m_myAsteroids;
+    std::map<ChunkCoordinates, AsteroidFieldChunkClient::pointer> m_asteroidFieldChunks;
+    ChunkCoordinates m_oldCoords;
 
     osg::ref_ptr<osg::Uniform> m_viewportSizeUniform;
 

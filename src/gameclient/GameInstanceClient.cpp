@@ -17,7 +17,8 @@ GameInstanceClient::GameInstanceClient(osg::Group* rootGroup, osgViewer::Viewer*
 m_rootGraphicsGroup(rootGroup),
 m_viewer(viewer),
 m_connected(false),
-m_orphaned(false)
+m_orphaned(false),
+m_oldCoords(-10000, -10000, -10000)
 {
     setupPPPipeline();
 
@@ -126,6 +127,8 @@ void GameInstanceClient::addExternalSpaceShip(SpaceShipClient::pointer ship)
         m_shipCamera = new ChaseCam(m_myShip.get());
         m_viewer->setCameraManipulator(m_shipCamera);
         m_viewer->getCamera()->setProjectionMatrixAsPerspective(60, m_viewer->getCamera()->getViewport()->aspectRatio(), 0.1f, 100000.0f);
+
+        shipChangedPosition(ship->getPivotLocation(), ship.get());
     }
     else
         m_otherShips.push_back(ship);
@@ -154,9 +157,10 @@ osg::Group* GameInstanceClient::sceneGraphRoot()
     return m_rootGraphicsGroup;
 }
 
-void GameInstanceClient::setAsteroidField(AsteroidFieldChunkClient::pointer asts)
+void GameInstanceClient::addAsteroidFieldChunk(GameInstanceClient::ChunkCoordinates coord, AsteroidFieldChunkClient::pointer asts)
 {
-    m_myAsteroids = asts;
+    //m_myAsteroids = asts;
+    m_asteroidFieldChunks[coord] = asts;
 }
 
 void GameInstanceClient::createTextureArrays()
@@ -241,4 +245,49 @@ void GameInstanceClient::setupPPPipeline()
     realRoot->addChild(m_screenQuad);
 
     m_viewer->getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
+}
+
+void GameInstanceClient::shipChangedPosition(const osg::Vec3f& pos, SpaceShipClient* ship)
+{
+    if (ship != m_myShip.get())
+        return;
+    // iterate over all asteroidFieldChunks and remove those that are no longer necessary
+    std::vector<ChunkCoordinates> erasedCoords;
+    ChunkCoordinates currentCoords = GameInstanceServer::positionToChunk(pos);
+
+    // Do nothing if chunk position hasn't changed
+    if (currentCoords == m_oldCoords)
+        return;
+
+    for (auto fieldChunk : m_asteroidFieldChunks)
+    {
+        osg::Vec3i dPos = currentCoords - fieldChunk.first;
+        if (dPos.x() * dPos.x() + dPos.y()*dPos.y() + dPos.z()*dPos.z() > 36)
+            erasedCoords.push_back(fieldChunk.first);
+    }
+
+    // Erase old chunks that lie too far
+    for (const ChunkCoordinates& chunkCoord : erasedCoords)
+    {
+        // Message to the server: stop chunk tracking.
+        NetStopChunkTrackingMessage::pointer msg{ new NetStopChunkTrackingMessage };
+        msg->coord = chunkCoord;
+        broadcastLocally(msg);
+
+        m_asteroidFieldChunks.erase(chunkCoord);
+    }
+
+    // Get all other chunks around yourself.
+    for (int dx = -1; dx <= 1; ++dx) for (int dy = -1; dy <= 1; ++dy) for (int dz = -1; dz <= 1; ++dz)
+    {
+        ChunkCoordinates newCoords = currentCoords + osg::Vec3i(dx, dy, dz);
+
+        if (m_asteroidFieldChunks.count(newCoords) == 0)
+        {
+            NetRequestChunkDataMessage::pointer msg{ new NetRequestChunkDataMessage };
+            msg->coord = newCoords;
+            broadcastLocally(msg);
+        }
+    }
+    m_oldCoords = currentCoords;
 }

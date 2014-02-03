@@ -22,6 +22,6 @@ public:
 protected:
     osg::ref_ptr<osg::Group> m_asteroidsGroup;
     osg::ref_ptr<osg::Group> m_rootGroup;
-
+    osg::Vec3i m_chunkCoord;
     static int m_dummy;
 };

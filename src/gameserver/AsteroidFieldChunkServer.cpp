@@ -16,6 +16,7 @@ for (unsigned int i = 0; i < size; ++i)
     position.push_back(pos);
     radius.push_back(rad);
 }
+in >> chunkCoord;
 END_RAWTOGAMEMESSAGE_QCONVERT()
 BEGIN_GAMETORAWMESSAGE_QCONVERT(AsteroidFieldData)
 uint16_t size = position.size();
@@ -26,13 +27,15 @@ for (int i = 0; i < position.size(); ++i)
     float rad = radius.at(i);
     out << position.at(i) << radius.at(i);
 }
+out << chunkCoord;
 END_GAMETORAWMESSAGE_QCONVERT()
 
 REGISTER_GAMEMESSAGE(AsteroidFieldData)
 
-AsteroidFieldChunkServer::AsteroidFieldChunkServer(int asteroidNumber, float chunkSideLength, uint32_t ownerId, GameInstanceServer* ctx):
+AsteroidFieldChunkServer::AsteroidFieldChunkServer(int asteroidNumber, float chunkSideLength, uint32_t ownerId, osg::Vec3i chunk, GameInstanceServer* ctx):
 GameObject(ownerId, ctx)
 {
+    m_chunkCoord = chunk;
     std::random_device randDevice;
 
     //Generate Asteroid Field
@@ -87,6 +90,8 @@ GameMessage::pointer AsteroidFieldChunkServer::creationMessage() const
         msg->radius.push_back(m_asteroids->getAsteroid(i)->getRadius());
     }
     msg->ownerId = m_myOwnerId;
+    msg->chunkCoord = m_chunkCoord;
+    msg->objectId = m_myObjectId;
     return msg;
 }
 
