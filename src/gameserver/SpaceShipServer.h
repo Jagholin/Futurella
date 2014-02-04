@@ -2,6 +2,7 @@
 
 #include "../gamecommon/GameObject.h"
 #include <osg/Quat>
+#include <chrono>
 
 BEGIN_DECLGAMEMESSAGE(SpaceShipConstructionData, 5002, false)
 osg::Vec3f pos;
@@ -53,9 +54,9 @@ protected:
     float m_steerability;
 
     bool m_inputState[6];
-    float m_timeSinceLastUpdate;
     std::shared_ptr<PhysicsEngine> m_engine;
     ShipPhysicsActor* m_actor;
+    std::chrono::steady_clock::time_point m_lastUpdate;
     unsigned int m_physicsId;
 
     // event related functions

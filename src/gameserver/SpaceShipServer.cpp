@@ -33,10 +33,10 @@ SpaceShipServer::SpaceShipServer(osg::Vec3f startPos, osg::Quat orient, uint32_t
 GameObject(ownerId, ctx),
 m_acceleration(30.0f),
 m_steerability(0.1f),
-m_timeSinceLastUpdate(10000.0f),
 m_actor(nullptr),
 m_physicsId(0)
 {
+    m_lastUpdate = std::chrono::steady_clock::now();
     for (unsigned int i = 0; i < 6; ++i) m_inputState[i] = false;
 
     m_engine = eng;
@@ -99,16 +99,20 @@ GameMessage::pointer SpaceShipServer::creationMessage() const
 
 void SpaceShipServer::onPhysicsUpdate(const osg::Vec3f& newPos, const osg::Quat& newRot)
 {
-    if (true)
-    {
-        m_timeSinceLastUpdate = 0;
-        GameSpaceShipPhysicsUpdateMessage::pointer msg{ new GameSpaceShipPhysicsUpdateMessage };
-        msg->pos = newPos;
-        msg->orient = newRot.asVec4();
-        msg->velocity.set(0, 0, 0);
-        msg->objectId = m_myObjectId;
-        messageToPartner(msg);
-    }
+    std::chrono::steady_clock::time_point tpNow = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::duration dt = tpNow - m_lastUpdate;
+    float dtMs = std::chrono::duration_cast<std::chrono::milliseconds>(dt).count();
+    if (dtMs < 1. / 30.)
+        return;
+
+    m_lastUpdate = tpNow;
+
+    GameSpaceShipPhysicsUpdateMessage::pointer msg{ new GameSpaceShipPhysicsUpdateMessage };
+    msg->pos = newPos;
+    msg->orient = newRot.asVec4();
+    msg->velocity.set(0, 0, 0);
+    msg->objectId = m_myObjectId;
+    messageToPartner(msg);
 }
 
 SpaceShipServer::~SpaceShipServer()
