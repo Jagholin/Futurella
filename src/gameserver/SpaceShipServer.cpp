@@ -112,8 +112,6 @@ void SpaceShipServer::onPhysicsUpdate(const osg::Vec3f& newPos, const osg::Quat&
     msg->orient = newRot.asVec4();
     msg->velocity.set(0, 0, 0);
     msg->objectId = m_myObjectId;
-    if (m_myObjectId == 3)
-        std::cout << "Send a message to client Pos: " << newPos.x() << ", " << newPos.y() << ", " << newPos.z() << "\n";
     messageToPartner(msg);
 }
 
