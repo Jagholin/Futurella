@@ -262,7 +262,7 @@ void GameInstanceClient::shipChangedPosition(const osg::Vec3f& pos, SpaceShipCli
     for (auto fieldChunk : m_asteroidFieldChunks)
     {
         osg::Vec3i dPos = currentCoords - fieldChunk.first;
-        if (dPos.x() * dPos.x() + dPos.y()*dPos.y() + dPos.z()*dPos.z() > 36)
+        if (dPos.x() * dPos.x() + dPos.y()*dPos.y() + dPos.z()*dPos.z() > 16)
             erasedCoords.push_back(fieldChunk.first);
     }
 
@@ -278,7 +278,7 @@ void GameInstanceClient::shipChangedPosition(const osg::Vec3f& pos, SpaceShipCli
     }
 
     // Get all other chunks around yourself.
-    for (int dx = -1; dx <= 1; ++dx) for (int dy = -1; dy <= 1; ++dy) for (int dz = -1; dz <= 1; ++dz)
+    for (int dx = -2; dx <= 2; ++dx) for (int dy = -2; dy <= 2; ++dy) for (int dz = -2; dz <= 2; ++dz)
     {
         ChunkCoordinates newCoords = currentCoords + osg::Vec3i(dx, dy, dz);
 
