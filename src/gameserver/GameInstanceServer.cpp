@@ -29,10 +29,12 @@ bool GameInstanceServer::unknownObjectIdMessage(const GameMessage::const_pointer
 void GameInstanceServer::connectLocallyTo(MessagePeer* buddy, bool recursive /*= true*/)
 {
     // we have got a new client! Create a SpaceShip just for him
+    static osg::Vec3f lastSpawnPoint;
     GameMessagePeer::connectLocallyTo(buddy, recursive);
 
     SpaceShipServer::pointer hisShip{ 
-        new SpaceShipServer(osg::Vec3f(), osg::Quat(0, osg::Vec3f(1, 0, 0)), RemotePeersManager::getManager()->getPeersId(buddy), this, m_physicsEngine) };
+        new SpaceShipServer(lastSpawnPoint, osg::Quat(0, osg::Vec3f(1, 0, 0)), RemotePeersManager::getManager()->getPeersId(buddy), this, m_physicsEngine) };
+    lastSpawnPoint += osg::Vec3f(0.2, 0.2, 0);
 
     GameMessage::pointer constructItMsg = m_asteroidField->creationMessage();
     buddy->send(constructItMsg);

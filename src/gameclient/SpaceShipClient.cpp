@@ -57,6 +57,8 @@ GameObject(objId, ownerId, ctx)
 
     m_rootGroup->addChild(m_transformGroup);
     m_transformGroup->setUpdateCallback(new ShipTransformUpdate(this));
+
+    for (int i = 0; i < 6; ++i) m_inputCache[i] = false;
 }
 
 SpaceShipClient::~SpaceShipClient()
@@ -107,6 +109,10 @@ void SpaceShipClient::tick(float deltaTime)
 
 void SpaceShipClient::sendInput(SpaceShipServer::inputType inType, bool isOn)
 {
+    if (m_inputCache[inType] == isOn)
+        return;
+
+    m_inputCache[inType] = isOn;
     GameSpaceShipControlMessage::pointer msg{ new GameSpaceShipControlMessage };
     msg->objectId = m_myObjectId;
     msg->inputType = inType;
