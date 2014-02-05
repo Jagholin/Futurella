@@ -1,5 +1,6 @@
 #include "glincludes.h"
 #include <osg/GLExtensions>
+#include <iostream>
 
 PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer = nullptr;
 PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray = nullptr;
@@ -26,26 +27,27 @@ PFNGLBEGINTRANSFORMFEEDBACKPROC glBeginTransformFeedback = nullptr;
 PFNGLENDTRANSFORMFEEDBACKPROC glEndTransformFeedback = nullptr;
 PFNGLGETBUFFERSUBDATAPROC glGetBufferSubData = nullptr;
 
-#define LOADGLFUNC(funcname, type) funcname = reinterpret_cast<type>(osg::getGLExtensionFuncPtr(#funcname))
+#define LOADGLFUNC(funcname, type) funcname = reinterpret_cast<type>(osg::getGLExtensionFuncPtr(#funcname)); \
+    if (funcname == nullptr) std::cerr << "Cant find function " #funcname ", program will self-destruct" << std::endl 
 
 void glFuncsInit()
 {
-    glGenBuffers = reinterpret_cast<PFNGLGENBUFFERSPROC>(osg::getGLExtensionFuncPtr("glGenBuffers"));
-    glBufferData = reinterpret_cast<PFNGLBUFFERDATAPROC>(osg::getGLExtensionFuncPtr("glBufferData"));
-    glDeleteBuffers = reinterpret_cast<PFNGLDELETEBUFFERSPROC>(osg::getGLExtensionFuncPtr("glDeleteBuffers"));
-    glGenVertexArrays = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(osg::getGLExtensionFuncPtr("glGenVertexArrays"));
-    glBindBuffer = reinterpret_cast<PFNGLBINDBUFFERPROC>(osg::getGLExtensionFuncPtr("glBindBuffer"));
-    glVertexAttribPointer = reinterpret_cast<PFNGLVERTEXATTRIBPOINTERPROC>(osg::getGLExtensionFuncPtr("glVertexAttribPointer"));
-    glEnableVertexAttribArray = reinterpret_cast<PFNGLENABLEVERTEXATTRIBARRAYPROC>(osg::getGLExtensionFuncPtr("glEnableVertexAttribArray"));
-    glDisableVertexAttribArray = reinterpret_cast<PFNGLDISABLEVERTEXATTRIBARRAYPROC>(osg::getGLExtensionFuncPtr("glDisableVertexAttribArray"));
-    glBindVertexArray = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(osg::getGLExtensionFuncPtr("glBindVertexArray"));
-    glBindFramebuffer = reinterpret_cast<PFNGLBINDFRAMEBUFFERPROC>(osg::getGLExtensionFuncPtr("glBindFramebuffer"));
-    glVertexAttribDivisor = reinterpret_cast<PFNGLVERTEXATTRIBDIVISORPROC>(osg::getGLExtensionFuncPtr("glVertexAttribDivisor"));
-    glDrawArraysInstanced = reinterpret_cast<PFNGLDRAWARRAYSINSTANCEDPROC>(osg::getGLExtensionFuncPtr("glDrawArraysInstanced"));
-    glPatchParameteri = reinterpret_cast<PFNGLPATCHPARAMETERIPROC>(osg::getGLExtensionFuncPtr("glPatchParameteri"));
-    glTransformFeedbackVaryings = reinterpret_cast<PFNGLTRANSFORMFEEDBACKVARYINGSPROC>(osg::getGLExtensionFuncPtr("glTransformFeedbackVaryings"));
-    glDeleteVertexArrays = reinterpret_cast<PFNGLDELETEVERTEXARRAYSPROC>(osg::getGLExtensionFuncPtr("glDeleteVertexArrays"));
-    glBindBufferBase = reinterpret_cast<PFNGLBINDBUFFERBASEPROC>(osg::getGLExtensionFuncPtr("glBindBufferBase"));
+    LOADGLFUNC(glGenBuffers, PFNGLGENBUFFERSPROC);
+    LOADGLFUNC(glBufferData, PFNGLBUFFERDATAPROC);
+    LOADGLFUNC(glDeleteBuffers, PFNGLDELETEBUFFERSPROC);
+    LOADGLFUNC(glGenVertexArrays, PFNGLGENVERTEXARRAYSPROC);
+    LOADGLFUNC(glBindBuffer, PFNGLBINDBUFFERPROC);
+    LOADGLFUNC(glVertexAttribPointer, PFNGLVERTEXATTRIBPOINTERPROC);
+    LOADGLFUNC(glEnableVertexAttribArray, PFNGLENABLEVERTEXATTRIBARRAYPROC);
+    LOADGLFUNC(glDisableVertexAttribArray, PFNGLDISABLEVERTEXATTRIBARRAYPROC);
+    LOADGLFUNC(glBindVertexArray, PFNGLBINDVERTEXARRAYPROC);
+    LOADGLFUNC(glBindFramebuffer, PFNGLBINDFRAMEBUFFERPROC);
+    LOADGLFUNC(glVertexAttribDivisor, PFNGLVERTEXATTRIBDIVISORPROC);
+    LOADGLFUNC(glDrawArraysInstanced, PFNGLDRAWARRAYSINSTANCEDPROC);
+    LOADGLFUNC(glPatchParameteri, PFNGLPATCHPARAMETERIPROC);
+    LOADGLFUNC(glTransformFeedbackVaryings, PFNGLTRANSFORMFEEDBACKVARYINGSPROC);
+    LOADGLFUNC(glDeleteVertexArrays, PFNGLDELETEVERTEXARRAYSPROC);
+    LOADGLFUNC(glBindBufferBase, PFNGLBINDBUFFERBASEPROC);
     LOADGLFUNC(glGenQueries, PFNGLGENQUERIESPROC);
     LOADGLFUNC(glBeginQuery, PFNGLBEGINQUERYPROC);
     LOADGLFUNC(glEndQuery, PFNGLENDQUERYPROC);
