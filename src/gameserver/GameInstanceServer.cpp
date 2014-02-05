@@ -7,7 +7,6 @@
 
 #define MINPLAYERS 1
 
-
 BEGIN_NETTORAWMESSAGE_QCONVERT(RequestChunkData)
 out << coord;
 END_NETTORAWMESSAGE_QCONVERT()
@@ -136,6 +135,22 @@ void GameInstanceServer::disconnectLocallyFrom(MessagePeer* buddy, bool recursiv
     {
         m_waitingForPlayers = true;
     }
+
+    std::vector <ChunkCoordinates> chunksToRemove;
+    for (auto& chunk : m_universe)
+    {
+        std::deque<MessagePeer*> &observers = chunk.second.m_observers;
+        auto endIter = observers.end();
+        auto peerData = std::find(observers.begin(), endIter, buddy);
+        if (peerData != endIter)
+        {
+            observers.erase(peerData);
+            if (observers.empty())
+                chunksToRemove.push_back(chunk.first);
+        }
+    }
+    for (ChunkCoordinates const& coord : chunksToRemove)
+        m_universe.erase(coord);
 }
 
 void GameInstanceServer::physicsTick(float timeInterval)
@@ -183,7 +198,7 @@ bool GameInstanceServer::takeMessage(const NetMessage::const_pointer& msg, Messa
         {
             // The chunk doesn't exist yet, generate it
             ServerChunkData newChunk;
-            newChunk.m_asteroidField = std::make_shared<AsteroidFieldChunkServer>(200, 16, 0, chunkCoord, this, m_physicsEngine.get());
+            newChunk.m_asteroidField = std::make_shared<AsteroidFieldChunkServer>(100, 16, 0, chunkCoord, this, m_physicsEngine.get());
             m_universe.insert(std::make_pair(chunkCoord, newChunk));
         }
 
