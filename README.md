@@ -8,7 +8,7 @@ A game of fast delivery
 - FMod (not yet)
 - boost::asio
 - CEGUI
-- BulletPhysics (not yet)
+- BulletPhysics 2.8.2(in add_bullet branch)
 
 
 How to build
@@ -50,4 +50,4 @@ MacOS:
 Also
 =========
 
-In March/April we'll drop OpenSceneGraph in favor of a more appropriate Framework, it will be perhaps Ogre3d.
+In March/April we'll drop OpenSceneGraph in favor of a more appropriate Framework, it will be perhaps ~~Ogre3d~~ Magnum.

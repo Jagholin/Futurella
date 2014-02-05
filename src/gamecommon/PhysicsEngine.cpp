@@ -120,7 +120,7 @@ osg::Vec3f PhysicsEngine::getShipPosition(unsigned int shipId)
     return osg::Vec3f(v.x(), v.y(), v.z());
 }
 
-void PhysicsEngine::addCollisionSphere(osg::Vec3f pos, float radius, float mass)
+unsigned int PhysicsEngine::addCollisionSphere(osg::Vec3f pos, float radius, float mass)
 {
     btSphereShape* newShape = new btSphereShape(radius);
     m_collisionShapes.push_back(newShape);
@@ -137,8 +137,23 @@ void PhysicsEngine::addCollisionSphere(osg::Vec3f pos, float radius, float mass)
     btCollisionObject* newBody = new btCollisionObject;
     newBody->setCollisionShape(newShape);
     newBody->setWorldTransform(initialTransform);
+    m_collisionObjects.insert(std::make_pair(m_nextUsedId, newBody));
+    ++m_nextUsedId;
 
     m_physicsWorld->addCollisionObject(newBody, COLLISION_ASTEROIDGROUP, COLLISION_SHIPGROUP);
+    return m_nextUsedId - 1;
+}
+
+void PhysicsEngine::removeCollisionSphere(unsigned int id)
+{
+    btCollisionObject* obj = m_collisionObjects[id];
+    m_physicsWorld->removeCollisionObject(obj);
+
+    m_collisionObjects.erase(id);
+    btCollisionShape* shape = obj->getCollisionShape();
+    m_collisionShapes.remove(shape);
+    delete obj;
+    delete shape;
 }
 
 unsigned int PhysicsEngine::addUserVehicle(const osg::Vec3f& pos, const osg::Vec3f& sizes, const osg::Quat& orient, float mass)

@@ -19,7 +19,8 @@ public:
 
     void physicsInit();
 
-    void addCollisionSphere(osg::Vec3f pos, float radius, float mass = 0.f);
+    unsigned int addCollisionSphere(osg::Vec3f pos, float radius, float mass = 0.f);
+    void removeCollisionSphere(unsigned int id);
     unsigned int addUserVehicle(const osg::Vec3f& pos, const osg::Vec3f& sizes, const osg::Quat& orient, float mass);
     void removeVehicle(unsigned int id);
     btRigidBody* getBodyById(unsigned int);
@@ -49,6 +50,7 @@ protected:
 
     btAlignedObjectArray<btCollisionShape*> m_collisionShapes;
     btCollisionShape* m_vehicleShape;
+    std::map<unsigned int, btCollisionObject*> m_collisionObjects;
     //btAlignedObjectArray<VehicleMotionState*> m_vehicleMotionObservers;
     std::map<unsigned int, t_motionFunc> m_motionCallbacks;
     std::map<unsigned int, btRigidBody*> m_vehicles;

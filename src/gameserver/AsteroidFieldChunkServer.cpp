@@ -1,9 +1,10 @@
-#include "AsteroidFieldServer.h"
+#include "AsteroidFieldChunkServer.h"
 #include "GameInstanceServer.h"
 #include "../Asteroid.h"
 #include "../gamecommon/PhysicsEngine.h"
 
 #include <random>
+#include <memory>
 
 BEGIN_RAWTOGAMEMESSAGE_QCONVERT(AsteroidFieldData)
 uint16_t size;
@@ -16,6 +17,7 @@ for (unsigned int i = 0; i < size; ++i)
     position.push_back(pos);
     radius.push_back(rad);
 }
+in >> chunkCoord;
 END_RAWTOGAMEMESSAGE_QCONVERT()
 BEGIN_GAMETORAWMESSAGE_QCONVERT(AsteroidFieldData)
 uint16_t size = position.size();
@@ -26,21 +28,24 @@ for (int i = 0; i < position.size(); ++i)
     float rad = radius.at(i);
     out << position.at(i) << radius.at(i);
 }
+out << chunkCoord;
 END_GAMETORAWMESSAGE_QCONVERT()
 
 REGISTER_GAMEMESSAGE(AsteroidFieldData)
 
-AsteroidFieldServer::AsteroidFieldServer(int asteroidNumber, float turbulence, float density, uint32_t ownerId, GameInstanceServer* ctx, PhysicsEngine* engine):
+AsteroidFieldChunkServer::AsteroidFieldChunkServer(int asteroidNumber, float chunkSideLength, uint32_t ownerId, osg::Vec3i chunk, GameInstanceServer* ctx, PhysicsEngine* engine):
 GameObject(ownerId, ctx)
 {
+    m_chunkCoord = chunk;
+    m_physicsEngine = engine;
     std::random_device randDevice;
 
     //Generate Asteroid Field
     //step 1: scatter asteroids. save to AsteroidField
-    AsteroidField *scatteredAsteroids = new AsteroidField();
+    std::shared_ptr<AsteroidField> scatteredAsteroids = std::make_shared<AsteroidField>();
     float astSizeDif = m_astMaxSize - m_astMinSize;
-    float asteroidSpaceCubeSidelength = m_astMaxSize * (2 + 2 - density * 2);
-    m_asteroidFieldSpaceCubeSideLength = pow(pow(asteroidSpaceCubeSidelength, 3)*asteroidNumber, 0.333f);
+    float asteroidSpaceCubeSidelength = m_astMaxSize * 2;
+    m_asteroidFieldSpaceCubeSideLength = chunkSideLength;
     float radius;
     osg::Vec3f pos;
     for (int i = 0; i < asteroidNumber; i++)
@@ -76,17 +81,23 @@ GameObject(ownerId, ctx)
         m_asteroids->addAsteroid(scatteredAsteroids->getAsteroid(i)->getPosition() + shift, scatteredAsteroids->getAsteroid(i)->getRadius());
 
     }
-    delete scatteredAsteroids;
 
     // Add asteroids as collision bodies to the engine
     for (unsigned int i = 0; i < m_asteroids->getLength(); ++i)
     {
         Asteroid* currentAst = m_asteroids->getAsteroid(i);
-        engine->addCollisionSphere(currentAst->getPosition(), currentAst->getRadius());
+        unsigned int id = engine->addCollisionSphere(currentAst->getPosition() + GameInstanceServer::chunkToPosition(m_chunkCoord), currentAst->getRadius());
+        m_physicsIds.push_back(id);
     }
 }
 
-GameMessage::pointer AsteroidFieldServer::creationMessage() const
+AsteroidFieldChunkServer::~AsteroidFieldChunkServer()
+{
+    for (unsigned int id : m_physicsIds)
+        m_physicsEngine->removeCollisionSphere(id);
+}
+
+GameMessage::pointer AsteroidFieldChunkServer::creationMessage() const
 {
     GameAsteroidFieldDataMessage::pointer msg{ new GameAsteroidFieldDataMessage };
     for (unsigned int i = 0; i < m_asteroids->getLength(); ++i)
@@ -96,15 +107,17 @@ GameMessage::pointer AsteroidFieldServer::creationMessage() const
     }
     msg->objectId = m_myObjectId;
     msg->ownerId = m_myOwnerId;
+    msg->chunkCoord = m_chunkCoord;
+    msg->objectId = m_myObjectId;
     return msg;
 }
 
-bool AsteroidFieldServer::takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender)
+bool AsteroidFieldChunkServer::takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender)
 {
     return false;
 }
 
-float AsteroidFieldServer::getCubeSideLength()
+float AsteroidFieldChunkServer::getCubeSideLength()
 {
     return m_asteroidFieldSpaceCubeSideLength;
 }
