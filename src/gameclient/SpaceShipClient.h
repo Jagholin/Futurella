@@ -35,5 +35,6 @@ protected:
     osg::Vec3f m_projVelocity;
     osg::Vec3f m_lastPosition;
     osg::Vec4f m_lastOrientation;
+    bool m_inputCache[6];
     static int m_dummy;
 };

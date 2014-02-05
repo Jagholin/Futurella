@@ -12,6 +12,7 @@
 
 #include "networking/networking.h"
 #include "networking/peermanager.h"
+#include "gamecommon/PhysicsEngine.h"
 
 using CEGUI::String;
 using CEGUI::Window;
@@ -67,6 +68,9 @@ public:
     void hudLostFocus();
     void hudGotFocus();
 
+    // Retrieves or creates current Physics engine
+    std::shared_ptr<PhysicsEngine> getOrCreatePhysicsEngine();
+
     // gui-triggered event handlers
     bool onQuitBtnClicked(const CEGUI::EventArgs&);
     bool onWindowCloseClicked(const CEGUI::EventArgs&);
@@ -95,6 +99,7 @@ protected:
     std::vector<std::tuple<std::string, MessagePeer*>> m_availableGameServers;
     std::vector<Window*> m_animHideTargets;
     std::shared_ptr<ShaderProvider> m_shaderProvider;
+    std::weak_ptr<PhysicsEngine> m_physicsEngine;
 
     // User data =====> TODO: Relocate this to somewhere else, PLEASE!
     bool m_userCreated;

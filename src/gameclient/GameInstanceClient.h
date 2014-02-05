@@ -4,6 +4,7 @@
 #include "../gameserver/GameInstanceServer.h"
 #include "SpaceShipClient.h"
 #include "AsteroidFieldChunkClient.h"
+#include "GameInfoClient.h"
 #include "../ChaseCam.h"
 
 #include <osgViewer/Viewer>
@@ -28,6 +29,7 @@ public:
 
     void addExternalSpaceShip(SpaceShipClient::pointer ship);
     void addAsteroidFieldChunk(ChunkCoordinates coord, AsteroidFieldChunkClient::pointer asts);
+    void setGameInfo(GameInfoClient::pointer gameInfo);
     osg::Group* sceneGraphRoot();
 
     virtual bool takeMessage(const NetMessage::const_pointer&, MessagePeer*);
@@ -43,6 +45,7 @@ protected:
     //AsteroidFieldChunkClient::pointer m_myAsteroids;
     std::map<ChunkCoordinates, AsteroidFieldChunkClient::pointer> m_asteroidFieldChunks;
     ChunkCoordinates m_oldCoords;
+    GameInfoClient::pointer m_myGameInfo;
 
     osg::ref_ptr<osg::Uniform> m_viewportSizeUniform;
 

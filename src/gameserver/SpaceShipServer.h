@@ -2,6 +2,7 @@
 
 #include "../gamecommon/GameObject.h"
 #include <osg/Quat>
+#include <chrono>
 
 BEGIN_DECLGAMEMESSAGE(SpaceShipConstructionData, 5002, false)
 osg::Vec3f pos;
@@ -24,6 +25,8 @@ BEGIN_DECLGAMEMESSAGE(SpaceShipCollision, 5005, true)
 END_DECLGAMEMESSAGE()
 
 class GameInstanceServer;
+class PhysicsEngine;
+class ShipPhysicsActor;
 
 class SpaceShipServer : public GameObject
 {
@@ -39,25 +42,26 @@ public:
         BACK
     };
 
-    SpaceShipServer(osg::Vec3f startPos, osg::Quat orient, uint32_t ownerId, GameInstanceServer* context);
+    SpaceShipServer(osg::Vec3f startPos, osg::Quat orient, uint32_t ownerId, GameInstanceServer* context, const std::shared_ptr<PhysicsEngine>& eng);
+    virtual ~SpaceShipServer();
 
     virtual bool takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender);
 
+    unsigned int getPhysicsId();
+
     GameMessage::pointer creationMessage() const;
 
-    void timeTick(float deltaTime);
-
 protected:
-    osg::Vec3f m_pos;
-    osg::Quat m_orientation;
-    osg::Vec3f m_velocity;
     float m_acceleration;
     float m_steerability;
-    float m_friction;
 
     bool m_inputState[6];
-    float m_timeSinceLastUpdate;
+    std::shared_ptr<PhysicsEngine> m_engine;
+    ShipPhysicsActor* m_actor;
+    std::chrono::steady_clock::time_point m_lastUpdate;
+    unsigned int m_physicsId;
 
     // event related functions
     void onControlMessage(uint16_t inputType, bool on);
+    void onPhysicsUpdate(const osg::Vec3f& newPos, const osg::Quat& newRot);
 };

@@ -17,6 +17,8 @@ if (WIN32)
     add_definitions(-D_WIN32_WINNT=${ver})
 endif()
 
+set(BULLET_ROOT $ENV{BULLET_ROOT})
+
 find_package(OpenThreads REQUIRED)
 find_package(osg REQUIRED)
 find_package(osgDB REQUIRED)
@@ -25,6 +27,7 @@ find_package(osgViewer REQUIRED)
 find_package(osgGA REQUIRED)
 find_package(CEGUI REQUIRED)
 find_package(OpenGL REQUIRED)
+find_package(Bullet REQUIRED)
 
 find_package(BOOST 1.54.0 REQUIRED COMPONENTS system asio)
 # add_definitions(-DBOOST_ASIO_ENABLE_HANDLER_TRACKING)
@@ -59,12 +62,18 @@ add_executable(Futurella
     src/gamecommon/GameMessagePeer.cpp
     src/gamecommon/GameObject.h
     src/gamecommon/GameObject.cpp
+    src/gamecommon/PhysicsEngine.h
+    src/gamecommon/PhysicsEngine.cpp
+    src/gamecommon/ShipPhysicsActor.h
+    src/gamecommon/ShipPhysicsActor.cpp
     src/gameserver/SpaceShipServer.h
     src/gameserver/SpaceShipServer.cpp
     src/gameserver/GameInstanceServer.h
     src/gameserver/GameInstanceServer.cpp
     src/gameserver/AsteroidFieldChunkServer.h
     src/gameserver/AsteroidFieldChunkServer.cpp
+    src/gameserver/GameInfoServer.h
+    src/gameserver/GameInfoServer.cpp
     src/gameclient/SpaceShipClient.h
     src/gameclient/SpaceShipClient.cpp
     src/gameclient/GameInstanceClient.h
@@ -73,6 +82,8 @@ add_executable(Futurella
     src/gameclient/AsteroidFieldChunkClient.cpp
     src/gameclient/LevelDrawable.cpp
     src/gameclient/LevelDrawable.h
+    src/gameclient/GameInfoClient.h
+    src/gameclient/GameInfoClient.cpp
     src/CEGUIDrawable.h
     src/CEGUIDrawable.cpp
     src/GUIApplication.h
@@ -89,7 +100,8 @@ add_executable(Futurella
     src/glincludes.h
     src/glincludes.cpp
     src/ShaderWrapper.h
-    src/ShaderWrapper.cpp)
+    src/ShaderWrapper.cpp
+    )
 
 add_lib(Futurella OPENTHREADS)
 add_lib(Futurella OSG)
@@ -100,3 +112,4 @@ add_lib(Futurella OSGGA)
 add_lib(Futurella CEGUI)
 add_lib(Futurella Boost)
 add_lib(Futurella OPENGL)
+add_lib(Futurella BULLET)

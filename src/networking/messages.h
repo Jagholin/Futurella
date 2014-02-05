@@ -202,3 +202,13 @@ public:
         throw std::bad_cast();
     }
 };
+
+template <typename... Types>
+class GenericMessage : public NetMessage
+{
+protected:
+    std::tuple<Types...> m_values;
+
+public:
+
+};

@@ -1,4 +1,3 @@
-
 #include "glincludes.h"
 #include <osgDB/ReadFile>
 #include <osg/Group>
@@ -10,6 +9,7 @@
 #include <map>
 #include <osgGA/TrackballManipulator>
 #include <iostream>
+#include <OpenThreads/Thread>
 
 #include "CEGUIDrawable.h"
 #include "GUIApplication.h"
@@ -69,9 +69,17 @@ int main()
     while (!viewer->done()){
         start = std::chrono::steady_clock::now();
 
-        guiApp.timeTick(frameTime.count());
+        guiApp.timeTick(std::chrono::duration_cast<std::chrono::milliseconds>(frameTime).count());
         viewer->frame();
 
         frameTime = std::chrono::steady_clock::now() - start;
+        // Add sleeping
+        std::chrono::milliseconds msFrameTime = std::chrono::duration_cast<std::chrono::milliseconds>(frameTime);
+        if (msFrameTime.count() < 1000. / 70.)
+        {
+            OpenThreads::Thread::microSleep((1000. / 70. - msFrameTime.count()) * 1000.);
+        }
+        else
+            OpenThreads::Thread::microSleep(0);
     }
 }

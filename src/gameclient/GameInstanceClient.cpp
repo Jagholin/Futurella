@@ -163,6 +163,11 @@ void GameInstanceClient::addAsteroidFieldChunk(GameInstanceClient::ChunkCoordina
     m_asteroidFieldChunks[coord] = asts;
 }
 
+void GameInstanceClient::setGameInfo(GameInfoClient::pointer gi)
+{
+    m_myGameInfo = gi;
+}
+
 void GameInstanceClient::createTextureArrays()
 {
     osg::ref_ptr<osg::Texture2DArray> myTex512Array = new osg::Texture2DArray;
