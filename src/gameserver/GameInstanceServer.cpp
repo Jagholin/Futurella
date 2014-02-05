@@ -67,6 +67,7 @@ void GameInstanceServer::newRound()
     std::random_device randDevice;
     float range = m_asteroidField->getCubeSideLength();
     float maxRand = randDevice.max();
+
     osg::Vec3f startingPoint = osg::Vec3f(
         range*randDevice() / maxRand,
         range*randDevice() / maxRand,
@@ -76,12 +77,23 @@ void GameInstanceServer::newRound()
         range*randDevice() / maxRand,
         range*randDevice() / maxRand);
     m_gameInfo->setObjective(startingPoint, finishArea, 1);
+    
+    
     GameMessage::pointer msg = m_gameInfo->objectiveMessage();
+    btTransform t;
     for (std::map<MessagePeer*, SpaceShipServer::pointer>::iterator peerSpaceShip = m_peerSpaceShips.begin(); peerSpaceShip != m_peerSpaceShips.end(); ++peerSpaceShip)
     {
         //set ship positions to starting point
+        osg::Vec3f v1 = osg::Vec3f(0, 0, 1), v2 = startingPoint - finishArea;
+        osg::Vec3f a = v1 ^ v2;
+        float w = sqrt(v1.length2() * v2.length2()) + v1*v2;
+        btQuaternion q = btQuaternion(a.x(), a.y(), a.z(), w).normalize();
+        t.setRotation(q);
+        t.setOrigin(btVector3(startingPoint.x(), startingPoint.y(), startingPoint.z()));
+
         unsigned int physId = peerSpaceShip->second->getPhysicsId();
-        m_physicsEngine->setShipPosition(physId, startingPoint);
+        
+        m_physicsEngine->setShipTransformation(physId, t);
 
         //inform clients about new objective
         MessagePeer* buddy = peerSpaceShip->first;

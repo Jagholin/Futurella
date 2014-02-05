@@ -107,9 +107,10 @@ PhysicsEngine::~PhysicsEngine()
 }
 
 
-void PhysicsEngine::setShipPosition(unsigned int shipId, osg::Vec3f position)
+void PhysicsEngine::setShipTransformation(unsigned int shipId, btTransform t)
 {
-    m_vehicles[shipId]->setWorldTransform(btTransform(btQuaternion(), btVector3(position.x(), position.y(), position.z())));
+    m_vehicles[shipId]->setLinearVelocity(btVector3(0, 0, 0));
+    m_vehicles[shipId]->setWorldTransform(t);
 }
 
 

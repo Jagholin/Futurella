@@ -26,7 +26,7 @@ public:
     ShipPhysicsActor* getActorById(unsigned int);
     void addMotionCallback(unsigned int, const t_motionFunc& cb);
 
-    void setShipPosition(unsigned int shipId, osg::Vec3f position);
+    void setShipTransformation(unsigned int shipId, btTransform transformation);
     osg::Vec3f getShipPosition(unsigned int shipId);
     
 
