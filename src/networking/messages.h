@@ -158,6 +158,7 @@ public:
 
     // send a message to *this* MessagePeer.
     bool send(const NetMessage::const_pointer& msg, MessagePeer* sender = nullptr);
+    virtual std::string name() const = 0;
 
 protected:
     // inform all connected(except yourself) peers about the message
@@ -173,6 +174,8 @@ class LocalMessagePeer: public MessagePeer
 protected:
     // you need to provide this function to make use of this class
     // virtual bool takeMessage(const NetMessage::const_pointer&, MessagePeer*);
+
+    std::string name() const;
 };
 
 class MsgFactory

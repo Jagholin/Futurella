@@ -14,6 +14,11 @@ BEGIN_DECLNETMESSAGE(StopChunkTracking, 1778, false)
 osg::Vec3i coord;
 END_DECLNETMESSAGE()
 
+BEGIN_DECLNETMESSAGE(PlayerScoreInfo, 1779, false)
+std::string playerName;
+uint16_t score;
+END_DECLNETMESSAGE();
+
 class PhysicsEngine;
 
 class GameInstanceServer : public GameMessagePeer
@@ -45,11 +50,17 @@ public:
         AsteroidFieldChunkServer::pointer m_asteroidField;
         std::deque<MessagePeer*> m_observers;
     };
+
+    struct ScoreData {
+        std::string m_playerName;
+        unsigned int m_score;
+    };
 protected:
     
     std::shared_ptr<PhysicsEngine> m_physicsEngine;
 
     std::map<MessagePeer*, SpaceShipServer::pointer> m_peerSpaceShips;
+    std::map<MessagePeer*, ScoreData> m_scores;
     //AsteroidFieldChunkServer::pointer m_asteroidField;
     GameInfoServer::pointer m_gameInfo;
 

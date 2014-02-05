@@ -2,6 +2,7 @@
     Copyright (C) 2009 - 2014 Pavel Belskiy, github.com/Jagholin
  */
 #include "messages.h"
+#include "peermanager.h"
 #include <algorithm>
 #include <cassert>
 
@@ -71,4 +72,9 @@ bool MessagePeer::send(const NetMessage::const_pointer& msg, MessagePeer* from)
         m_isWorking = false;
     }
     return result;
+}
+
+std::string LocalMessagePeer::name() const
+{
+    return RemotePeersManager::getManager()->getMyName();
 }

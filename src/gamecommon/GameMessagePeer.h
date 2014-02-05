@@ -29,7 +29,7 @@ struct GameMessage : public NetMessage
 
 class GameObject;
 
-class GameMessagePeer : public MessagePeer
+class GameMessagePeer : public LocalMessagePeer
 {
 protected:
     GameMessagePeer();

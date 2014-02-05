@@ -23,6 +23,14 @@ in >> coord;
 END_RAWTONETMESSAGE_QCONVERT();
 REGISTER_NETMESSAGE(StopChunkTracking)
 
+BEGIN_NETTORAWMESSAGE_QCONVERT(PlayerScoreInfo)
+out << playerName << score;
+END_NETTORAWMESSAGE_QCONVERT()
+BEGIN_RAWTONETMESSAGE_QCONVERT(PlayerScoreInfo)
+in >> playerName >> score;
+END_RAWTONETMESSAGE_QCONVERT();
+REGISTER_NETMESSAGE(PlayerScoreInfo)
+
 GameInstanceServer::GameInstanceServer(const std::string &name) :
 m_physicsEngine(new PhysicsEngine),
 m_name(name)
@@ -70,6 +78,7 @@ void GameInstanceServer::connectLocallyTo(MessagePeer* buddy, bool recursive /*=
 
     GameMessage::pointer constructGameInfoMsg = m_gameInfo->creationMessage();
     buddy->send(constructGameInfoMsg);
+
 
     if (m_peerSpaceShips.size() >= MINPLAYERS && m_waitingForPlayers)
     {

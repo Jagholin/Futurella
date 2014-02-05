@@ -35,14 +35,12 @@ public:
             return;
 
         osg::Camera* realNode = static_cast<osg::Camera*>(n);
-        osg::Matrixd proj = realNode->getProjectionMatrix() * realNode->getViewMatrix();
+        osg::Matrixd proj = realNode->getViewMatrix() * realNode->getProjectionMatrix();
 
-        //proj.invert(proj);
-
-        osg::Vec4f realPos =osg::Vec4f(m_posInSpace, 1.0) * proj ;
-        std::cout << realPos.x() << ", " << realPos.y() << ", " << realPos.z() << ", " << realPos.w() << std::endl;
+        osg::Vec4f realPos = proj * osg::Vec4f(m_posInSpace, 1.0)  ;
+        //std::cout << realPos.x() << ", " << realPos.y() << ", " << realPos.z() << ", " << realPos.w() << std::endl;
         realPos /= realPos.w();
-        std::cout << realPos.x() << ", " << realPos.y() << ", " << realPos.z() << std::endl;
+        //std::cout << realPos.x() << ", " << realPos.y() << ", " << realPos.z() << std::endl;
 
         // Now setup hud data
         if (realPos.x() > -1 && realPos.x() < 1 && realPos.y() > -1 && realPos.y() < 1 && realPos.z() < 0)

@@ -836,11 +836,11 @@ std::shared_ptr<PhysicsEngine> GUIApplication::getOrCreatePhysicsEngine()
 
 void GUIApplication::showGoalCursorAt(float x, float y)
 {
-    m_renderThreadService->dispatch([this, x, y](){
-        Window* goal = m_guiContext->getRootWindow()->getChild("levelGoal");
-        goal->setPosition(UVector2(UDim(x, 0), UDim(y, 0)));
-        goal->show();
-    });
+//     m_renderThreadService->dispatch([this, x, y](){
+//         Window* goal = m_guiContext->getRootWindow()->getChild("levelGoal");
+//         goal->setPosition(UVector2(UDim(x, 0), UDim(y, 0)));
+//         goal->show();
+//     });
 }
 
 void GUIApplication::hideGoalCursor()

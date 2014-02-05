@@ -65,6 +65,10 @@ public:
     std::string getRemoteName()const;
     virtual bool isTunnel()const;
 
+    std::string name() const{
+        return getRemoteName();
+    }
+
     // Functions to connect signals with signal handlers.
     template<typename T=int> void onPeerDestruction(const std::function<void()> &callBack, T&& closure = int(-1)) { m_tobeDestroyed.connect(callBack, std::forward<T>(closure)); }
     template<typename T=int> void onError(const std::function<void(std::string)> &callBack, T&& closure = int(-1)) { m_errorSignal.connect(callBack, std::forward<T>(closure)); }
