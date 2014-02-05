@@ -317,7 +317,8 @@ m_graphicsObjects(*this)
 
 LevelDrawable::~LevelDrawable()
 {
-    // nop
+    // HacK: shouldn't work at all, replace it.
+    releaseGLObjects(nullptr);
 }
 
 void 
