@@ -1,4 +1,3 @@
-
 #include "glincludes.h"
 #include <osgDB/ReadFile>
 #include <osg/Group>

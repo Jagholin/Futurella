@@ -3,6 +3,7 @@
 #include "../gamecommon/GameMessagePeer.h"
 #include "SpaceShipServer.h"
 #include "AsteroidFieldServer.h"
+#include "GameInfoServer.h"
 
 class PhysicsEngine;
 
@@ -22,10 +23,18 @@ public:
 
     void physicsTick(float timeInterval);
 
+    void newRound();
+    void checkForEndround();
+
 protected:
+    
     std::shared_ptr<PhysicsEngine> m_physicsEngine;
 
     std::map<MessagePeer*, SpaceShipServer::pointer> m_peerSpaceShips;
     AsteroidFieldServer::pointer m_asteroidField;
+    GameInfoServer::pointer m_gameInfo;
+
     std::string m_name;
+
+    bool m_waitingForPlayers;
 };

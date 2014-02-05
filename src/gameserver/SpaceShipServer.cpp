@@ -31,8 +31,8 @@ END_RAWTOGAMEMESSAGE_QCONVERT()
 
 SpaceShipServer::SpaceShipServer(osg::Vec3f startPos, osg::Quat orient, uint32_t ownerId, GameInstanceServer* ctx, const std::shared_ptr<PhysicsEngine>& eng):
 GameObject(ownerId, ctx),
-m_acceleration(30.0f),
-m_steerability(0.1f),
+m_acceleration(60.0f),
+m_steerability(0.4f),
 m_actor(nullptr),
 m_physicsId(0)
 {
@@ -41,6 +41,7 @@ m_physicsId(0)
 
     m_engine = eng;
     m_physicsId = eng->addUserVehicle(startPos, osg::Vec3f(0.1f, 0.1f, 0.3f), orient, 10.0f);
+    // das drehen des raumschiffs soll nicht so weich sein: eng->getBodyById(m_physicsId)->setRollingFriction(0.5f);
     eng->addMotionCallback(m_physicsId, std::bind(&SpaceShipServer::onPhysicsUpdate, this, std::placeholders::_1, std::placeholders::_2));
     m_actor = eng->getActorById(m_physicsId);
 }
@@ -72,7 +73,7 @@ void SpaceShipServer::onControlMessage(uint16_t inputType, bool on)
         osg::Vec3f torque(0, 0, 0);
         if (m_inputState[LEFT] != m_inputState[RIGHT])
         {
-            torque += osg::Vec3f(0, 0, m_inputState[LEFT] ? m_steerability : -m_steerability);
+            torque += osg::Vec3f(0, 0, 0.5f* (m_inputState[LEFT] ? m_steerability : -m_steerability));
         }
         if (m_inputState[UP] != m_inputState[DOWN])
         {
@@ -114,6 +115,12 @@ void SpaceShipServer::onPhysicsUpdate(const osg::Vec3f& newPos, const osg::Quat&
     msg->objectId = m_myObjectId;
     messageToPartner(msg);
 }
+
+unsigned int SpaceShipServer::getPhysicsId()
+{
+    return m_physicsId;
+}
+
 
 SpaceShipServer::~SpaceShipServer()
 {

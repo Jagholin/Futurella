@@ -2,6 +2,7 @@
 
 #include "../gamecommon/GameMessagePeer.h"
 #include "SpaceShipClient.h"
+#include "GameInfoClient.h"
 #include "AsteroidFieldClient.h"
 #include "../ChaseCam.h"
 
@@ -25,6 +26,7 @@ public:
 
     void addExternalSpaceShip(SpaceShipClient::pointer ship);
     void setAsteroidField(AsteroidFieldClient::pointer asts);
+    void setGameInfo(GameInfoClient::pointer gameInfo);
     osg::Group* sceneGraphRoot();
 
     virtual bool takeMessage(const NetMessage::const_pointer&, MessagePeer*);
@@ -38,6 +40,7 @@ protected:
     std::vector<SpaceShipClient::pointer> m_otherShips;
     SpaceShipClient::pointer m_myShip;
     AsteroidFieldClient::pointer m_myAsteroids;
+    GameInfoClient::pointer m_myGameInfo;
 
     osg::ref_ptr<osg::Uniform> m_viewportSizeUniform;
 
