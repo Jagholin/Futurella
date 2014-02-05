@@ -20,6 +20,12 @@ public:
     virtual bool takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender);
 
 protected:
+
+    osg::ref_ptr<osg::Group> m_rootGroup;
+    osg::ref_ptr<osg::Node> m_finishAreaNode;
+
+    osg::ref_ptr<osg::MatrixTransform> m_transformGroup;
+
     osg::Vec3f m_startingPoint, m_finishArea;
     float m_finishAreaSize;
 };

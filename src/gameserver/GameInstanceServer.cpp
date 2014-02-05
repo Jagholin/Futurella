@@ -75,7 +75,7 @@ void GameInstanceServer::newRound()
         range*randDevice() / maxRand,
         range*randDevice() / maxRand,
         range*randDevice() / maxRand);
-    m_gameInfo->setObjective(startingPoint, finishArea, 2);
+    m_gameInfo->setObjective(startingPoint, finishArea, 1);
     GameMessage::pointer msg = m_gameInfo->objectiveMessage();
     for (std::map<MessagePeer*, SpaceShipServer::pointer>::iterator peerSpaceShip = m_peerSpaceShips.begin(); peerSpaceShip != m_peerSpaceShips.end(); ++peerSpaceShip)
     {
@@ -110,12 +110,6 @@ void GameInstanceServer::disconnectLocallyFrom(MessagePeer* buddy, bool recursiv
 
 void GameInstanceServer::physicsTick(float timeInterval)
 {
-    static int debugcount= 0;
-    if (++debugcount > 200)
-    {
-     //   newRound();
-        debugcount = 0;
-    }
     m_physicsEngine->physicsTick(timeInterval);
     checkForEndround();
 }
