@@ -42,10 +42,11 @@ public:
         realPos /= realPos.w();
 
         // Now setup hud data
-        if (realPos.x() > -1 && realPos.x() < 1 && realPos.y() > -1 && realPos.y() < 1 && realPos.z() > -1 && realPos.z() < 1)
+        realPos.set(osg::clampBetween(realPos.x(), -1.0f, 1.0f), osg::clampBetween(realPos.y(), -1.0f, 1.0f), realPos.z(), 1.0);
+        //if (realPos.z() > -1 && realPos.z() < 1)
             m_hud->showGoalCursorAt((realPos.x() + 1.0) * 0.5, 1.0 - (realPos.y() + 1.0) * 0.5);
-        else
-            m_hud->hideGoalCursor();
+        //else
+        //    m_hud->hideGoalCursor();
     }
 protected:
     bool m_active;
