@@ -2,6 +2,7 @@
 #include "../gamecommon/GameObject.h"
 #include "../networking/peermanager.h"
 #include "../ShaderWrapper.h"
+#include "../GUIApplication.h"
 
 #include <osgGA/TrackballManipulator>
 #include <osg/TextureCubeMap>
@@ -13,14 +14,58 @@
 #include <osg/BlendFunc>
 #include <osgUtil/CullVisitor>
 
-GameInstanceClient::GameInstanceClient(osg::Group* rootGroup, osgViewer::Viewer* viewer):
+class TrackGameInfoUpdate : public osg::NodeCallback
+{
+public:
+    TrackGameInfoUpdate(GUIApplication* hud)
+    {
+        m_hud = hud;
+        m_active = false;
+    }
+
+    void setGoal(const GameInfoClient::pointer &gi)
+    {
+        m_active = true;
+        m_posInSpace = gi->finishArea();
+    }
+
+    virtual void operator()(osg::Node* n, osg::NodeVisitor* nv) override
+    {
+        if (!m_active)
+            return;
+
+        osg::Camera* realNode = static_cast<osg::Camera*>(n);
+        osg::Matrixd proj = realNode->getProjectionMatrix() * realNode->getViewMatrix();
+
+        //proj.invert(proj);
+
+        osg::Vec4f realPos =osg::Vec4f(m_posInSpace, 1.0) * proj ;
+        std::cout << realPos.x() << ", " << realPos.y() << ", " << realPos.z() << ", " << realPos.w() << std::endl;
+        realPos /= realPos.w();
+        std::cout << realPos.x() << ", " << realPos.y() << ", " << realPos.z() << std::endl;
+
+        // Now setup hud data
+        if (realPos.x() > -1 && realPos.x() < 1 && realPos.y() > -1 && realPos.y() < 1 && realPos.z() < 0)
+            m_hud->showGoalCursorAt((realPos.x() + 1.0) * 0.5, 1.0 - (realPos.y() + 1.0) * 0.5);
+        else
+            m_hud->hideGoalCursor();
+    }
+protected:
+    bool m_active;
+    osg::Vec3f m_posInSpace;
+    GUIApplication* m_hud;
+};
+
+GameInstanceClient::GameInstanceClient(osg::Group* rootGroup, osgViewer::Viewer* viewer, GUIApplication* guiApp):
 m_rootGraphicsGroup(rootGroup),
 m_viewer(viewer),
+m_oldCoords(-10000, -10000, -10000),
+m_HUD(guiApp),
 m_connected(false),
-m_orphaned(false),
-m_oldCoords(-10000, -10000, -10000)
+m_orphaned(false)
 {
     setupPPPipeline();
+    m_fieldGoalUpdater = new TrackGameInfoUpdate(m_HUD);
 
     m_viewportSizeUniform = new osg::Uniform("viewportSize", osg::Vec2f(800, 600));
     osg::Viewport* myViewport = m_viewer->getCamera()->getViewport();
@@ -78,11 +123,15 @@ m_oldCoords(-10000, -10000, -10000)
     rootGroup->addChild(skyboxCamera);
 
     createTextureArrays();
+
+    m_viewer->getCamera()->setUpdateCallback(m_fieldGoalUpdater);
 }
 
 GameInstanceClient::~GameInstanceClient()
 {
     m_viewer->setCameraManipulator(new osgGA::TrackballManipulator);
+    m_viewer->getCamera()->removeUpdateCallback(m_fieldGoalUpdater);
+    delete m_fieldGoalUpdater;
 }
 
 void GameInstanceClient::connectLocallyTo(MessagePeer* buddy, bool recursive /*= true*/)
@@ -166,6 +215,8 @@ void GameInstanceClient::addAsteroidFieldChunk(GameInstanceClient::ChunkCoordina
 void GameInstanceClient::setGameInfo(GameInfoClient::pointer gi)
 {
     m_myGameInfo = gi;
+    //m_viewer->getCamera()->setUpdateCallback(new TrackGameInfoUpdate(m_myGameInfo, m_HUD));
+    m_fieldGoalUpdater->setGoal(gi);
 }
 
 void GameInstanceClient::createTextureArrays()
@@ -283,7 +334,7 @@ void GameInstanceClient::shipChangedPosition(const osg::Vec3f& pos, SpaceShipCli
     }
 
     // Get all other chunks around yourself.
-    for (int dx = -2; dx <= 2; ++dx) for (int dy = -2; dy <= 2; ++dy) for (int dz = -2; dz <= 2; ++dz)
+    for (int dx = -1; dx <= 1; ++dx) for (int dy = -1; dy <= 1; ++dy) for (int dz = -1; dz <= 1; ++dz)
     {
         ChunkCoordinates newCoords = currentCoords + osg::Vec3i(dx, dy, dz);
 

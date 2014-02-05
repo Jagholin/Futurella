@@ -68,6 +68,10 @@ public:
     void hudLostFocus();
     void hudGotFocus();
 
+    // Sets or hides goal cursor(CEGUI image)
+    void showGoalCursorAt(float x, float y);
+    void hideGoalCursor();
+
     // Retrieves or creates current Physics engine
     std::shared_ptr<PhysicsEngine> getOrCreatePhysicsEngine();
 

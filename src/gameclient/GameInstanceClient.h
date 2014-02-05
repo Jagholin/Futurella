@@ -9,12 +9,15 @@
 
 #include <osgViewer/Viewer>
 
+class GUIApplication;
+class TrackGameInfoUpdate;
+
 class GameInstanceClient : public GameMessagePeer
 {
 public:
     typedef GameInstanceServer::ChunkCoordinates ChunkCoordinates;
 
-    GameInstanceClient(osg::Group* rootGroup, osgViewer::Viewer* viewer);
+    GameInstanceClient(osg::Group* rootGroup, osgViewer::Viewer* viewer, GUIApplication* app);
     virtual ~GameInstanceClient();
     //...
 
@@ -48,6 +51,8 @@ protected:
     GameInfoClient::pointer m_myGameInfo;
 
     osg::ref_ptr<osg::Uniform> m_viewportSizeUniform;
+    GUIApplication* m_HUD;
+    TrackGameInfoUpdate* m_fieldGoalUpdater;
 
     void createTextureArrays();
     void setupPPPipeline();

@@ -18,6 +18,7 @@ public:
     static pointer createFromGameMessage(const GameMessage::const_pointer& msg, GameMessagePeer* ctx);
 
     virtual bool takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender);
+    osg::Vec3f finishArea() const;
 
 protected:
 

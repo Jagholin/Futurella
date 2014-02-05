@@ -730,7 +730,7 @@ void GUIApplication::consoleConnectGameServer(const std::vector<String>& params,
         return;
     }
 
-    m_gameClient = new GameInstanceClient(m_rootGroup, m_osgApp);
+    m_gameClient = new GameInstanceClient(m_rootGroup, m_osgApp, this);
     m_gameClient->onClientOrphaned(m_renderThreadService->wrap([this](){
         // No server is connected to the game client, so we may just drop it
         delete m_gameClient;
@@ -832,4 +832,21 @@ std::shared_ptr<PhysicsEngine> GUIApplication::getOrCreatePhysicsEngine()
         result = m_physicsEngine.lock();
     }
     return result;
+}
+
+void GUIApplication::showGoalCursorAt(float x, float y)
+{
+    m_renderThreadService->dispatch([this, x, y](){
+        Window* goal = m_guiContext->getRootWindow()->getChild("levelGoal");
+        goal->setPosition(UVector2(UDim(x, 0), UDim(y, 0)));
+        goal->show();
+    });
+}
+
+void GUIApplication::hideGoalCursor()
+{
+    m_renderThreadService->dispatch([this](){
+        Window* goal = m_guiContext->getRootWindow()->getChild("levelGoal");
+        goal->hide();
+    });
 }

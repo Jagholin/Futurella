@@ -66,3 +66,8 @@ GameInfoClient::pointer GameInfoClient::createFromGameMessage(const GameMessage:
 
     return gameInfo;
 }
+
+osg::Vec3f GameInfoClient::finishArea() const
+{
+    return m_finishArea;
+}
