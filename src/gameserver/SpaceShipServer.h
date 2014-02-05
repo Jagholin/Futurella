@@ -46,6 +46,8 @@ public:
 
     virtual bool takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender);
 
+    unsigned int getPhysicsId();
+
     GameMessage::pointer creationMessage() const;
 
 protected:

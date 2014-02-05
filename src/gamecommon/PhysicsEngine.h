@@ -26,6 +26,10 @@ public:
     ShipPhysicsActor* getActorById(unsigned int);
     void addMotionCallback(unsigned int, const t_motionFunc& cb);
 
+    void setShipPosition(unsigned int shipId, osg::Vec3f position);
+    osg::Vec3f getShipPosition(unsigned int shipId);
+    
+
     void physicsTick(float msDelta);
 
     enum {
@@ -50,4 +54,5 @@ protected:
     std::map<unsigned int, btRigidBody*> m_vehicles;
     std::map<unsigned int, ShipPhysicsActor*> m_actors;
     unsigned int    m_nextUsedId;
+
 };

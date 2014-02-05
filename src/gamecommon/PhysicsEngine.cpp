@@ -8,6 +8,8 @@ protected:
     PhysicsEngine* m_engine;
     unsigned int m_vehicle;
     btTransform m_currTransform;
+
+    bool m_transformManuallyChanged;
 public:
     VehicleMotionState(PhysicsEngine* eng, unsigned int vehicleId, btTransform initTransform)
     {
@@ -21,14 +23,24 @@ public:
         std::cerr << "~VehicleMotionState\n";
     }
 
+    void setPosition(osg::Vec3f* a)
+    {
+        m_currTransform.setOrigin(btVector3(a->x(), a->y(), a->z()));
+        m_transformManuallyChanged = true;
+    }
+
     void getWorldTransform(btTransform& worldTrans) const override
     {
+
         worldTrans = m_currTransform;
     }
 
     void setWorldTransform(const btTransform& worldTrans) override
     {
-        m_currTransform = worldTrans;
+        if (m_transformManuallyChanged)
+            m_transformManuallyChanged = false;
+        else
+          m_currTransform = worldTrans;
         if (m_engine->m_motionCallbacks.count(m_vehicle) > 0)
         {
             btVector3 transl = worldTrans.getOrigin();
@@ -92,6 +104,19 @@ PhysicsEngine::~PhysicsEngine()
     delete m_broadphase;
     delete m_collisionDispatcher;
     delete m_collisionConfig;
+}
+
+
+void PhysicsEngine::setShipPosition(unsigned int shipId, osg::Vec3f position)
+{
+    m_vehicles[shipId]->setWorldTransform(btTransform(btQuaternion(), btVector3(position.x(), position.y(), position.z())));
+}
+
+
+osg::Vec3f PhysicsEngine::getShipPosition(unsigned int shipId)
+{
+    btVector3 v =  m_vehicles[shipId]->getWorldTransform().getOrigin();
+    return osg::Vec3f(v.x(), v.y(), v.z());
 }
 
 void PhysicsEngine::addCollisionSphere(osg::Vec3f pos, float radius, float mass)

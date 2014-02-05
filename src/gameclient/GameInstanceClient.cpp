@@ -17,6 +17,7 @@ m_viewer(viewer),
 m_connected(false),
 m_orphaned(false)
 {
+   
     m_viewportSizeUniform = new osg::Uniform("viewportSize", osg::Vec2f(800, 600));
     osg::Viewport* myViewport = m_viewer->getCamera()->getViewport();
     m_viewportSizeUniform->set(osg::Vec2f(myViewport->width(), myViewport->height()));
@@ -153,6 +154,11 @@ osg::Group* GameInstanceClient::sceneGraphRoot()
 void GameInstanceClient::setAsteroidField(AsteroidFieldClient::pointer asts)
 {
     m_myAsteroids = asts;
+}
+
+void GameInstanceClient::setGameInfo(GameInfoClient::pointer gi)
+{
+    m_myGameInfo = gi;
 }
 
 void GameInstanceClient::createTextureArrays()

@@ -22,9 +22,11 @@ public:
 
     virtual bool takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender);
 
+    float getCubeSideLength();
+
 protected:
 
     const float m_astMinSize = 0.2f, m_astMaxSize = 1.0f;
-    float m_asteroidSpaceCubeSidelength;
+    float m_asteroidFieldSpaceCubeSideLength;
     std::shared_ptr<AsteroidField> m_asteroids;
 };

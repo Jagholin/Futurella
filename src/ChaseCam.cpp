@@ -104,7 +104,8 @@ osg::Matrixd ChaseCam::getInverseMatrix() const
 void ChaseCam::computeMatrix()
 {
     osg::Matrix newCameraMatrix;
-    newCameraMatrix.makeTranslate(osg::Vec3d(0, 0, 5));
+    float distanceBetweenCameraAndShip = 2;
+    newCameraMatrix.makeTranslate(osg::Vec3d(0, 0, distanceBetweenCameraAndShip));
     osg::Matrix shipTransform;
     delayRotation.slerp(0.05, delayRotation, ship->getOrientation());
     delayRotation.get(shipTransform);

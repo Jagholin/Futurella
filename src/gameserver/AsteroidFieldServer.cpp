@@ -40,15 +40,15 @@ GameObject(ownerId, ctx)
     AsteroidField *scatteredAsteroids = new AsteroidField();
     float astSizeDif = m_astMaxSize - m_astMinSize;
     float asteroidSpaceCubeSidelength = m_astMaxSize * (2 + 2 - density * 2);
-    float asteroidFieldSpaceCubeSideLength = pow(pow(asteroidSpaceCubeSidelength, 3)*asteroidNumber, 0.333f);
+    m_asteroidFieldSpaceCubeSideLength = pow(pow(asteroidSpaceCubeSidelength, 3)*asteroidNumber, 0.333f);
     float radius;
     osg::Vec3f pos;
     for (int i = 0; i < asteroidNumber; i++)
     {
         pos.set(
-            randDevice()*asteroidFieldSpaceCubeSideLength / randDevice.max(),
-            randDevice()*asteroidFieldSpaceCubeSideLength / randDevice.max(),
-            randDevice()*asteroidFieldSpaceCubeSideLength / randDevice.max());
+            randDevice()*m_asteroidFieldSpaceCubeSideLength / randDevice.max(),
+            randDevice()*m_asteroidFieldSpaceCubeSideLength / randDevice.max(),
+            randDevice()*m_asteroidFieldSpaceCubeSideLength / randDevice.max());
         radius = (randDevice()*astSizeDif / randDevice.max() + m_astMinSize)*0.5f;
         scatteredAsteroids->addAsteroid(pos, radius);
     }
@@ -101,4 +101,9 @@ GameMessage::pointer AsteroidFieldServer::creationMessage() const
 bool AsteroidFieldServer::takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender)
 {
     return false;
+}
+
+float AsteroidFieldServer::getCubeSideLength()
+{
+    return m_asteroidFieldSpaceCubeSideLength;
 }

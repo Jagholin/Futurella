@@ -111,6 +111,12 @@ void SpaceShipServer::onPhysicsUpdate(const osg::Vec3f& newPos, const osg::Quat&
     }
 }
 
+unsigned int SpaceShipServer::getPhysicsId()
+{
+    return m_physicsId;
+}
+
+
 SpaceShipServer::~SpaceShipServer()
 {
     m_engine->removeVehicle(m_physicsId);
