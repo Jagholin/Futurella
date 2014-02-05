@@ -37,6 +37,7 @@ public:
 
     virtual bool takeMessage(const NetMessage::const_pointer&, MessagePeer*);
     void shipChangedPosition(const osg::Vec3f& pos, SpaceShipClient* ship);
+    void gameInfoUpdated();
 protected:
     addstd::signal<void()> m_clientOrphaned;
     osg::ref_ptr<osg::Group> m_rootGraphicsGroup;

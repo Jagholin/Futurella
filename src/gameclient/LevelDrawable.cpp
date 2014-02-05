@@ -173,6 +173,7 @@ void LevelDrawable::GLObjectsHolder::initGLObjectsForTesselation()
     glEnableVertexAttribArray(2);
     glEnableVertexAttribArray(3);
     glEnableVertexAttribArray(4);
+    glEnableVertexAttribArray(5);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
     glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (GLvoid*)(3 * sizeof(float)));
@@ -182,10 +183,12 @@ void LevelDrawable::GLObjectsHolder::initGLObjectsForTesselation()
     glBindBuffer(GL_ARRAY_BUFFER, m_VBinstanceInfo);
     glBufferData(GL_ARRAY_BUFFER, m_owner.m_instanceRawData.size() * sizeof(float), &(m_owner.m_instanceRawData[0]), GL_DYNAMIC_DRAW);
 
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-    glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (GLvoid*)(3 * sizeof(float)));
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 0);
+    glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (GLvoid*)(3 * sizeof(float)));
+    glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (GLvoid*)(4 * sizeof(float)));
     glVertexAttribDivisor(3, 1);
     glVertexAttribDivisor(4, 1);
+    glVertexAttribDivisor(5, 1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -335,6 +338,7 @@ void LevelDrawable::addAsteroid(osg::Vec3f position, float scale)
     m_instanceRawData.push_back(position.y());
     m_instanceRawData.push_back(position.z());
     m_instanceRawData.push_back(scale);
+    m_instanceRawData.push_back(std::rand() % 16);
     ++m_asteroidCount;
     m_graphicsObjects.invalidateGeometry();
 }

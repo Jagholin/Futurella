@@ -7,11 +7,13 @@ in GeometryOut {
     vec3 vNormal;
     vec2 vTexCoord;
     vec3 vPos;
+    float texNumber;
 } inVertex[];
 
 out vec3 vNormal;
 out vec2 vTexCoord;
 out vec4 vPos;
+out float texNumber;
 
 out vec3 tfPos;
 out vec3 tfNormal;
@@ -25,6 +27,7 @@ void main()
         vNormal = inVertex[i].vNormal;
         vTexCoord = inVertex[i].vTexCoord;
         vPos = osg_ModelViewProjectionMatrix * vec4(inVertex[i].vPos, 1.0);
+        texNumber = inVertex[i].texNumber;
 
         tfPos = inVertex[i].vPos;
         tfNormal = inVertex[i].vNormal;

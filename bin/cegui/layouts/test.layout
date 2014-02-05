@@ -106,6 +106,7 @@ To see the list of available commands, try "help".</Property>
         <Window type ="TaharezLook/StaticImage" name="levelGoal">
             <Property name="Image" value="Figures/green_square"></Property>
             <Property name="Visible" value="false"></Property>
+            <Property name="Size" value="{{0, 32}, {0, 32}}" />
         </Window>
     </Window>
 </GUILayout>

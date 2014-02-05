@@ -3,6 +3,7 @@
 in vec2 vTexCoord;
 in vec3 vNormal;
 in vec4 vPos;
+in float texNumber;
 
 layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec3 fragNormal;
@@ -20,7 +21,7 @@ void main()
     //else 
 
     //fragColor = vec4(vTexCoord, 0, 1);
-    fragColor = texture(array512Tex, vec3(vTexCoord, 0));
+    fragColor = texture(array512Tex, vec3(vTexCoord, texNumber));
     fragNormal = vNormal;
 
     //fragColor = vec4(0, 1, 1, 1);

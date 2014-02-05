@@ -35,15 +35,14 @@ public:
             return;
 
         osg::Camera* realNode = static_cast<osg::Camera*>(n);
-        osg::Matrixd proj = realNode->getViewMatrix() * realNode->getProjectionMatrix();
+        osg::Matrix view = realNode->getViewMatrix();
+        osg::Matrixd proj = view * realNode->getProjectionMatrix();
 
-        osg::Vec4f realPos = proj * osg::Vec4f(m_posInSpace, 1.0)  ;
-        //std::cout << realPos.x() << ", " << realPos.y() << ", " << realPos.z() << ", " << realPos.w() << std::endl;
+        osg::Vec4f realPos = osg::Vec4f(m_posInSpace, 1.0) * proj;
         realPos /= realPos.w();
-        //std::cout << realPos.x() << ", " << realPos.y() << ", " << realPos.z() << std::endl;
 
         // Now setup hud data
-        if (realPos.x() > -1 && realPos.x() < 1 && realPos.y() > -1 && realPos.y() < 1 && realPos.z() < 0)
+        if (realPos.x() > -1 && realPos.x() < 1 && realPos.y() > -1 && realPos.y() < 1 && realPos.z() > -1 && realPos.z() < 1)
             m_hud->showGoalCursorAt((realPos.x() + 1.0) * 0.5, 1.0 - (realPos.y() + 1.0) * 0.5);
         else
             m_hud->hideGoalCursor();
@@ -221,9 +220,25 @@ void GameInstanceClient::createTextureArrays()
 {
     osg::ref_ptr<osg::Texture2DArray> myTex512Array = new osg::Texture2DArray;
 
-    const unsigned int textures = 1;
+    const unsigned int textures = 17;
     std::string textureNames[] = {
-        "textures/spherical_noise2.png"
+        "textures/spherical_noise2.png",
+        "textures/sphericalnoise1.png",
+        "textures/sphericalnoise2.png",
+        "textures/sphericalnoise3.png",
+        "textures/sphericalnoise4.png",
+        "textures/sphericalnoise5.png",
+        "textures/sphericalnoise6.png",
+        "textures/sphericalnoise7.png",
+        "textures/sphericalnoise8.png",
+        "textures/sphericalnoise9.png",
+        "textures/sphericalnoise10.png",
+        "textures/sphericalnoise11.png",
+        "textures/sphericalnoise12.png",
+        "textures/sphericalnoise13.png",
+        "textures/sphericalnoise14.png",
+        "textures/sphericalnoise15.png",
+        "textures/sphericalnoise16.png",
     };
     myTex512Array->setTextureHeight(512);
     myTex512Array->setTextureWidth(512);
@@ -344,4 +359,9 @@ void GameInstanceClient::shipChangedPosition(const osg::Vec3f& pos, SpaceShipCli
         }
     }
     m_oldCoords = currentCoords;
+}
+
+void GameInstanceClient::gameInfoUpdated()
+{
+    m_fieldGoalUpdater->setGoal(m_myGameInfo);
 }

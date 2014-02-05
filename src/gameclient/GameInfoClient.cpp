@@ -50,6 +50,8 @@ bool GameInfoClient::takeMessage(const GameMessage::const_pointer& msg, MessageP
         mat.preMultScale(osg::Vec3f(m_finishAreaSize, m_finishAreaSize, m_finishAreaSize));
         m_transformGroup->setMatrix(mat);
 
+        ((GameInstanceClient*)m_context)->gameInfoUpdated();
+
         return true;
     }
     return false;

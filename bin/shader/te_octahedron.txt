@@ -14,12 +14,14 @@ in PerVertexTess {
     float scale;
     float uvGenMode;
     vec2 explicitTexCoord;
+    float texNumber;
 } inVertex[];
 
 out GeometryOut {
     vec3 vNormal;
     vec2 vTexCoord;
     vec3 vPos;
+    float texNumber;
 };
 
 uniform mat4 osg_ModelViewProjectionMatrix;
@@ -47,6 +49,7 @@ void main()
     float u = (lon + PI) / (2*PI);
     v = (v + 1.0) * 0.5; // map v to [0, 1]
     vTexCoord = vec2(u, v);
+    texNumber = inVertex[0].texNumber;
 
     if (gl_TessCoord.x > 0.9999 && inVertex[0].explicitTexCoord.x > -0.5)
         vTexCoord = inVertex[0].explicitTexCoord;
@@ -56,14 +59,14 @@ void main()
         vTexCoord = inVertex[2].explicitTexCoord;
 
     // Read height at (u, v) from the texture array
-    vec4 scaleFromTex = texture(array512Tex, vec3(u, v, 0));
+    vec4 scaleFromTex = texture(array512Tex, vec3(u, v, texNumber));
     float addScale = scaleFromTex.x;
     addScale = (addScale - 0.5) * 0.5 + 1.0;
 
     // In the next step we need to calculate normal vector to the perturbed surface.
     // First, reading heights from neighbour points
-    vec2 dscaleTex = vec2( texture(array512Tex, vec3(u + DU, v, 0)).x, 
-        texture(array512Tex, vec3(u, v + DV, 0)).x );
+    vec2 dscaleTex = vec2( texture(array512Tex, vec3(u + DU, v, texNumber)).x, 
+        texture(array512Tex, vec3(u, v + DV, texNumber)).x );
 
     // Create tangential vectors, in basis (r, u, v) 
     // where r - usual normal vector to the sphere, u and v - tangential vectors to the sphere

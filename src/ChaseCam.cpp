@@ -1,4 +1,4 @@
-#include <stdlib.h>
+﻿#include <stdlib.h>
 
 #include "ChaseCam.h"
 
@@ -107,6 +107,7 @@ void ChaseCam::computeMatrix()
     float distanceBetweenCameraAndShip = 2;
     newCameraMatrix.makeTranslate(osg::Vec3d(0, 0, distanceBetweenCameraAndShip));
     osg::Matrix shipTransform;
+    // Framerate abhängig? Wirklich?
     delayRotation.slerp(0.05, delayRotation, ship->getOrientation());
     delayRotation.get(shipTransform);
     newCameraMatrix.postMult(shipTransform);
