@@ -13,7 +13,7 @@ m_physicsEngine(new PhysicsEngine),
 m_name(name)
 {
     m_asteroidField = std::make_shared<AsteroidFieldServer>(200, 0.5f, 1, 0, this, m_physicsEngine.get());
-    m_gameInfo = std::make_shared<GameInfoServer>(900, this);
+    m_gameInfo = std::make_shared<GameInfoServer>(0, this);
     m_waitingForPlayers = true;
 }
 

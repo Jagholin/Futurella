@@ -94,6 +94,7 @@ GameMessage::pointer AsteroidFieldServer::creationMessage() const
         msg->position.push_back(m_asteroids->getAsteroid(i)->getPosition());
         msg->radius.push_back(m_asteroids->getAsteroid(i)->getRadius());
     }
+    msg->objectId = m_myObjectId;
     msg->ownerId = m_myOwnerId;
     return msg;
 }

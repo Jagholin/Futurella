@@ -49,7 +49,8 @@ GameMessage::pointer GameInfoServer::objectiveMessage() const
     msg->startPoint = m_startingPoint;
     msg->finishAreaCenter = m_finishArea;
     msg->finishAreaRadius = m_finishAreaSize;
-    msg->ownerId = getOwnerId();
+    msg->objectId = m_myObjectId;
+    msg->ownerId = m_myOwnerId;
     return msg;
 }
 
