@@ -123,37 +123,37 @@ void LevelDrawable::GLObjectsHolder::initGLObjectsForTesselation()
         glGenBuffers(1, &m_VBbasis);
         glBindBuffer(GL_ARRAY_BUFFER, m_VBbasis);
         float vertices[] = {
-            -1, 0, 0, 0,
-            0, 0, -1, 0,
-            0, -1, 0, 0,
+            -1, 0, 0, 0, -1, -1,
+            0, 0, -1, 0, -1, -1,
+            0, -1, 0, 0, 0.875, 0,
 
-            -1, 0, 0, 1,
-            0, -1, 0, 1, // << This one requires some special attention when texture coordinates are generated
-            0, 0, 1, 1,
+            -1, 0, 0, 1, -1, -1,
+            0, -1, 0, 1, 0.125, 0,// << This one requires some special attention when texture coordinates are generated
+            0, 0, 1, 1, -1, -1,
 
-            1, 0, 0, 0,
-            0, -1, 0, 0,
-            0, 0, -1, 0,
+            1, 0, 0, 0, -1, -1,
+            0, -1, 0, 0, 0.625, 0,
+            0, 0, -1, 0, -1, -1,
 
-            1, 0, 0, 0,
-            0, 0, 1, 0,
-            0, -1, 0, 0,
+            1, 0, 0, 0, -1, -1,
+            0, 0, 1, 0, -1, -1,
+            0, -1, 0, 0, 0.375, 0,
 
-            -1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, -1, 0,
+            -1, 0, 0, 0, -1, -1,
+            0, 1, 0, 0, 0.875, 1,
+            0, 0, -1, 0, -1, -1,
 
-            -1, 0, 0, 1,
-            0, 0, 1, 1, // << As well as this one.
-            0, 1, 0, 1,
+            -1, 0, 0, 1, -1, -1,
+            0, 0, 1, 1, -1, -1, // << As well as this one.
+            0, 1, 0, 1, 0.125, 1,
 
-            1, 0, 0, 0,
-            0, 0, -1, 0,
-            0, 1, 0, 0,
+            1, 0, 0, 0, -1, -1,
+            0, 0, -1, 0, -1, -1,
+            0, 1, 0, 0, 0.625, 1,
 
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
+            1, 0, 0, 0, -1, -1,
+            0, 1, 0, 0, 0.375, 1,
+            0, 0, 1, 0, -1, -1
         };
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     }
@@ -172,18 +172,20 @@ void LevelDrawable::GLObjectsHolder::initGLObjectsForTesselation()
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
     glEnableVertexAttribArray(3);
+    glEnableVertexAttribArray(4);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (GLvoid*)(3 * sizeof(float)));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (GLvoid*)(3 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (GLvoid*)(4 * sizeof(float)));
     glPatchParameteri(GL_PATCH_VERTICES, 3);
 
     glBindBuffer(GL_ARRAY_BUFFER, m_VBinstanceInfo);
     glBufferData(GL_ARRAY_BUFFER, m_owner.m_instanceRawData.size() * sizeof(float), &(m_owner.m_instanceRawData[0]), GL_DYNAMIC_DRAW);
 
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (GLvoid*)(3 * sizeof(float)));
-    glVertexAttribDivisor(2, 1);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+    glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (GLvoid*)(3 * sizeof(float)));
     glVertexAttribDivisor(3, 1);
+    glVertexAttribDivisor(4, 1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);

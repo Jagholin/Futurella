@@ -13,6 +13,7 @@ in PerVertexTess {
     vec3 offset;
     float scale;
     float uvGenMode;
+    vec2 explicitTexCoord;
 } inVertex[];
 
 out GeometryOut {
@@ -40,15 +41,19 @@ void main()
     // u/v spherically mapped texture coordinates.
     float lat = asin(clamp(point.y, -0.999f, 0.999f));
     float v = lat / (PI * 0.5); // v still in [-1, 1]
-    //float lon = acos(clamp(normalize(point.xz).x, -0.999f, 0.999f));
     float lon = atan(- point.z, point.x);
-    //if (isinf(lon) || isnan(lon))
-    //    lon = mix(-PI/2.0, PI/2.0, step(0, point.z));
     if (inVertex[0].uvGenMode > 0.5 && lon > 0)
         lon -= 2*PI;
     float u = (lon + PI) / (2*PI);
     v = (v + 1.0) * 0.5; // map v to [0, 1]
     vTexCoord = vec2(u, v);
+
+    if (gl_TessCoord.x > 0.9999 && inVertex[0].explicitTexCoord.x > -0.5)
+        vTexCoord = inVertex[0].explicitTexCoord;
+    else if (gl_TessCoord.y > 0.9999 && inVertex[1].explicitTexCoord.x > -0.5)
+        vTexCoord = inVertex[1].explicitTexCoord;
+    else if (gl_TessCoord.z > 0.9999 && inVertex[2].explicitTexCoord.x > -0.5)
+        vTexCoord = inVertex[2].explicitTexCoord;
 
     // Read height at (u, v) from the texture array
     vec4 scaleFromTex = texture(array512Tex, vec3(u, v, 0));

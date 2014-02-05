@@ -6,6 +6,7 @@ in PerVertex {
     vec3 offset;
     float scale;
     float uvGenMode;
+    vec2 explicitTexCoord;
 } inVertex[];
 
 out PerVertexTess {
@@ -13,6 +14,7 @@ out PerVertexTess {
     vec3 offset;
     float scale;
     float uvGenMode;
+    vec2 explicitTexCoord;
 } outVertex[];
 
 uniform mat4 osg_ModelViewProjectionMatrix;
@@ -26,6 +28,7 @@ void main()
     outVertex[gl_InvocationID].offset = inVertex[gl_InvocationID].offset;
     outVertex[gl_InvocationID].scale = inVertex[gl_InvocationID].scale;
     outVertex[gl_InvocationID].uvGenMode = inVertex[gl_InvocationID].uvGenMode;
+    outVertex[gl_InvocationID].explicitTexCoord = inVertex[gl_InvocationID].explicitTexCoord;
     
     // Take the sides
     //vec4 p1 = vec4(inVertex[0].position * inVertex[0].scale + inVertex[0].offset, 1);

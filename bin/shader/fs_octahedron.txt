@@ -19,6 +19,7 @@ void main()
     //    fragColor = vec4(0, 1, 0, 1);
     //else 
 
+    //fragColor = vec4(vTexCoord, 0, 1);
     fragColor = texture(array512Tex, vec3(vTexCoord, 0));
     fragNormal = vNormal;
 
