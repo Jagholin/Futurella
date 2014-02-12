@@ -286,15 +286,36 @@ GameServerThread::GameServerThread(GameInstanceServer* srv)
 
 void GameServerThread::run()
 {
+    // VS steady_clock has about 1 ms precision, which is good enough here
+    m_previousTime = std::chrono::steady_clock::now();
     while (m_continueRun)
     {
-        m_serverObject->m_eventService.poll();
+        std::chrono::steady_clock::time_point startTick = std::chrono::steady_clock::now();
+
+        // Don't run more work items than you can do per tick
+        // 8 ms is a soft boundary here
+        std::chrono::steady_clock::time_point timepoint;
+        // TODO: implement a priority queue
+        while (m_serverObject->m_eventService.poll_one() > 0)
+        {
+            timepoint = std::chrono::steady_clock::now();
+            if (std::chrono::duration_cast<std::chrono::microseconds>(timepoint - startTick).count() >= 8000)
+                break;
+        }
         m_serverObject->m_eventService.reset();
-        std::chrono::steady_clock::time_point timepoint = std::chrono::steady_clock::now();
-        float dt = std::chrono::duration_cast<std::chrono::milliseconds>(timepoint - m_previousTime).count();
+
+        timepoint = std::chrono::steady_clock::now();
+        float dt = std::chrono::duration_cast<std::chrono::microseconds>(timepoint - m_previousTime).count() / 1000.0f;
         m_serverObject->physicsTick(dt);
         m_previousTime = timepoint;
-        microSleep(16000);
+
+        timepoint = std::chrono::steady_clock::now();
+        dt = std::chrono::duration_cast<std::chrono::microseconds>(timepoint - startTick).count() / 1000.0f;
+
+        if (dt >= 15.999f)
+            std::cout << dt << "\n";
+        else
+            microSleep((16.0f - dt) * 1000.0f);
     }
 }
 
