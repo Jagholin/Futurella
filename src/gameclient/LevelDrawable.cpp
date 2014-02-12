@@ -4,6 +4,8 @@
 #include <iostream>
 
 GLuint LevelDrawable::GLObjectsHolder::m_VBbasis = 0;
+osg::ref_ptr<ShaderWrapper> LevelDrawable::m_tessShader;
+osg::ref_ptr<ShaderWrapper> LevelDrawable::m_normalShader;
 
 class LevelDrawableUpdateCallback : public osg::Drawable::UpdateCallback
 {
@@ -301,19 +303,25 @@ m_graphicsObjects(*this)
     setUseDisplayList(false);
     setSupportsDisplayList(false);
 
-    m_tessShader = new ShaderWrapper;
-    m_tessShader->load(osg::Shader::VERTEX, "shader/vs_octahedron.txt");
-    m_tessShader->load(osg::Shader::TESSCONTROL, "shader/tc_octahedron.txt");
-    m_tessShader->load(osg::Shader::TESSEVALUATION, "shader/te_octahedron.txt");
-    m_tessShader->load(osg::Shader::GEOMETRY, "shader/gs_octahedron.txt");
-    m_tessShader->load(osg::Shader::FRAGMENT, "shader/fs_octahedron.txt");
+    if (m_tessShader == nullptr)
+    {
+        m_tessShader = new ShaderWrapper;
+        m_tessShader->load(osg::Shader::VERTEX, "shader/vs_octahedron.txt");
+        m_tessShader->load(osg::Shader::TESSCONTROL, "shader/tc_octahedron.txt");
+        m_tessShader->load(osg::Shader::TESSEVALUATION, "shader/te_octahedron.txt");
+        m_tessShader->load(osg::Shader::GEOMETRY, "shader/gs_octahedron.txt");
+        m_tessShader->load(osg::Shader::FRAGMENT, "shader/fs_octahedron.txt");
 
-    m_tessShader->addTransformFeedbackVarying("tfPos");
-    m_tessShader->addTransformFeedbackVarying("tfNormal");
+        m_tessShader->addTransformFeedbackVarying("tfPos");
+        m_tessShader->addTransformFeedbackVarying("tfNormal");
+    }
 
-    m_normalShader = new ShaderWrapper;
-    m_normalShader->load(osg::Shader::VERTEX, "shader/vs_asteroids.txt");
-    m_normalShader->load(osg::Shader::FRAGMENT, "shader/fs_asteroids.txt");
+    if (m_normalShader == nullptr)
+    {
+        m_normalShader = new ShaderWrapper;
+        m_normalShader->load(osg::Shader::VERTEX, "shader/vs_asteroids.txt");
+        m_normalShader->load(osg::Shader::FRAGMENT, "shader/fs_asteroids.txt");
+    }
 
     getOrCreateStateSet()->setAttributeAndModes(m_tessShader, osg::StateAttribute::ON);
 

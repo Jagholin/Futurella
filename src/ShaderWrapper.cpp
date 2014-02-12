@@ -89,9 +89,9 @@ ShaderProvider::ShaderProvider()
 
 void ShaderProvider::addShader(const std::string &fileName, ShaderWrapper* shader)
 {
-    Listbox *fileList = static_cast<Listbox*>(System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("shaderEditor/list"));
-    ListboxItem *myItem = new ListboxTextItem(fileName);
-    fileList->addItem(myItem);
+    //Listbox *fileList = static_cast<Listbox*>(System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("shaderEditor/list"));
+    //ListboxItem *myItem = new ListboxTextItem(fileName);
+    //fileList->addItem(myItem);
 
     m_loadedShaders[fileName] = shader;
 }

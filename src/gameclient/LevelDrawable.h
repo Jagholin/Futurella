@@ -72,6 +72,6 @@ private:
     std::vector<float> m_feedbackPrimitives;
     TransformFeedbackMode m_feedbackMode;
     mutable GLObjectsHolder m_graphicsObjects;
-    osg::ref_ptr<ShaderWrapper> m_tessShader, m_normalShader;
+    static osg::ref_ptr<ShaderWrapper> m_tessShader, m_normalShader;
     int m_asteroidCount;
 };
