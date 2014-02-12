@@ -4,7 +4,12 @@
 
 #include <random>
 
-#define MINPLAYERS 1
+#ifdef _DEBUG
+const auto g_serverTick = std::chrono::microseconds(24000);
+#else
+const auto g_serverTick = std::chrono::microseconds(16000);
+#endif
+const unsigned int MINPLAYERS = 1;
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(RequestChunkData)
 out << coord;
@@ -233,7 +238,7 @@ bool GameInstanceServer::takeMessage(const NetMessage::const_pointer& msg, Messa
         {
             // The chunk doesn't exist yet, generate it
             ServerChunkData newChunk;
-            newChunk.m_asteroidField = std::make_shared<AsteroidFieldChunkServer>(100, 16, 0, chunkCoord, this, m_physicsEngine.get());
+            newChunk.m_asteroidField = std::make_shared<AsteroidFieldChunkServer>(100, 16.0f, 0, chunkCoord, this, m_physicsEngine.get());
             m_universe.insert(std::make_pair(chunkCoord, newChunk));
         }
 
@@ -299,7 +304,7 @@ void GameServerThread::run()
         while (m_serverObject->m_eventService.poll_one() > 0)
         {
             timepoint = std::chrono::steady_clock::now();
-            if (std::chrono::duration_cast<std::chrono::microseconds>(timepoint - startTick).count() >= 8000)
+            if (timepoint - startTick >= g_serverTick/2)
                 break;
         }
         m_serverObject->m_eventService.reset();
@@ -310,12 +315,12 @@ void GameServerThread::run()
         m_previousTime = timepoint;
 
         timepoint = std::chrono::steady_clock::now();
-        dt = std::chrono::duration_cast<std::chrono::microseconds>(timepoint - startTick).count() / 1000.0f;
+        //dt = std::chrono::duration_cast<std::chrono::microseconds>(timepoint - startTick).count() / 1000.0f;
 
-        if (dt >= 15.999f)
-            std::cout << dt << "\n";
+        if (timepoint - startTick >= g_serverTick)
+            std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(timepoint - startTick).count() << "\n";
         else
-            microSleep((16.0f - dt) * 1000.0f);
+            microSleep(g_serverTick.count() - std::chrono::duration_cast<std::chrono::microseconds>(timepoint - startTick).count());
     }
 }
 

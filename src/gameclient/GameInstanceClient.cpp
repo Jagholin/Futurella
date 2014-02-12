@@ -15,6 +15,14 @@
 #include <osg/BlendFunc>
 #include <osgUtil/CullVisitor>
 
+#ifdef _DEBUG
+const int g_cubeOfChunksSize = 1;
+const unsigned int g_removeChunksDistanceSquared = 4;
+#else
+const int g_cubeOfChunksSize = 2;
+const unsigned int g_removeChunksDistanceSquared = 14;
+#endif
+
 class TrackGameInfoUpdate : public osg::NodeCallback
 {
 public:
@@ -335,7 +343,7 @@ void GameInstanceClient::shipChangedPosition(const osg::Vec3f& pos, SpaceShipCli
     for (auto fieldChunk : m_asteroidFieldChunks)
     {
         osg::Vec3i dPos = currentCoords - fieldChunk.first;
-        if (dPos.x() * dPos.x() + dPos.y()*dPos.y() + dPos.z()*dPos.z() > 12)
+        if (dPos.x() * dPos.x() + dPos.y()*dPos.y() + dPos.z()*dPos.z() > g_removeChunksDistanceSquared)
             erasedCoords.push_back(fieldChunk.first);
     }
 
@@ -351,7 +359,9 @@ void GameInstanceClient::shipChangedPosition(const osg::Vec3f& pos, SpaceShipCli
     }
 
     // Get all other chunks around yourself.
-    for (int dx = -2; dx <= 2; ++dx) for (int dy = -2; dy <= 2; ++dy) for (int dz = -2; dz <= 2; ++dz)
+    for (int dx = -g_cubeOfChunksSize; dx <= g_cubeOfChunksSize; ++dx) 
+        for (int dy = -g_cubeOfChunksSize; dy <= g_cubeOfChunksSize; ++dy) 
+            for (int dz = -g_cubeOfChunksSize; dz <= g_cubeOfChunksSize; ++dz)
     {
         ChunkCoordinates newCoords = currentCoords + osg::Vec3i(dx, dy, dz);
 
