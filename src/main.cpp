@@ -45,41 +45,17 @@ int main()
     root->addChild(postCamera);
 
     viewer->setSceneData(root.get());
-
-//     osg::ref_ptr<osg::Drawable> octahedron = new LevelDrawable();
-//     osg::ref_ptr<osg::Geode> blabla = new osg::Geode();
-//     blabla->getOrCreateStateSet()->setAttributeAndModes(octahedronShader, osg::StateAttribute::ON);
-//     blabla->addDrawable(octahedron);
-//     root->addChild(blabla);
-    //viewer->setCameraManipulator(new osgGA::TrackballManipulator);
     viewer->realize();
     viewer->getCamera()->getGraphicsContext()->getState()->setUseModelViewAndProjectionUniforms(true);
 
     osgViewer::ViewerBase::Windows windowList;
     viewer->getWindows(windowList);
-    //windowList[0]->setWindowRectangle(10, 10, 500, 500);
     windowList[0]->useCursor(false);
 
     //Camera setup: in SpaceShipClient
     //viewer->getCamera()->setProjectionMatrixAsPerspective(60, 16.0f / 9.0f, 0.1f, 1000); //TODO: use real aspect ratio
-    
-    std::chrono::duration<float> frameTime(0);
-    std::chrono::steady_clock::time_point start;
 
     while (!viewer->done()){
-        start = std::chrono::steady_clock::now();
-
-        guiApp.timeTick(std::chrono::duration_cast<std::chrono::milliseconds>(frameTime).count());
         viewer->frame();
-
-        frameTime = std::chrono::steady_clock::now() - start;
-        // Add sleeping
-        std::chrono::milliseconds msFrameTime = std::chrono::duration_cast<std::chrono::milliseconds>(frameTime);
-        if (msFrameTime.count() < 1000. / 70.)
-        {
-            OpenThreads::Thread::microSleep((1000. / 70. - msFrameTime.count()) * 1000.);
-        }
-        else
-            OpenThreads::Thread::microSleep(0);
     }
 }

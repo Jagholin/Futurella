@@ -3,8 +3,12 @@
 #include "../gamecommon/GameMessagePeer.h"
 #include "SpaceShipServer.h"
 #include "AsteroidFieldChunkServer.h"
-#include <osg/Vec3i>
 #include "GameInfoServer.h"
+
+#include <boost/asio/io_service.hpp>
+#include <osg/Vec3i>
+#include <OpenThreads/Thread>
+#include <chrono>
 
 BEGIN_DECLNETMESSAGE(RequestChunkData, 1777, false)
 osg::Vec3i coord;
@@ -20,6 +24,21 @@ uint16_t score;
 END_DECLNETMESSAGE();
 
 class PhysicsEngine;
+class GameInstanceServer;
+
+class GameServerThread : public OpenThreads::Thread
+{
+public:
+    GameServerThread(GameInstanceServer* srv);
+
+    virtual void run() override;
+    void stopThread();
+protected:
+    GameInstanceServer *m_serverObject;
+    // TODO: use atomic_bool here
+    volatile bool m_continueRun;
+    std::chrono::steady_clock::time_point m_previousTime;
+};
 
 class GameInstanceServer : public GameMessagePeer
 {
@@ -46,6 +65,8 @@ public:
 
     virtual bool takeMessage(const NetMessage::const_pointer&, MessagePeer*);
 
+    virtual boost::asio::io_service* eventService();
+
     struct ServerChunkData {
         AsteroidFieldChunkServer::pointer m_asteroidField;
         std::deque<MessagePeer*> m_observers;
@@ -55,6 +76,8 @@ public:
         std::string m_playerName;
         unsigned int m_score;
     };
+
+    friend class GameServerThread;
 protected:
     
     std::shared_ptr<PhysicsEngine> m_physicsEngine;
@@ -66,6 +89,10 @@ protected:
 
     std::map<ChunkCoordinates, ServerChunkData> m_universe;
     std::string m_name;
+
+    boost::asio::io_service m_eventService;
+
+    GameServerThread m_serverThread;
 
     bool m_waitingForPlayers;
 };

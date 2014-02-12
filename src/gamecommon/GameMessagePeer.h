@@ -44,6 +44,9 @@ public:
     void registerGameObject(uint16_t objId, GameObject* obj);
     uint16_t registerGameObject(GameObject*);
     void unregisterGameObject(uint16_t objId);
+    virtual bool send(const NetMessage::const_pointer& msg, MessagePeer* sender = nullptr);
+
+    virtual boost::asio::io_service* eventService() = 0;
 
     friend class GameObject;
 protected:

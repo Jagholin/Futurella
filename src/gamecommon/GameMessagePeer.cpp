@@ -59,3 +59,24 @@ void GameMessagePeer::messageToPartner(const GameMessage::const_pointer& msg)
 {
     broadcastLocally(msg);
 }
+
+bool GameMessagePeer::send(const NetMessage::const_pointer& msg, MessagePeer* from /*= nullptr*/)
+{
+    // Adding the message to the queue
+    boost::asio::io_service* eventServ = eventService();
+    m_messageQueue.push_back(std::make_pair(msg, from));
+    if (!m_isWorking)
+    {
+        m_isWorking = true;
+        do
+        {
+            workPair curMessage = m_messageQueue.front();
+            m_messageQueue.pop_front();
+            eventServ->dispatch([this, curMessage](){
+                takeMessage(curMessage.first, curMessage.second);
+            });
+        } while (m_messageQueue.empty() == false);
+        m_isWorking = false;
+    }
+    return true;
+}

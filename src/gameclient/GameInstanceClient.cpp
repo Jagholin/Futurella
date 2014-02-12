@@ -386,3 +386,8 @@ void GameInstanceClient::removeNodeFromScene(osg::Node* aNode)
         m_rootGraphicsGroup->removeChild(aNode);
     });
 }
+
+boost::asio::io_service* GameInstanceClient::eventService()
+{
+    return &m_updateCallbackService;
+}

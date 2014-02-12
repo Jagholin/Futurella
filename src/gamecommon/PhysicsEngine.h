@@ -8,6 +8,10 @@
 
 class ShipPhysicsActor;
 
+namespace OpenThreads{
+    class Thread;
+};
+
 class PhysicsEngine
 {
 public:
@@ -57,4 +61,5 @@ protected:
     std::map<unsigned int, ShipPhysicsActor*> m_actors;
     unsigned int    m_nextUsedId;
 
+    const OpenThreads::Thread* m_physicsThread;
 };

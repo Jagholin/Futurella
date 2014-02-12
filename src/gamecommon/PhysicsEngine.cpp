@@ -1,5 +1,8 @@
 #include "PhysicsEngine.h"
 #include "ShipPhysicsActor.h"
+
+#include <OpenThreads/Thread>
+#include <cassert>
 #include <iostream>
 
 class VehicleMotionState : public btMotionState
@@ -62,6 +65,8 @@ m_constraintSolver(new btSequentialImpulseConstraintSolver)
     m_physicsWorld->setGravity(btVector3(0, 0, 0));
     m_vehicleShape = nullptr;
     m_nextUsedId = 0;
+
+    m_physicsThread = OpenThreads::Thread::CurrentThread();
 }
 
 PhysicsEngine::~PhysicsEngine()
@@ -109,6 +114,8 @@ PhysicsEngine::~PhysicsEngine()
 
 void PhysicsEngine::setShipTransformation(unsigned int shipId, btTransform t)
 {
+    assert(OpenThreads::Thread::CurrentThread() == m_physicsThread);
+
     m_vehicles[shipId]->setLinearVelocity(btVector3(0, 0, 0));
     m_vehicles[shipId]->setWorldTransform(t);
 }
@@ -116,12 +123,16 @@ void PhysicsEngine::setShipTransformation(unsigned int shipId, btTransform t)
 
 osg::Vec3f PhysicsEngine::getShipPosition(unsigned int shipId)
 {
+    assert(OpenThreads::Thread::CurrentThread() == m_physicsThread);
+
     btVector3 v =  m_vehicles[shipId]->getWorldTransform().getOrigin();
     return osg::Vec3f(v.x(), v.y(), v.z());
 }
 
 unsigned int PhysicsEngine::addCollisionSphere(osg::Vec3f pos, float radius, float mass)
 {
+    assert(OpenThreads::Thread::CurrentThread() == m_physicsThread);
+
     btSphereShape* newShape = new btSphereShape(radius);
     m_collisionShapes.push_back(newShape);
 
@@ -146,6 +157,8 @@ unsigned int PhysicsEngine::addCollisionSphere(osg::Vec3f pos, float radius, flo
 
 void PhysicsEngine::removeCollisionSphere(unsigned int id)
 {
+    assert(OpenThreads::Thread::CurrentThread() == m_physicsThread);
+
     btCollisionObject* obj = m_collisionObjects[id];
     m_physicsWorld->removeCollisionObject(obj);
 
@@ -158,6 +171,8 @@ void PhysicsEngine::removeCollisionSphere(unsigned int id)
 
 unsigned int PhysicsEngine::addUserVehicle(const osg::Vec3f& pos, const osg::Vec3f& sizes, const osg::Quat& orient, float mass)
 {
+    assert(OpenThreads::Thread::CurrentThread() == m_physicsThread);
+
     if (! m_vehicleShape)
         m_vehicleShape = new btBoxShape(btVector3(sizes.x() / 2, sizes.y() / 2, sizes.z() / 2));
     //m_collisionShapes.push_back(m_vehicleShape);
@@ -183,11 +198,15 @@ unsigned int PhysicsEngine::addUserVehicle(const osg::Vec3f& pos, const osg::Vec
 
 btRigidBody* PhysicsEngine::getBodyById(unsigned int id)
 {
+    assert(OpenThreads::Thread::CurrentThread() == m_physicsThread);
+
     return m_vehicles[id];
 }
 
 ShipPhysicsActor* PhysicsEngine::getActorById(unsigned int id)
 {
+    assert(OpenThreads::Thread::CurrentThread() == m_physicsThread);
+
     if (m_actors.count(id) == 0)
     {
         ShipPhysicsActor* myActor = new ShipPhysicsActor(m_vehicles[id]);
@@ -199,16 +218,22 @@ ShipPhysicsActor* PhysicsEngine::getActorById(unsigned int id)
 
 void PhysicsEngine::addMotionCallback(unsigned int id, const t_motionFunc& cb)
 {
+    assert(OpenThreads::Thread::CurrentThread() == m_physicsThread);
+
     m_motionCallbacks[id] = cb;
 }
 
 void PhysicsEngine::physicsTick(float msDelta)
 {
-    m_physicsWorld->stepSimulation(msDelta / 1000.0f, 10, 1. / 120.);
+    assert(OpenThreads::Thread::CurrentThread() == m_physicsThread);
+
+    m_physicsWorld->stepSimulation(msDelta / 1000.0f, 50, 1. / 240.);
 }
 
 void PhysicsEngine::removeVehicle(unsigned int id)
 {
+    assert(OpenThreads::Thread::CurrentThread() == m_physicsThread);
+
     std::cerr << "Removing a vehicle\n";
     btRigidBody* rigBody = getBodyById(id);
 

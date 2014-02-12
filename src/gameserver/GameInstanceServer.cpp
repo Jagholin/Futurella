@@ -2,7 +2,6 @@
 #include "../networking/peermanager.h"
 #include "../gamecommon/PhysicsEngine.h"
 
-
 #include <random>
 
 #define MINPLAYERS 1
@@ -32,16 +31,23 @@ END_RAWTONETMESSAGE_QCONVERT();
 REGISTER_NETMESSAGE(PlayerScoreInfo)
 
 GameInstanceServer::GameInstanceServer(const std::string &name) :
-m_physicsEngine(new PhysicsEngine),
-m_name(name)
+//m_physicsEngine(new PhysicsEngine),
+m_name(name),
+m_serverThread(this)
 {
-    // nop
+    m_eventService.dispatch([this](){
+        m_physicsEngine = std::make_shared<PhysicsEngine>();
+    });
     m_gameInfo = std::make_shared<GameInfoServer>(0, this);
     m_waitingForPlayers = true;
+    m_serverThread.setSchedulePriority(OpenThreads::Thread::THREAD_PRIORITY_HIGH);
+    m_serverThread.start();
 }
 
 GameInstanceServer::~GameInstanceServer()
 {
+    m_serverThread.stopThread();
+    m_serverThread.join();
 }
 
 std::string GameInstanceServer::name() const
@@ -62,104 +68,117 @@ void GameInstanceServer::connectLocallyTo(MessagePeer* buddy, bool recursive /*=
     // we have got a new client! Create a SpaceShip just for him
     GameMessagePeer::connectLocallyTo(buddy, recursive);
 
-    SpaceShipServer::pointer hisShip{ 
-        new SpaceShipServer(osg::Vec3f(), osg::Quat(0, osg::Vec3f(1, 0, 0)), RemotePeersManager::getManager()->getPeersId(buddy), this, m_physicsEngine) };
+    // Dispatch to server thread, if necessary(see docs on difference between 
+    // io_service::dispatch() and io_service::post()
+    m_eventService.dispatch([this, buddy](){
 
-    //GameMessage::pointer constructItMsg = m_asteroidField->creationMessage();
-    //buddy->send(constructItMsg);
-    GameMessage::pointer constructItMsg;
-    for (std::pair<MessagePeer*, SpaceShipServer::pointer> aShip : m_peerSpaceShips)
-    {
-        constructItMsg = aShip.second->creationMessage();
-        buddy->send(constructItMsg);
-    }
-    broadcastLocally(hisShip->creationMessage());
-    m_peerSpaceShips.insert(std::make_pair(buddy, hisShip));
+        SpaceShipServer::pointer hisShip{
+            new SpaceShipServer(osg::Vec3f(), osg::Quat(0, osg::Vec3f(1, 0, 0)), RemotePeersManager::getManager()->getPeersId(buddy), this, m_physicsEngine) };
 
-    GameMessage::pointer constructGameInfoMsg = m_gameInfo->creationMessage();
-    buddy->send(constructGameInfoMsg);
+        //GameMessage::pointer constructItMsg = m_asteroidField->creationMessage();
+        //buddy->send(constructItMsg);
+        GameMessage::pointer constructItMsg;
+        for (std::pair<MessagePeer*, SpaceShipServer::pointer> aShip : m_peerSpaceShips)
+        {
+            constructItMsg = aShip.second->creationMessage();
+            buddy->send(constructItMsg);
+        }
+        broadcastLocally(hisShip->creationMessage());
+        m_peerSpaceShips.insert(std::make_pair(buddy, hisShip));
+
+        GameMessage::pointer constructGameInfoMsg = m_gameInfo->creationMessage();
+        buddy->send(constructGameInfoMsg);
 
 
-    if (m_peerSpaceShips.size() >= MINPLAYERS && m_waitingForPlayers)
-    {
-        m_waitingForPlayers = false;
-        newRound(); 
-    }
+        if (m_peerSpaceShips.size() >= MINPLAYERS && m_waitingForPlayers)
+        {
+            m_waitingForPlayers = false;
+            newRound();
+        }
+
+    });
 }
 
 void GameInstanceServer::newRound()
 {
-    std::random_device randDevice;
-    //float range = m_asteroidField->getCubeSideLength();
-    float range = 16.0; // todo: new range calculation?
-    float maxRand = randDevice.max();
+    // dispatch to the server thread if necessary
+    m_eventService.dispatch([this]() {
 
-    osg::Vec3f startingPoint = osg::Vec3f(
-        range*randDevice() / maxRand,
-        range*randDevice() / maxRand,
-        range*randDevice() / maxRand);
-    osg::Vec3f finishArea = osg::Vec3f(
-        range*randDevice() / maxRand,
-        range*randDevice() / maxRand,
-        range*randDevice() / maxRand);
-    m_gameInfo->setObjective(startingPoint, finishArea, 1);
+        std::random_device randDevice;
+        //float range = m_asteroidField->getCubeSideLength();
+        float range = 16.0; // todo: new range calculation?
+        float maxRand = randDevice.max();
+
+        osg::Vec3f startingPoint = osg::Vec3f(
+            range*randDevice() / maxRand,
+            range*randDevice() / maxRand,
+            range*randDevice() / maxRand);
+        osg::Vec3f finishArea = osg::Vec3f(
+            range*randDevice() / maxRand,
+            range*randDevice() / maxRand,
+            range*randDevice() / maxRand);
+        m_gameInfo->setObjective(startingPoint, finishArea, 1);
     
     
-    GameMessage::pointer msg = m_gameInfo->objectiveMessage();
-    btTransform t;
-    for (std::map<MessagePeer*, SpaceShipServer::pointer>::iterator peerSpaceShip = m_peerSpaceShips.begin(); peerSpaceShip != m_peerSpaceShips.end(); ++peerSpaceShip)
-    {
-        //set ship positions to starting point
-        osg::Vec3f v1 = osg::Vec3f(0, 0, 1), v2 = startingPoint - finishArea;
-        osg::Vec3f a = v1 ^ v2;
-        float w = sqrt(v1.length2() * v2.length2()) + v1*v2;
-        btQuaternion q = btQuaternion(a.x(), a.y(), a.z(), w).normalize();
-        t.setRotation(q);
-        t.setOrigin(btVector3(startingPoint.x(), startingPoint.y(), startingPoint.z()));
+        GameMessage::pointer msg = m_gameInfo->objectiveMessage();
+        btTransform t;
+        for (std::map<MessagePeer*, SpaceShipServer::pointer>::iterator peerSpaceShip = m_peerSpaceShips.begin(); peerSpaceShip != m_peerSpaceShips.end(); ++peerSpaceShip)
+        {
+            //set ship positions to starting point
+            osg::Vec3f v1 = osg::Vec3f(0, 0, 1), v2 = startingPoint - finishArea;
+            osg::Vec3f a = v1 ^ v2;
+            float w = sqrt(v1.length2() * v2.length2()) + v1*v2;
+            btQuaternion q = btQuaternion(a.x(), a.y(), a.z(), w).normalize();
+            t.setRotation(q);
+            t.setOrigin(btVector3(startingPoint.x(), startingPoint.y(), startingPoint.z()));
 
-        unsigned int physId = peerSpaceShip->second->getPhysicsId();
+            unsigned int physId = peerSpaceShip->second->getPhysicsId();
         
-        m_physicsEngine->setShipTransformation(physId, t);
+            m_physicsEngine->setShipTransformation(physId, t);
 
-        //inform clients about new objective
-        MessagePeer* buddy = peerSpaceShip->first;
-        buddy->send(msg);
+            //inform clients about new objective
+            MessagePeer* buddy = peerSpaceShip->first;
+            buddy->send(msg);
 
-    }
+        }
+    });
 }
 
 void GameInstanceServer::disconnectLocallyFrom(MessagePeer* buddy, bool recursive /*= true*/)
 {
-    
     GameMessagePeer::disconnectLocallyFrom(buddy, recursive);
 
-    SpaceShipServer::pointer shipToRemove = m_peerSpaceShips.at(buddy);
-    NetRemoveGameObjectMessage::pointer removeMessage{ new NetRemoveGameObjectMessage };
-    removeMessage->objectId = shipToRemove->getObjectId();
-    broadcastLocally(removeMessage);
+    // Dispatch to the server thread
+    m_eventService.dispatch([this, buddy](){
 
-    m_peerSpaceShips.erase(buddy);
+        SpaceShipServer::pointer shipToRemove = m_peerSpaceShips.at(buddy);
+        NetRemoveGameObjectMessage::pointer removeMessage{ new NetRemoveGameObjectMessage };
+        removeMessage->objectId = shipToRemove->getObjectId();
+        broadcastLocally(removeMessage);
 
-    if (m_peerSpaceShips.size() < MINPLAYERS)
-    {
-        m_waitingForPlayers = true;
-    }
+        m_peerSpaceShips.erase(buddy);
 
-    std::vector <ChunkCoordinates> chunksToRemove;
-    for (auto& chunk : m_universe)
-    {
-        std::deque<MessagePeer*> &observers = chunk.second.m_observers;
-        auto endIter = observers.end();
-        auto peerData = std::find(observers.begin(), endIter, buddy);
-        if (peerData != endIter)
+        if (m_peerSpaceShips.size() < MINPLAYERS)
         {
-            observers.erase(peerData);
-            if (observers.empty())
-                chunksToRemove.push_back(chunk.first);
+            m_waitingForPlayers = true;
         }
-    }
-    for (ChunkCoordinates const& coord : chunksToRemove)
-        m_universe.erase(coord);
+
+        std::vector <ChunkCoordinates> chunksToRemove;
+        for (auto& chunk : m_universe)
+        {
+            std::deque<MessagePeer*> &observers = chunk.second.m_observers;
+            auto endIter = observers.end();
+            auto peerData = std::find(observers.begin(), endIter, buddy);
+            if (peerData != endIter)
+            {
+                observers.erase(peerData);
+                if (observers.empty())
+                    chunksToRemove.push_back(chunk.first);
+            }
+        }
+        for (ChunkCoordinates const& coord : chunksToRemove)
+            m_universe.erase(coord);
+    });
 }
 
 void GameInstanceServer::physicsTick(float timeInterval)
@@ -170,22 +189,26 @@ void GameInstanceServer::physicsTick(float timeInterval)
 
 void GameInstanceServer::checkForEndround()
 {
-    bool someShipEnteredFinishArea = false;
-    for (std::map<MessagePeer*, SpaceShipServer::pointer>::iterator peerSpaceShip = m_peerSpaceShips.begin(); peerSpaceShip != m_peerSpaceShips.end(); ++peerSpaceShip)
-    {
-        unsigned int physId = peerSpaceShip->second->getPhysicsId();
-        osg::Vec3f pos = m_physicsEngine->getShipPosition(physId);
-        if ( m_gameInfo->shipInFinishArea(pos) )
+    // Dispatch to the server thread
+    m_eventService.dispatch([this]() {
+
+        bool someShipEnteredFinishArea = false;
+        for (std::map<MessagePeer*, SpaceShipServer::pointer>::iterator peerSpaceShip = m_peerSpaceShips.begin(); peerSpaceShip != m_peerSpaceShips.end(); ++peerSpaceShip)
         {
-            someShipEnteredFinishArea = true;
-            break;
+            unsigned int physId = peerSpaceShip->second->getPhysicsId();
+            osg::Vec3f pos = m_physicsEngine->getShipPosition(physId);
+            if (m_gameInfo->shipInFinishArea(pos))
+            {
+                someShipEnteredFinishArea = true;
+                break;
+            }
         }
-    }
-    if (someShipEnteredFinishArea)
-    {
-        //todo. update the players scores
-        newRound();
-    }
+        if (someShipEnteredFinishArea)
+        {
+            //todo. update the players scores
+            newRound();
+        }
+    });
 }
 
 GameInstanceServer::ChunkCoordinates GameInstanceServer::positionToChunk(const osg::Vec3f& pos)
@@ -197,6 +220,9 @@ GameInstanceServer::ChunkCoordinates GameInstanceServer::positionToChunk(const o
 
 bool GameInstanceServer::takeMessage(const NetMessage::const_pointer& msg, MessagePeer* peer)
 {
+    // You have to be executed from within this thread.
+    assert(OpenThreads::Thread::CurrentThread() == &m_serverThread);
+
     if (msg->gettype() == NetRequestChunkDataMessage::type)
     {
         NetRequestChunkDataMessage::const_pointer realMsg = msg->as<NetRequestChunkDataMessage>();
@@ -246,3 +272,33 @@ osg::Vec3f GameInstanceServer::chunkToPosition(const osg::Vec3i& pos)
     return osg::Vec3f(pos.x() * 16.0, pos.y()*16.0, pos.z()*16.0);
 }
 
+boost::asio::io_service* GameInstanceServer::eventService()
+{
+    return &m_eventService;
+}
+
+GameServerThread::GameServerThread(GameInstanceServer* srv)
+{
+    m_serverObject = srv;
+    m_continueRun = true;
+    m_previousTime = std::chrono::steady_clock::now();
+}
+
+void GameServerThread::run()
+{
+    while (m_continueRun)
+    {
+        m_serverObject->m_eventService.poll();
+        m_serverObject->m_eventService.reset();
+        std::chrono::steady_clock::time_point timepoint = std::chrono::steady_clock::now();
+        float dt = std::chrono::duration_cast<std::chrono::milliseconds>(timepoint - m_previousTime).count();
+        m_serverObject->physicsTick(dt);
+        m_previousTime = timepoint;
+        microSleep(10000);
+    }
+}
+
+void GameServerThread::stopThread()
+{
+    m_continueRun = false;
+}

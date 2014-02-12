@@ -65,6 +65,8 @@ protected:
     void createTextureArrays();
     void setupPPPipeline();
 
+    virtual boost::asio::io_service* eventService();
+
     bool m_connected;
     bool m_orphaned;
 };

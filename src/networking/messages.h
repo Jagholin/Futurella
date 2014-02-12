@@ -157,13 +157,13 @@ public:
     virtual void disconnectLocallyFrom(MessagePeer* buddy, bool recursive = true);
 
     // send a message to *this* MessagePeer.
-    bool send(const NetMessage::const_pointer& msg, MessagePeer* sender = nullptr);
+    virtual bool send(const NetMessage::const_pointer& msg, MessagePeer* sender = nullptr);
     virtual std::string name() const = 0;
 
 protected:
     // inform all connected(except yourself) peers about the message
     void broadcastLocally(const NetMessage::const_pointer&);
-private:
+//private:
     typedef std::pair<NetMessage::const_pointer, MessagePeer*> workPair;
     std::deque<workPair> m_messageQueue;
     bool m_isWorking;
