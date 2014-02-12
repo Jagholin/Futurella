@@ -1,5 +1,6 @@
 #include "SpaceShipClient.h"
 #include "GameInstanceClient.h"
+#include "../NodeCallbackService.h"
 
 #include <osg/ShapeDrawable>
 #include <osg/Geode>
@@ -10,24 +11,14 @@
 REGISTER_GAMEOBJECT_TYPE(SpaceShipClient, 5002)
 
 // We use Update Callback to update ship's transformation group
+// (NOT USED)
 class ShipTransformUpdate : public osg::NodeCallback
 {
     SpaceShipClient* m_ship;
     std::chrono::steady_clock::time_point m_lastTick;
 public:
-    META_Object(futurella, ShipTransformUpdate);
-
-    ShipTransformUpdate()
-    {
-        m_ship = nullptr;
-    }
     ShipTransformUpdate(SpaceShipClient* obj){
         m_ship = obj;
-    }
-
-    ShipTransformUpdate(const ShipTransformUpdate& rhs, const osg::CopyOp&)
-    {
-        m_ship = rhs.m_ship;
     }
 
     void operator()(osg::Node*, osg::NodeVisitor*)
@@ -55,15 +46,18 @@ GameObject(objId, ownerId, ctx)
     setTransform(pos, orient);
     m_transformGroup->addChild(m_shipNode);
 
-    m_rootGroup->addChild(m_transformGroup);
-    m_transformGroup->setUpdateCallback(new ShipTransformUpdate(this));
+    //m_rootGroup->addChild(m_transformGroup);
+    m_transformGroup->setUpdateCallback(new NodeCallbackService(m_shipUpdateService));
+    //m_transformGroup->setUpdateCallback(new ShipTransformUpdate(this));
+    m_transformGroup->setDataVariance(osg::Object::DYNAMIC);
+    ctx->addNodeToScene(m_transformGroup);
 
     for (int i = 0; i < 6; ++i) m_inputCache[i] = false;
 }
 
 SpaceShipClient::~SpaceShipClient()
 {
-    m_rootGroup->removeChild(m_transformGroup);
+    static_cast<GameInstanceClient*>(m_context)->removeNodeFromScene(m_transformGroup);
 }
 
 SpaceShipClient::pointer SpaceShipClient::createFromGameMessage(const GameMessage::const_pointer& msg, GameMessagePeer* ctx)
@@ -97,10 +91,12 @@ void SpaceShipClient::setTransform(osg::Vec3f pos, osg::Vec4f orient)
 {
     m_lastPosition = pos;
     m_lastOrientation = orient;
-    m_transformGroup->setMatrix(osg::Matrix::translate(pos));
-    osg::Matrix rotationMatrix;
-    osg::Quat(orient).get(rotationMatrix);
-    m_transformGroup->preMult(rotationMatrix);
+    m_shipUpdateService.dispatch([this](){
+        m_transformGroup->setMatrix(osg::Matrix::translate(m_lastPosition));
+        osg::Matrix rotationMatrix;
+        osg::Quat(m_lastOrientation).get(rotationMatrix);
+        m_transformGroup->preMult(rotationMatrix);
+    });
 }
 
 void SpaceShipClient::tick(float deltaTime)

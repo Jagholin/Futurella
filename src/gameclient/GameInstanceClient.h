@@ -8,6 +8,7 @@
 #include "../ChaseCam.h"
 
 #include <osgViewer/Viewer>
+#include <boost/asio/io_service.hpp>
 
 class GUIApplication;
 class TrackGameInfoUpdate;
@@ -38,6 +39,11 @@ public:
     virtual bool takeMessage(const NetMessage::const_pointer&, MessagePeer*);
     void shipChangedPosition(const osg::Vec3f& pos, SpaceShipClient* ship);
     void gameInfoUpdated();
+
+    // Scene graph manipulation functions, can be called by game objects
+    // These methods are thread-safe
+    void addNodeToScene(osg::Node* aNode);
+    void removeNodeFromScene(osg::Node* aNode);
 protected:
     addstd::signal<void()> m_clientOrphaned;
     osg::ref_ptr<osg::Group> m_rootGraphicsGroup;
@@ -46,7 +52,6 @@ protected:
 
     std::vector<SpaceShipClient::pointer> m_otherShips;
     SpaceShipClient::pointer m_myShip;
-    //AsteroidFieldChunkClient::pointer m_myAsteroids;
     std::map<ChunkCoordinates, AsteroidFieldChunkClient::pointer> m_asteroidFieldChunks;
     ChunkCoordinates m_oldCoords;
     GameInfoClient::pointer m_myGameInfo;
@@ -54,6 +59,8 @@ protected:
     osg::ref_ptr<osg::Uniform> m_viewportSizeUniform;
     GUIApplication* m_HUD;
     TrackGameInfoUpdate* m_fieldGoalUpdater;
+
+    boost::asio::io_service m_updateCallbackService;
 
     void createTextureArrays();
     void setupPPPipeline();

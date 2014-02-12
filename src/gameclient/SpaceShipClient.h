@@ -4,6 +4,7 @@
 #include "../gameserver/SpaceShipServer.h"
 
 #include <osg/Group>
+#include <boost/asio/io_service.hpp>
 
 class GameInstanceClient;
 class ChaseCam;
@@ -37,4 +38,6 @@ protected:
     osg::Vec4f m_lastOrientation;
     bool m_inputCache[6];
     static int m_dummy;
+
+    boost::asio::io_service m_shipUpdateService;
 };

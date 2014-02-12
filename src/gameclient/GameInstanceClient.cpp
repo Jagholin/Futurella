@@ -3,6 +3,7 @@
 #include "../networking/peermanager.h"
 #include "../ShaderWrapper.h"
 #include "../GUIApplication.h"
+#include "../NodeCallbackService.h"
 
 #include <osgGA/TrackballManipulator>
 #include <osg/TextureCubeMap>
@@ -44,7 +45,7 @@ public:
         // Now setup hud data
         realPos.set(osg::clampBetween(realPos.x(), -1.0f, 1.0f), osg::clampBetween(realPos.y(), -1.0f, 1.0f), realPos.z(), 1.0);
         //if (realPos.z() > -1 && realPos.z() < 1)
-            m_hud->showGoalCursorAt((realPos.x() + 1.0) * 0.5, 1.0 - (realPos.y() + 1.0) * 0.5);
+        m_hud->showGoalCursorAt((realPos.x() + 1.0) * 0.5, 1.0 - (realPos.y() + 1.0) * 0.5);
         //else
         //    m_hud->hideGoalCursor();
     }
@@ -123,6 +124,8 @@ m_orphaned(false)
     createTextureArrays();
 
     m_viewer->getCamera()->setUpdateCallback(m_fieldGoalUpdater);
+    m_rootGraphicsGroup->setUpdateCallback(new NodeCallbackService(m_updateCallbackService));
+    m_rootGraphicsGroup->setDataVariance(osg::Object::DYNAMIC);
 }
 
 GameInstanceClient::~GameInstanceClient()
@@ -332,7 +335,7 @@ void GameInstanceClient::shipChangedPosition(const osg::Vec3f& pos, SpaceShipCli
     for (auto fieldChunk : m_asteroidFieldChunks)
     {
         osg::Vec3i dPos = currentCoords - fieldChunk.first;
-        if (dPos.x() * dPos.x() + dPos.y()*dPos.y() + dPos.z()*dPos.z() > 16)
+        if (dPos.x() * dPos.x() + dPos.y()*dPos.y() + dPos.z()*dPos.z() > 12)
             erasedCoords.push_back(fieldChunk.first);
     }
 
@@ -365,4 +368,21 @@ void GameInstanceClient::shipChangedPosition(const osg::Vec3f& pos, SpaceShipCli
 void GameInstanceClient::gameInfoUpdated()
 {
     m_fieldGoalUpdater->setGoal(m_myGameInfo);
+}
+
+void GameInstanceClient::addNodeToScene(osg::Node* aNode)
+{
+    // Will be run within m_rootGraphicsGroup's UpdateCallback instance
+    // see m_rootGraphicsGroup->setUpdateCallback(...) call in the constructor
+    //m_updateCallbackService.dispatch([aNode, this](){
+        m_rootGraphicsGroup->addChild(aNode);
+    //});
+}
+
+void GameInstanceClient::removeNodeFromScene(osg::Node* aNode)
+{
+    // Same as above
+    m_updateCallbackService.dispatch([aNode, this](){
+        m_rootGraphicsGroup->removeChild(aNode);
+    });
 }

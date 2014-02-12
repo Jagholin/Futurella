@@ -3,6 +3,8 @@
 #include <osg/GLExtensions>
 #include <iostream>
 
+GLuint LevelDrawable::GLObjectsHolder::m_VBbasis = 0;
+
 class LevelDrawableUpdateCallback : public osg::Drawable::UpdateCallback
 {
 public:
@@ -17,7 +19,7 @@ LevelDrawable::GLObjectsHolder::GLObjectsHolder(const LevelDrawable& ld):
 m_owner(ld)
 {
     m_aabbDirty = m_geometryDirty = true;
-    m_VBbasis = m_VBfeedback = m_VBinstanceInfo = m_VAtess = 0;
+    m_VBfeedback = m_VBinstanceInfo = m_VAtess = 0;
     m_VBnorm = m_VBlinesfeed = m_VAnorm = m_VAlines = 0;
     m_TFquery = 0;
     m_tessPrimitiveCount = 0;
@@ -203,8 +205,8 @@ void LevelDrawable::GLObjectsHolder::deleteGLObjects()
 {
     if (m_VAtess)
         glDeleteVertexArrays(1, &m_VAtess);
-    if (m_VBbasis)
-        glDeleteBuffers(1, &m_VBbasis);
+//     if (m_VBbasis)
+//         glDeleteBuffers(1, &m_VBbasis);
     if (m_VBinstanceInfo)
         glDeleteBuffers(1, &m_VBinstanceInfo);
     if (m_VBfeedback)
@@ -219,7 +221,7 @@ void LevelDrawable::GLObjectsHolder::deleteGLObjects()
         glDeleteVertexArrays(1, &m_VAlines);
     if (m_VBlinesfeed)
         glDeleteVertexArrays(1, &m_VBlinesfeed);
-    m_VAtess = m_VBbasis = m_VBinstanceInfo = m_VBfeedback = 0;
+    m_VAtess = m_VBinstanceInfo = m_VBfeedback = 0;
     m_VAnorm = m_VBnorm = m_VAlines = m_VBlinesfeed = 0;
     m_TFquery = 0;
     m_geometryDirty = true;
@@ -316,6 +318,10 @@ m_graphicsObjects(*this)
     getOrCreateStateSet()->setAttributeAndModes(m_tessShader, osg::StateAttribute::ON);
 
     setUpdateCallback(new LevelDrawableUpdateCallback);
+
+    // IMPORTANT: If you use UpdateCallback above to change this object,
+    // set the data variance to dynamic.
+    //setDataVariance(osg::Object::DYNAMIC);
 
     m_feedbackMode = NO_TRANSFORM_FEEDBACK;
 }

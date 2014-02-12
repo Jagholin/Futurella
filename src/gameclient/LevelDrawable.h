@@ -52,7 +52,8 @@ protected:
 
         void invalidateGeometry();
     protected:
-        GLuint m_VBbasis, m_VBinstanceInfo, m_VAtess, m_VAnorm, m_VAlines;
+        GLuint m_VBinstanceInfo, m_VAtess, m_VAnorm, m_VAlines;
+        static GLuint m_VBbasis;
         GLuint m_VBfeedback, m_VBlinesfeed;
         GLuint m_VBnorm;
         GLuint m_TFquery;
@@ -65,18 +66,12 @@ protected:
         bool m_feedbackWritten;
     };
 private:
-    //mutable GLuint basis, instanceInfo, vao;
-    //mutable GLuint feedbackBuffer;
 
     std::vector<float> m_instanceRawData;
     std::vector<float> m_normalLines;
     std::vector<float> m_feedbackPrimitives;
-    //mutable bool m_geometryDirty;
-    //mutable bool m_aabbDirty;
     TransformFeedbackMode m_feedbackMode;
-    //mutable osg::BoundingBox m_aabb;
     mutable GLObjectsHolder m_graphicsObjects;
     osg::ref_ptr<ShaderWrapper> m_tessShader, m_normalShader;
     int m_asteroidCount;
-    //virtual void initGeometry() const;
 };

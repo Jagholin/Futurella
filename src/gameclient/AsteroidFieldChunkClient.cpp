@@ -23,12 +23,14 @@ GameObject(objId, ownId, ctx)
     {
         myLevel->addAsteroid(createMessage->position.at(i), createMessage->radius.at(i));
     }
-    m_rootGroup->addChild(m_asteroidsGroup);
+    //m_rootGroup->addChild(m_asteroidsGroup);
+    ctx->addNodeToScene(m_asteroidsGroup);
 }
 
 AsteroidFieldChunkClient::~AsteroidFieldChunkClient()
 {
-    m_rootGroup->removeChild(m_asteroidsGroup);
+    //m_rootGroup->removeChild(m_asteroidsGroup);
+    static_cast<GameInstanceClient*>(m_context)->removeNodeFromScene(m_asteroidsGroup);
 }
 
 AsteroidFieldChunkClient::pointer AsteroidFieldChunkClient::createFromGameMessage(const GameMessage::const_pointer& msg, GameMessagePeer* ctx)

@@ -60,5 +60,5 @@ protected:
 
     osg::Matrixd cameraMatrix;
 
-    osg::Quat delayRotation;
+    //osg::Quat delayRotation;
 };

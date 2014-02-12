@@ -95,6 +95,8 @@ add_executable(Futurella
     src/AsteroidField.h
     src/Node.cpp
     src/Node.h
+    src/NodeCallbackService.h
+    src/NodeCallbackService.cpp
     src/ChaseCam.cpp
     src/ChaseCam.h
     src/glincludes.h

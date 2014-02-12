@@ -11,7 +11,7 @@ using namespace osgGA;
 ChaseCam::ChaseCam(SpaceShipClient* spaceShip):
 ship(spaceShip)
 {
-    delayRotation.makeRotate(0,osg::Vec3f(1,0,0));
+    //delayRotation.makeRotate(0,osg::Vec3f(1,0,0));
 }
 
 ChaseCam::~ChaseCam() 
@@ -108,8 +108,9 @@ void ChaseCam::computeMatrix()
     newCameraMatrix.makeTranslate(osg::Vec3d(0, 0, distanceBetweenCameraAndShip));
     osg::Matrix shipTransform;
     // Framerate abhängig? Wirklich?
-    delayRotation.slerp(0.05, delayRotation, ship->getOrientation());
-    delayRotation.get(shipTransform);
+    //delayRotation.slerp(0.05, delayRotation, ship->getOrientation());
+    ship->getOrientation().get(shipTransform);
+    //delayRotation.get(shipTransform);
     newCameraMatrix.postMult(shipTransform);
     shipTransform.makeTranslate(ship->getPivotLocation());
     newCameraMatrix.postMult(shipTransform);
