@@ -294,7 +294,7 @@ void GameServerThread::run()
         float dt = std::chrono::duration_cast<std::chrono::milliseconds>(timepoint - m_previousTime).count();
         m_serverObject->physicsTick(dt);
         m_previousTime = timepoint;
-        microSleep(10000);
+        microSleep(16000);
     }
 }
 

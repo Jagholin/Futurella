@@ -12,13 +12,14 @@ protected:
     unsigned int m_vehicle;
     btTransform m_currTransform;
 
-    bool m_transformManuallyChanged;
+    volatile bool m_transformManuallyChanged;
 public:
     VehicleMotionState(PhysicsEngine* eng, unsigned int vehicleId, btTransform initTransform)
     {
         m_engine = eng;
         m_vehicle = vehicleId;
         m_currTransform = initTransform;
+        m_transformManuallyChanged = false;
     }
 
     ~VehicleMotionState()
@@ -227,7 +228,22 @@ void PhysicsEngine::physicsTick(float msDelta)
 {
     assert(OpenThreads::Thread::CurrentThread() == m_physicsThread);
 
-    m_physicsWorld->stepSimulation(msDelta / 1000.0f, 50, 1. / 240.);
+    //static int a = 0;
+
+    /*m_realTime += msDelta;
+    if (m_realTime > 1000.f / 180.f)
+    {
+        // We can run stepSimulation
+        int stepCount = std::floor(m_realTime * 180.f / 1000.f);
+        m_realTime -= stepCount * 1000.f / 180.f;
+        for (int i = 0; i < stepCount; ++i)
+            assert(m_physicsWorld->stepSimulation(1.f / 180.f, 1, 1.f/180.f) == 1);
+    }*/
+
+    m_physicsWorld->stepSimulation(msDelta / 1000.f, 30, 1. / 120.);
+
+    //if ((++a) % 50 == 0)
+      //  std::cerr << "Real: " << m_realTime << "ms, Physics: " << m_physicsTime << "ms\n";
 }
 
 void PhysicsEngine::removeVehicle(unsigned int id)
