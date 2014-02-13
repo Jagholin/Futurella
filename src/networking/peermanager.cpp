@@ -443,8 +443,8 @@ bool RemotePeersManager::isAnyoneConnected() const
 void RemotePeersManager::sendChatMessage(const std::string &msg)
 {
     NetChatMessage* myMsg = new NetChatMessage;
-    myMsg->message = msg;
-    myMsg->sentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::get<0>(myMsg->m_values) = msg;
+    std::get<1>(myMsg->m_values) = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     broadcast(NetMessage::const_pointer(myMsg));
 }
 
@@ -491,14 +491,6 @@ uint32_t RemotePeersManager::getPeersId(MessagePeer* peer) const
     }
     return getMyId();
 }
-
-BEGIN_NETTORAWMESSAGE_QCONVERT(Chat)
-out << message << sentTime;
-END_NETTORAWMESSAGE_QCONVERT()
-
-BEGIN_RAWTONETMESSAGE_QCONVERT(Chat)
-in >> message >> sentTime;
-END_RAWTONETMESSAGE_QCONVERT()
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(Hallo)
 out << buddyName << halloStat << peerId << udpPort << version;

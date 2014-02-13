@@ -17,38 +17,9 @@ using namespace CEGUI;
 // Some netmessages that inform about existing GameInstanceServers or request a connection
 // between GameInstanceServer and GameInstanceClient
 
-BEGIN_DECLNETMESSAGE(GameServerAvailable, 1400, false)
-std::string serverName;
-END_DECLNETMESSAGE()
-
-BEGIN_DECLNETMESSAGE(GameConnectRequest, 1401, false)
-END_DECLNETMESSAGE()
-
-BEGIN_DECLNETMESSAGE(GameConnectDenied, 1402, false)
-std::string reason;
-END_DECLNETMESSAGE()
-
-BEGIN_NETTORAWMESSAGE_QCONVERT(GameServerAvailable)
-out << serverName;
-END_NETTORAWMESSAGE_QCONVERT()
-
-BEGIN_RAWTONETMESSAGE_QCONVERT(GameServerAvailable)
-in >> serverName;
-END_RAWTONETMESSAGE_QCONVERT()
-
-BEGIN_NETTORAWMESSAGE_QCONVERT(GameConnectRequest)
-END_NETTORAWMESSAGE_QCONVERT()
-
-BEGIN_RAWTONETMESSAGE_QCONVERT(GameConnectRequest)
-END_RAWTONETMESSAGE_QCONVERT()
-
-BEGIN_NETTORAWMESSAGE_QCONVERT(GameConnectDenied)
-out << reason;
-END_NETTORAWMESSAGE_QCONVERT()
-
-BEGIN_RAWTONETMESSAGE_QCONVERT(GameConnectDenied)
-in >> reason;
-END_RAWTONETMESSAGE_QCONVERT()
+typedef GenericNetMessage<1400, false, std::string> NetGameServerAvailableMessage;
+typedef GenericNetMessage<1401, false> NetGameConnectRequestMessage;
+typedef GenericNetMessage<1402, false, std::string> NetGameConnectDeniedMessage;
 
 REGISTER_NETMESSAGE(GameServerAvailable)
 REGISTER_NETMESSAGE(GameConnectRequest)
@@ -316,7 +287,7 @@ void GUIApplication::onNewFuturellaPeer(const RemoteMessagePeer::pointer& peer)
         if (m_gameServer)
         {
             NetGameServerAvailableMessage::pointer msg{ new NetGameServerAvailableMessage };
-            msg->serverName = m_gameServer->name();
+            std::get<0>(msg->m_values) = m_gameServer->name();
             peer->send(msg);
         }
         //m_currentLevel->connectLocallyTo(peer);
@@ -361,7 +332,7 @@ void GUIApplication::onNetworkMessage(NetMessage::const_pointer msg, RemoteMessa
         m_renderThreadService->post([this, msg](){
             Window* chatWindow = m_guiContext->getRootWindow()->getChild("chatWindow/output");
             NetChatMessage::const_pointer realMsg{msg->as<NetChatMessage>()};
-            chatWindow->appendText(realMsg->message);
+            chatWindow->appendText(std::get<0>(realMsg->m_values));
         });
     }
     else if (msg->gettype() == NetGameServerAvailableMessage::type)
@@ -369,8 +340,8 @@ void GUIApplication::onNetworkMessage(NetMessage::const_pointer msg, RemoteMessa
         m_renderThreadService->post([this, msg, sender](){
             Window* console = m_guiContext->getRootWindow()->getChild("console/output");
             NetGameServerAvailableMessage::const_pointer realMsg{ msg->as<NetGameServerAvailableMessage>() };
-            m_availableGameServers.push_back(std::make_tuple(realMsg->serverName, sender));
-            console->appendText(String("\nNew Game server available: \\[") + boost::lexical_cast<std::string>(m_availableGameServers.size() - 1) + "]: " + realMsg->serverName);
+            m_availableGameServers.push_back(std::make_tuple(std::get<0>(realMsg->m_values), sender));
+            console->appendText(String("\nNew Game server available: \\[") + boost::lexical_cast<std::string>(m_availableGameServers.size() - 1) + "]: " + std::get<0>(realMsg->m_values));
         });
     }
     else if (msg->gettype() == NetGameConnectRequestMessage::type)
@@ -379,7 +350,7 @@ void GUIApplication::onNetworkMessage(NetMessage::const_pointer msg, RemoteMessa
             if (!m_gameServer)
             {
                 NetGameConnectDeniedMessage::pointer response{ new NetGameConnectDeniedMessage };
-                response->reason = "The server you requested to be connected with, doesn't exist";
+                std::get<0>(response->m_values) = "The server you requested to be connected with, doesn't exist";
                 sender->send(response);
                 return;
             }
@@ -683,7 +654,7 @@ void GUIApplication::consoleStartGameServer(const std::vector<String>& params, S
 
     m_gameServer = new GameInstanceServer(params[2].c_str());
     NetGameServerAvailableMessage::pointer msg{ new NetGameServerAvailableMessage };
-    msg->serverName = params[2].c_str();
+    std::get<0>(msg->m_values) = params[2].c_str();
     RemotePeersManager::getManager()->broadcast(msg);
 
     m_availableGameServers.push_back(std::make_tuple(params[2].c_str(), m_gameServer));

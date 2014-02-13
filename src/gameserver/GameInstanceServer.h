@@ -10,16 +10,9 @@
 #include <OpenThreads/Thread>
 #include <chrono>
 
-typedef GenericMessage<1777, false, osg::Vec3i> NetRequestChunkDataMessage;
-
-BEGIN_DECLNETMESSAGE(StopChunkTracking, 1778, false)
-osg::Vec3i coord;
-END_DECLNETMESSAGE()
-
-BEGIN_DECLNETMESSAGE(PlayerScoreInfo, 1779, false)
-std::string playerName;
-uint16_t score;
-END_DECLNETMESSAGE();
+typedef GenericNetMessage<1777, false, osg::Vec3i> NetRequestChunkDataMessage;
+typedef GenericNetMessage<1778, false, osg::Vec3i> NetStopChunkTrackingMessage;
+typedef GenericNetMessage<1779, false, std::string, uint16_t> NetPlayerScoreInfoMessage;
 
 class PhysicsEngine;
 class GameInstanceServer;

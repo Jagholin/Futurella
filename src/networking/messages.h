@@ -73,23 +73,26 @@ public:
 
     // Special case for std::tuple<...>
 
-    template<typename FirstType, typename... Types>
-    void outTupleImpl(const std::tuple<FirstType, Types...> &val){
-        FirstType firstElem;
-        std::tuple<Types...> rest;
-        std::tie(firstElem, rest) = val;
-        (*this) << firstElem;
-        outTupleImpl(rest);
-    }
+    template<int Index, typename... Types>
+    struct outTupleImpl
+    {
+        static void exec(binaryStream& s, const std::tuple<Types...> &val){
+            s << std::get<Index>(val);
+            outTupleImpl<Index + 1, Types...>::exec(s, val);
+        }
+    };
 
-    template<typename OnlyType>
-    void outTupleImpl(const std::tuple<OnlyType> &val){
-        (*this) << std::get<0>(val);
-    }
+    template<typename... Types>
+    struct outTupleImpl<sizeof...(Types), Types...>
+    {
+        static void exec(binaryStream& s, const std::tuple<Types...> &val){
+            // nop
+        }
+    };
 
     template<typename... Types>
     binaryStream& operator<<(const std::tuple<Types...> &val){
-        outTupleImpl(val);
+        outTupleImpl<0, Types...>::exec(*this, val);
         return (*this);
     }
 
@@ -126,7 +129,6 @@ public:
     }
 
     // Special case for std::tuple<...>
-
 
     template<int Index, typename... Types>
     struct inTupleImpl
@@ -257,14 +259,14 @@ public:
 };
 
 template <int MessageTypeID, bool UDP, typename... Types>
-class GenericMessage : public NetMessage
+class GenericNetMessage : public NetMessage
 {
 public:
     std::tuple<Types...> m_values;
 
 public:
-    typedef std::shared_ptr<GenericMessage<MessageTypeID, UDP, Types...>> pointer;
-    typedef std::shared_ptr<const GenericMessage<MessageTypeID, UDP, Types...>> const_pointer;
+    typedef std::shared_ptr<GenericNetMessage<MessageTypeID, UDP, Types...>> pointer;
+    typedef std::shared_ptr<const GenericNetMessage<MessageTypeID, UDP, Types...>> const_pointer;
     enum {type = MessageTypeID};
 
     unsigned int gettype() const override final
@@ -282,7 +284,8 @@ public:
         return false;
     }
 
-    RawMessage::pointer toRaw() const override final
+    template<int Test = sizeof...(Types)>
+    RawMessage::pointer toRawImpl(typename std::enable_if<(Test>0)>::type *test = 0) const
     {
         RawMessage::pointer result{ new RawMessage };
         result->msgType = MessageTypeID;
@@ -292,10 +295,33 @@ public:
         return result;
     }
 
-    void fromRaw(const std::string& str)
+    template<int Test = sizeof...(Types)>
+    RawMessage::pointer toRawImpl(typename std::enable_if<(Test==0)>::type *test = 0) const
+    {
+        RawMessage::pointer result{ new RawMessage };
+        result->msgType = MessageTypeID;
+        return result;
+    }
+
+    RawMessage::pointer toRaw() const override final
+    {
+        return toRawImpl();
+    }
+
+    template<int Test = sizeof...(Types)>
+    void fromRawImpl(const std::string& str, typename std::enable_if<(Test>0)>::type *test = 0)
     {
         binaryStream in(str);
         in >> m_values;
+    }
+    template<int Test = sizeof...(Types)>
+    void fromRawImpl(const std::string& str, typename std::enable_if<(Test==0)> ::type *test = 0)
+    {
+    }
+
+    void fromRaw(const std::string& str)
+    {
+        fromRawImpl(str);
     }
 
 protected:

@@ -1,13 +1,6 @@
 #include "GameObject.h"
 #include <boost/lexical_cast.hpp>
 
-BEGIN_NETTORAWMESSAGE_QCONVERT(RemoveGameObject)
-out << objectId;
-END_NETTORAWMESSAGE_QCONVERT()
-BEGIN_RAWTONETMESSAGE_QCONVERT(RemoveGameObject)
-in >> objectId;
-END_RAWTONETMESSAGE_QCONVERT()
-
 REGISTER_NETMESSAGE(RemoveGameObject)
 
 GameObject::GameObject(uint32_t ownerId, GameMessagePeer* context):

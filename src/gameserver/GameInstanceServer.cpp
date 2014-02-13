@@ -12,21 +12,7 @@ const auto g_serverTick = std::chrono::microseconds(16000);
 const unsigned int MINPLAYERS = 1;
 
 REGISTER_NETMESSAGE(RequestChunkData)
-
-BEGIN_NETTORAWMESSAGE_QCONVERT(StopChunkTracking)
-out << coord;
-END_NETTORAWMESSAGE_QCONVERT()
-BEGIN_RAWTONETMESSAGE_QCONVERT(StopChunkTracking)
-in >> coord;
-END_RAWTONETMESSAGE_QCONVERT();
 REGISTER_NETMESSAGE(StopChunkTracking)
-
-BEGIN_NETTORAWMESSAGE_QCONVERT(PlayerScoreInfo)
-out << playerName << score;
-END_NETTORAWMESSAGE_QCONVERT()
-BEGIN_RAWTONETMESSAGE_QCONVERT(PlayerScoreInfo)
-in >> playerName >> score;
-END_RAWTONETMESSAGE_QCONVERT();
 REGISTER_NETMESSAGE(PlayerScoreInfo)
 
 GameInstanceServer::GameInstanceServer(const std::string &name) :
@@ -152,7 +138,7 @@ void GameInstanceServer::disconnectLocallyFrom(MessagePeer* buddy, bool recursiv
 
         SpaceShipServer::pointer shipToRemove = m_peerSpaceShips.at(buddy);
         NetRemoveGameObjectMessage::pointer removeMessage{ new NetRemoveGameObjectMessage };
-        removeMessage->objectId = shipToRemove->getObjectId();
+        std::get<0>(removeMessage->m_values) = shipToRemove->getObjectId();
         broadcastLocally(removeMessage);
 
         m_peerSpaceShips.erase(buddy);
@@ -246,7 +232,7 @@ bool GameInstanceServer::takeMessage(const NetMessage::const_pointer& msg, Messa
     else if (msg->gettype() == NetStopChunkTrackingMessage::type)
     {
         NetStopChunkTrackingMessage::const_pointer realMsg = msg->as<NetStopChunkTrackingMessage>();
-        osg::Vec3i chunkCoord = realMsg->coord;
+        osg::Vec3i chunkCoord = std::get<0>(realMsg->m_values);
 
         if (m_universe.count(chunkCoord) == 0)
             return false;

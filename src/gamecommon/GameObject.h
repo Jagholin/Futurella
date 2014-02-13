@@ -1,9 +1,7 @@
 #pragma once
 #include "GameMessagePeer.h"
 
-BEGIN_DECLNETMESSAGE(RemoveGameObject, 7394, false)
-uint16_t objectId;
-END_DECLNETMESSAGE()
+typedef GenericNetMessage<7394, false, uint16_t> NetRemoveGameObjectMessage;
 
 class GameObject
 {
@@ -28,8 +26,6 @@ protected:
     uint32_t m_myOwnerId;
 
     void messageToPartner(const GameMessage::pointer& msg);
-private:
-    static int m_dummy;
 };
 
 class GameObjectFactory

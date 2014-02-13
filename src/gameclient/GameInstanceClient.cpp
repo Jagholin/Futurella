@@ -212,7 +212,7 @@ bool GameInstanceClient::takeMessage(const NetMessage::const_pointer& msg, Messa
         NetRemoveGameObjectMessage::const_pointer realMsg = msg->as<NetRemoveGameObjectMessage>();
         auto it = std::find_if(m_otherShips.cbegin(), m_otherShips.cend(), [realMsg]
             (const SpaceShipClient::pointer& aShip) -> bool {
-            return aShip->getObjectId() == realMsg->objectId;
+            return aShip->getObjectId() == std::get<0>(realMsg->m_values);
         });
         if (it != m_otherShips.cend())
         {
@@ -365,7 +365,7 @@ void GameInstanceClient::shipChangedPosition(const osg::Vec3f& pos, SpaceShipCli
     {
         // Message to the server: stop chunk tracking.
         NetStopChunkTrackingMessage::pointer msg{ new NetStopChunkTrackingMessage };
-        msg->coord = chunkCoord;
+        std::get<0>(msg->m_values) = chunkCoord;
         broadcastLocally(msg);
 
         m_asteroidFieldChunks.erase(chunkCoord);

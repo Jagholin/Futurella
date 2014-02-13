@@ -132,7 +132,4 @@ protected:
     void onPeerActivated(const RemoteMessagePeer::pointer& sender);
 };
 
-BEGIN_DECLNETMESSAGE(Chat, 100, true)
-std::string message;
-std::time_t sentTime;
-END_DECLNETMESSAGE()
+typedef GenericNetMessage<100, true, std::string, std::time_t> NetChatMessage;

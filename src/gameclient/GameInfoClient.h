@@ -29,4 +29,6 @@ protected:
 
     osg::Vec3f m_startingPoint, m_finishArea;
     float m_finishAreaSize;
+
+    static int m_dummy;
 };
