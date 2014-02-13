@@ -19,8 +19,8 @@
 const int g_cubeOfChunksSize = 1;
 const unsigned int g_removeChunksDistanceSquared = 4;
 #else
-const int g_cubeOfChunksSize = 2;
-const unsigned int g_removeChunksDistanceSquared = 14;
+const int g_cubeOfChunksSize = 1;
+const unsigned int g_removeChunksDistanceSquared = 9;
 #endif
 
 class TrackGameInfoUpdate : public osg::NodeCallback
@@ -53,7 +53,20 @@ public:
         // Now setup hud data
         realPos.set(osg::clampBetween(realPos.x(), -1.0f, 1.0f), osg::clampBetween(realPos.y(), -1.0f, 1.0f), realPos.z(), 1.0);
         //if (realPos.z() > -1 && realPos.z() < 1)
-        m_hud->showGoalCursorAt((realPos.x() + 1.0) * 0.5, 1.0 - (realPos.y() + 1.0) * 0.5);
+        if (realPos.z() > 1)
+        {
+            if (std::abs(realPos.x()) > std::abs(realPos.y()))
+            {
+                float m = 1.f / std::abs(realPos.x());
+                realPos *= -m;
+            }
+            else
+            {
+                float m = 1.f / std::abs(realPos.y());
+                realPos *= -m;
+            }
+        }
+            m_hud->showGoalCursorAt((realPos.x() + 1.0) * 0.5, 1.0 - (realPos.y() + 1.0) * 0.5);
         //else
         //    m_hud->hideGoalCursor();
     }
@@ -140,7 +153,7 @@ GameInstanceClient::~GameInstanceClient()
 {
     m_viewer->setCameraManipulator(new osgGA::TrackballManipulator);
     m_viewer->getCamera()->removeUpdateCallback(m_fieldGoalUpdater);
-    delete m_fieldGoalUpdater;
+    //delete m_fieldGoalUpdater;
 }
 
 void GameInstanceClient::connectLocallyTo(MessagePeer* buddy, bool recursive /*= true*/)
@@ -368,7 +381,7 @@ void GameInstanceClient::shipChangedPosition(const osg::Vec3f& pos, SpaceShipCli
         if (m_asteroidFieldChunks.count(newCoords) == 0)
         {
             NetRequestChunkDataMessage::pointer msg{ new NetRequestChunkDataMessage };
-            msg->coord = newCoords;
+            std::get<0>(msg->m_values) = newCoords;
             broadcastLocally(msg);
         }
     }

@@ -71,6 +71,30 @@ public:
         return (*this);
     }
 
+    // Special case for std::tuple<...>
+
+    template<typename FirstType, typename... Types>
+    void outTupleImpl(const std::tuple<FirstType, Types...> &val){
+        FirstType firstElem;
+        std::tuple<Types...> rest;
+        std::tie(firstElem, rest) = val;
+        (*this) << firstElem;
+        outTupleImpl(rest);
+    }
+
+    template<typename OnlyType>
+    void outTupleImpl(const std::tuple<OnlyType> &val){
+        (*this) << std::get<0>(val);
+    }
+
+    template<typename... Types>
+    binaryStream& operator<<(const std::tuple<Types...> &val){
+        outTupleImpl(val);
+        return (*this);
+    }
+
+    /// Input
+
     template<typename T>
     binaryStream& operator>>(T& val){
         m_ss.read(reinterpret_cast<char*>(&val), sizeof(T));
@@ -98,6 +122,32 @@ public:
         osg::Vec4f::value_type x, y, z, w;
         (*this) >> x >> y >> z >> w;
         val.set(x, y, z, w);
+        return (*this);
+    }
+
+    // Special case for std::tuple<...>
+
+
+    template<int Index, typename... Types>
+    struct inTupleImpl
+    {
+        static void exec(binaryStream& s, std::tuple<Types...> &val){
+            s >> std::get<Index>(val);
+            inTupleImpl<Index + 1, Types...>::exec(s, val);
+        }
+    };
+
+    template<typename... Types>
+    struct inTupleImpl<sizeof...(Types), Types...>
+    {
+        static void exec(binaryStream& s, std::tuple<Types...> &val){
+            // nop
+        }
+    };
+
+    template<typename... Types>
+    binaryStream& operator>>(std::tuple<Types...> &val){
+        inTupleImpl<0, Types...>::exec(*this, val);
         return (*this);
     }
     
@@ -206,12 +256,48 @@ public:
     }
 };
 
-template <typename... Types>
+template <int MessageTypeID, bool UDP, typename... Types>
 class GenericMessage : public NetMessage
 {
-protected:
+public:
     std::tuple<Types...> m_values;
 
 public:
+    typedef std::shared_ptr<GenericMessage<MessageTypeID, UDP, Types...>> pointer;
+    typedef std::shared_ptr<const GenericMessage<MessageTypeID, UDP, Types...>> const_pointer;
+    enum {type = MessageTypeID};
 
+    unsigned int gettype() const override final
+    {
+        return MessageTypeID;
+    }
+
+    bool prefersUdp() const override final
+    {
+        return UDP;
+    }
+
+    bool isGameMessage() const override
+    {
+        return false;
+    }
+
+    RawMessage::pointer toRaw() const override final
+    {
+        RawMessage::pointer result{ new RawMessage };
+        result->msgType = MessageTypeID;
+        binaryStream out;
+        out << m_values;
+        result->msgBytes = out.str();
+        return result;
+    }
+
+    void fromRaw(const std::string& str)
+    {
+        binaryStream in(str);
+        in >> m_values;
+    }
+
+protected:
+    static unsigned int mtype;
 };

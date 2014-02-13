@@ -261,7 +261,9 @@ void CeguiDrawable::drawImplementation( osg::RenderInfo& renderInfo ) const
     glBindBuffer(GL_ARRAY_BUFFER, old_vbo);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+#ifdef _DEBUG
     myState->checkGLErrors("CeguiDrawable::drawImplementation");
+#endif
 }
 
 void CeguiDrawable::init() const

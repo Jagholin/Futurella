@@ -11,12 +11,6 @@ const auto g_serverTick = std::chrono::microseconds(16000);
 #endif
 const unsigned int MINPLAYERS = 1;
 
-BEGIN_NETTORAWMESSAGE_QCONVERT(RequestChunkData)
-out << coord;
-END_NETTORAWMESSAGE_QCONVERT()
-BEGIN_RAWTONETMESSAGE_QCONVERT(RequestChunkData)
-in >> coord;
-END_RAWTONETMESSAGE_QCONVERT()
 REGISTER_NETMESSAGE(RequestChunkData)
 
 BEGIN_NETTORAWMESSAGE_QCONVERT(StopChunkTracking)
@@ -231,7 +225,7 @@ bool GameInstanceServer::takeMessage(const NetMessage::const_pointer& msg, Messa
     if (msg->gettype() == NetRequestChunkDataMessage::type)
     {
         NetRequestChunkDataMessage::const_pointer realMsg = msg->as<NetRequestChunkDataMessage>();
-        osg::Vec3i chunkCoord = realMsg->coord;
+        osg::Vec3i chunkCoord = std::get<0>(realMsg->m_values);
         // A client has requested data about the chunk.
         // First look if we have it in our dictionary
         if (m_universe.count(chunkCoord) == 0)
@@ -251,7 +245,7 @@ bool GameInstanceServer::takeMessage(const NetMessage::const_pointer& msg, Messa
     }
     else if (msg->gettype() == NetStopChunkTrackingMessage::type)
     {
-        NetRequestChunkDataMessage::const_pointer realMsg = msg->as<NetRequestChunkDataMessage>();
+        NetStopChunkTrackingMessage::const_pointer realMsg = msg->as<NetStopChunkTrackingMessage>();
         osg::Vec3i chunkCoord = realMsg->coord;
 
         if (m_universe.count(chunkCoord) == 0)

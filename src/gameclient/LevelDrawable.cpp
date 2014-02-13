@@ -57,7 +57,10 @@ void LevelDrawable::GLObjectsHolder::draw(osg::RenderInfo& ri)
 {
     glEnable(GL_CULL_FACE);
     if (m_geometryDirty)
+    {
+        ri.getState()->setCheckForGLErrors(osg::State::NEVER_CHECK_GL_ERRORS);
         initGLObjects();
+    }
     if (m_owner.m_feedbackMode == GEN_TRANSFORM_FEEDBACK)
     {
         // Start generating transform feedback
@@ -115,7 +118,9 @@ void LevelDrawable::GLObjectsHolder::draw(osg::RenderInfo& ri)
     }
     glDisable(GL_CULL_FACE);
 
+#ifdef _DEBUG
     ri.getState()->checkGLErrors("LevelDrawable::drawImplementation");
+#endif
 }
 
 void LevelDrawable::GLObjectsHolder::initGLObjectsForTesselation()

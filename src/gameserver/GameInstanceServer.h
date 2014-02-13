@@ -10,9 +10,7 @@
 #include <OpenThreads/Thread>
 #include <chrono>
 
-BEGIN_DECLNETMESSAGE(RequestChunkData, 1777, false)
-osg::Vec3i coord;
-END_DECLNETMESSAGE()
+typedef GenericMessage<1777, false, osg::Vec3i> NetRequestChunkDataMessage;
 
 BEGIN_DECLNETMESSAGE(StopChunkTracking, 1778, false)
 osg::Vec3i coord;
