@@ -1,9 +1,21 @@
 #version 400
 
 layout(location = 0) in vec3 position;
+layout(location = 1) in vec3 normal;
+layout(location = 2) in vec2 texCoord;
+layout(location = 3) in float _texNumber;
 uniform mat4 osg_ModelViewProjectionMatrix;
+
+out vec2 vTexCoord;
+out vec3 vNormal;
+out vec4 vPos;
+out float texNumber;
 
 void main()
 {
+    vPos = vec4(position, 1.0);
+    vNormal = normal;
+    vTexCoord = texCoord;
+    texNumber = _texNumber;
     gl_Position = osg_ModelViewProjectionMatrix * vec4(position, 1.0);
 }

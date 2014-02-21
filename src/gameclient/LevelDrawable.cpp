@@ -21,11 +21,13 @@ m_owner(ld)
 {
     m_aabbDirty = m_geometryDirty = true;
     m_VBfeedback = m_VBinstanceInfo = m_VAtess = 0;
-    m_VBnorm = m_VBlinesfeed = m_VAnorm = m_VAlines = 0;
-    m_TFquery = 0;
-    m_tessPrimitiveCount = 0;
-    m_tessFeedbackArray = nullptr;
-    m_feedbackWritten = false;
+    m_VAnorm = 0;
+    m_TransFeedback = 0;
+    m_feedbackReady = false;
+    //m_TFquery = 0;
+    //m_tessPrimitiveCount = 0;
+    //m_tessFeedbackArray = nullptr;
+    //m_feedbackWritten = false;
 }
 
 LevelDrawable::GLObjectsHolder::~GLObjectsHolder()
@@ -63,17 +65,38 @@ void LevelDrawable::GLObjectsHolder::draw(osg::RenderInfo& ri)
     if (m_owner.m_feedbackMode == GEN_TRANSFORM_FEEDBACK)
     {
         // Start generating transform feedback
-        if (!m_VBfeedback)
+        if (!m_TransFeedback)
         {
+            glGenTransformFeedbacks(1, &m_TransFeedback);
+            glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, m_TransFeedback);
+
             glGenBuffers(1, &m_VBfeedback);
             glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, m_VBfeedback);
+            glBufferData(GL_TRANSFORM_FEEDBACK_BUFFER, 1000000 * 6 * sizeof(float), nullptr, GL_STATIC_DRAW);
 
-            glBufferData(GL_TRANSFORM_FEEDBACK_BUFFER, 1000000 * 6 * sizeof(float), nullptr, GL_DYNAMIC_READ);
+            glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0);
+
+            glGenVertexArrays(1, &m_VAnorm);
+            glBindVertexArray(m_VAnorm);
+            glBindBuffer(GL_ARRAY_BUFFER, m_VBfeedback);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), 0);
+            glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
+            glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
+            glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(8 * sizeof(float)));
+            glEnableVertexAttribArray(0);
+            glEnableVertexAttribArray(1);
+            glEnableVertexAttribArray(2);
+            glEnableVertexAttribArray(3);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            //glBindVertexArray(0);
+
+            glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, m_TransFeedback);
         }
         else
-            glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, m_VBfeedback);
+            //glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, m_VBfeedback);
+            glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, m_TransFeedback);
 
-        glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, m_TFquery);
+        //glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, m_TFquery);
         glBeginTransformFeedback(GL_TRIANGLES);
 
         glBindVertexArray(m_VAtess);
@@ -81,12 +104,8 @@ void LevelDrawable::GLObjectsHolder::draw(osg::RenderInfo& ri)
     }
     else if (m_owner.m_feedbackMode == USE_TRANSFORM_FEEDBACK)
     {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glBindVertexArray(m_VAnorm);
-        glDrawArrays(GL_TRIANGLES, 0, m_tessPrimitiveCount * 3);
-        glBindVertexArray(m_VAlines);
-        glDrawArrays(GL_LINES, 0, m_tessPrimitiveCount * 3 * 2);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glDrawTransformFeedback(GL_TRIANGLES, m_TransFeedback);
     }
     else // NO_TRANSFORM_FEEDBACK
     {
@@ -99,21 +118,23 @@ void LevelDrawable::GLObjectsHolder::draw(osg::RenderInfo& ri)
     if (m_owner.m_feedbackMode == GEN_TRANSFORM_FEEDBACK)
     {
         glEndTransformFeedback();
-        glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
+        glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0);
+        m_feedbackReady = true;
+        //glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
 
-        GLint oldPrimitiveCount = m_tessPrimitiveCount;
-        glGetQueryObjectiv(m_TFquery, GL_QUERY_RESULT, &m_tessPrimitiveCount);
+        //GLint oldPrimitiveCount = m_tessPrimitiveCount;
+        //glGetQueryObjectiv(m_TFquery, GL_QUERY_RESULT, &m_tessPrimitiveCount);
 
-        if (m_tessFeedbackArray && oldPrimitiveCount < m_tessPrimitiveCount)
-        {
-            delete[] m_tessFeedbackArray;
-            m_tessFeedbackArray = nullptr;
-        }
-        if (!m_tessFeedbackArray)
-            m_tessFeedbackArray = new float[m_tessPrimitiveCount * 3 * 6];
+        //if (m_tessFeedbackArray && oldPrimitiveCount < m_tessPrimitiveCount)
+        //{
+        //    delete[] m_tessFeedbackArray;
+        //    m_tessFeedbackArray = nullptr;
+        //}
+        //if (!m_tessFeedbackArray)
+        //    m_tessFeedbackArray = new float[m_tessPrimitiveCount * 3 * 6];
 
-        glGetBufferSubData(GL_TRANSFORM_FEEDBACK_BUFFER, 0, m_tessPrimitiveCount * 3 * 6 * sizeof(float), m_tessFeedbackArray);
-        m_feedbackWritten = true;
+        //glGetBufferSubData(GL_TRANSFORM_FEEDBACK_BUFFER, 0, m_tessPrimitiveCount * 3 * 6 * sizeof(float), m_tessFeedbackArray);
+        //m_feedbackWritten = true;
     }
     glDisable(GL_CULL_FACE);
 
@@ -199,8 +220,9 @@ void LevelDrawable::GLObjectsHolder::initGLObjectsForTesselation()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    if (!m_TFquery)
-        glGenQueries(1, &m_TFquery);
+    //if (!m_TFquery)
+    //    glGenQueries(1, &m_TFquery);
+    //glGenTransformFeedbacks(1, &m_TransFeedback);
 
     m_geometryDirty = false;
 }
@@ -215,19 +237,15 @@ void LevelDrawable::GLObjectsHolder::deleteGLObjects()
         glDeleteBuffers(1, &m_VBinstanceInfo);
     if (m_VBfeedback)
         glDeleteBuffers(1, &m_VBfeedback);
-    if (m_TFquery)
-        glDeleteQueries(1, &m_TFquery);
+    //if (m_TFquery)
+    //    glDeleteQueries(1, &m_TFquery);
     if (m_VAnorm)
         glDeleteVertexArrays(1, &m_VAnorm);
-    if (m_VBnorm)
-        glDeleteVertexArrays(1, &m_VBnorm);
-    if (m_VAlines)
-        glDeleteVertexArrays(1, &m_VAlines);
-    if (m_VBlinesfeed)
-        glDeleteVertexArrays(1, &m_VBlinesfeed);
+//     if (m_VBnorm)
+//         glDeleteVertexArrays(1, &m_VBnorm);
     m_VAtess = m_VBinstanceInfo = m_VBfeedback = 0;
-    m_VAnorm = m_VBnorm = m_VAlines = m_VBlinesfeed = 0;
-    m_TFquery = 0;
+    m_VAnorm = 0;
+    //m_TFquery = 0;
     m_geometryDirty = true;
 }
 
@@ -236,20 +254,20 @@ void LevelDrawable::GLObjectsHolder::invalidateGeometry()
     m_aabbDirty = m_geometryDirty = true;
 }
 
-bool LevelDrawable::GLObjectsHolder::hasFeedback()
-{
-    return m_feedbackWritten;
-}
+//bool LevelDrawable::GLObjectsHolder::hasFeedback()
+//{
+    //return m_feedbackWritten;
+//}
 
-float* LevelDrawable::GLObjectsHolder::getTessFeedback()
-{
-    return m_tessFeedbackArray;
-}
+//float* LevelDrawable::GLObjectsHolder::getTessFeedback()
+//{
+    //return m_tessFeedbackArray;
+//}
 
-unsigned int LevelDrawable::GLObjectsHolder::getPrimitiveCount()
-{
-    return m_tessPrimitiveCount;
-}
+//unsigned int LevelDrawable::GLObjectsHolder::getPrimitiveCount()
+//{
+//    return m_tessPrimitiveCount;
+//}
 
 void LevelDrawable::GLObjectsHolder::initGLObjects()
 {
@@ -261,41 +279,11 @@ void LevelDrawable::GLObjectsHolder::initGLObjects()
 
 void LevelDrawable::GLObjectsHolder::initGLObjectsForFBDrawing()
 {
-    if (!m_VBnorm)
-    {
-        glGenBuffers(1, &m_VBnorm);
-    }
-    glBindBuffer(GL_ARRAY_BUFFER, m_VBnorm);
-    glBufferData(GL_ARRAY_BUFFER, m_owner.m_feedbackPrimitives.size(), (GLvoid*)(&m_owner.m_feedbackPrimitives[0]), GL_STATIC_DRAW);
+}
 
-    if (!m_VAnorm)
-    {
-        glGenVertexArrays(1, &m_VAnorm);
-    }
-    glBindVertexArray(m_VAnorm);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-    glBindVertexArray(0);
-
-    if (!m_VBlinesfeed)
-    {
-        glGenBuffers(1, &m_VBlinesfeed);
-    }
-    glBindBuffer(GL_ARRAY_BUFFER, m_VBlinesfeed);
-    glBufferData(GL_ARRAY_BUFFER, m_owner.m_normalLines.size(), (GLvoid*)(&m_owner.m_normalLines[0]), GL_STATIC_DRAW);
-    if (!m_VAlines)
-    {
-        glGenVertexArrays(1, &m_VAlines);
-    }
-    glBindVertexArray(m_VAlines);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    m_geometryDirty = false;
+bool LevelDrawable::GLObjectsHolder::isFeedbackReady() const
+{
+    return m_feedbackReady;
 }
 
 LevelDrawable::LevelDrawable():
@@ -316,24 +304,26 @@ m_graphicsObjects(*this)
 
         m_tessShader->addTransformFeedbackVarying("tfPos");
         m_tessShader->addTransformFeedbackVarying("tfNormal");
+        m_tessShader->addTransformFeedbackVarying("tfTexCoord");
+        m_tessShader->addTransformFeedbackVarying("tfTexNumber");
     }
 
     if (m_normalShader == nullptr)
     {
         m_normalShader = new ShaderWrapper;
         m_normalShader->load(osg::Shader::VERTEX, "shader/vs_asteroids.txt");
-        m_normalShader->load(osg::Shader::FRAGMENT, "shader/fs_asteroids.txt");
+        m_normalShader->load(osg::Shader::FRAGMENT, "shader/fs_octahedron.txt");
     }
 
     getOrCreateStateSet()->setAttributeAndModes(m_tessShader, osg::StateAttribute::ON);
 
     setUpdateCallback(new LevelDrawableUpdateCallback);
+    m_feedbackMode = GEN_TRANSFORM_FEEDBACK;
 
     // IMPORTANT: If you use UpdateCallback above to change this object,
     // set the data variance to dynamic.
-    //setDataVariance(osg::Object::DYNAMIC);
-
-    m_feedbackMode = NO_TRANSFORM_FEEDBACK;
+    if (m_feedbackMode != NO_TRANSFORM_FEEDBACK)
+        setDataVariance(osg::Object::DYNAMIC);
 }
 
 LevelDrawable::~LevelDrawable()
@@ -375,15 +365,17 @@ void LevelDrawable::onUpdatePhase()
     // keep in mind that the rendering of the same LevelDrawable runs in parallel in 
     // a separate thread!!!!!!
 
-    if (m_feedbackMode != GEN_TRANSFORM_FEEDBACK || !m_graphicsObjects.hasFeedback())
+    //return;
+
+    if (m_feedbackMode != GEN_TRANSFORM_FEEDBACK || !m_graphicsObjects.isFeedbackReady())
         return;
-    float *tessResults = m_graphicsObjects.getTessFeedback();
-    unsigned int primitives = m_graphicsObjects.getPrimitiveCount();
+    //float *tessResults = m_graphicsObjects.getTessFeedback();
+    //unsigned int primitives = m_graphicsObjects.getPrimitiveCount();
 
     // generate second array of normal lines
-    m_normalLines.clear();
-    m_feedbackPrimitives.clear();
-    for (unsigned int i = 0; i < primitives * 3; ++i)
+    //m_normalLines.clear();
+    //m_feedbackPrimitives.clear();
+    /*for (unsigned int i = 0; i < primitives * 3; ++i)
     {
         m_normalLines.push_back(tessResults[0]);
         m_normalLines.push_back(tessResults[1]);
@@ -398,9 +390,9 @@ void LevelDrawable::onUpdatePhase()
         m_feedbackPrimitives.push_back(tessResults[2]);
 
         tessResults += 6;
-    }
+    }*/
 
     m_feedbackMode = USE_TRANSFORM_FEEDBACK;
     getOrCreateStateSet()->setAttributeAndModes(m_normalShader, osg::StateAttribute::ON);
-    m_graphicsObjects.invalidateGeometry();
+    //m_graphicsObjects.invalidateGeometry();
 }

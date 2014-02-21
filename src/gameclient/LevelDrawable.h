@@ -46,30 +46,25 @@ protected:
         void initGLObjectsForTesselation();
         void initGLObjectsForFBDrawing();
 
-        bool hasFeedback();
-        float* getTessFeedback();
-        unsigned int getPrimitiveCount();
-
         void invalidateGeometry();
+
+        bool isFeedbackReady() const;
     protected:
-        GLuint m_VBinstanceInfo, m_VAtess, m_VAnorm, m_VAlines;
+        GLuint m_VBinstanceInfo, m_VAtess, m_VAnorm;
         static GLuint m_VBbasis;
-        GLuint m_VBfeedback, m_VBlinesfeed;
-        GLuint m_VBnorm;
-        GLuint m_TFquery;
+        GLuint m_VBfeedback;
+        GLuint m_TransFeedback;
         bool m_geometryDirty, m_aabbDirty;
         osg::BoundingBox m_aabb;
         const LevelDrawable& m_owner;
 
-        GLint m_tessPrimitiveCount;
-        float* m_tessFeedbackArray;
-        bool m_feedbackWritten;
+        bool m_feedbackReady;
     };
 private:
 
     std::vector<float> m_instanceRawData;
-    std::vector<float> m_normalLines;
-    std::vector<float> m_feedbackPrimitives;
+    //std::vector<float> m_normalLines;
+    //std::vector<float> m_feedbackPrimitives;
     TransformFeedbackMode m_feedbackMode;
     mutable GLObjectsHolder m_graphicsObjects;
     static osg::ref_ptr<ShaderWrapper> m_tessShader, m_normalShader;
