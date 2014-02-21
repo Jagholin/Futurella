@@ -1,6 +1,5 @@
-#include "../glincludes.h"
+#include "../gl_40.h"
 #include "LevelDrawable.h"
-#include <osg/GLExtensions>
 #include <iostream>
 
 GLuint LevelDrawable::GLObjectsHolder::m_VBbasis = 0;
@@ -125,8 +124,6 @@ void LevelDrawable::GLObjectsHolder::draw(osg::RenderInfo& ri)
 
 void LevelDrawable::GLObjectsHolder::initGLObjectsForTesselation()
 {
-    if (!glGenBuffers)
-        glFuncsInit();
     if (m_VBbasis == 0)
     {
         glGenBuffers(1, &m_VBbasis);

@@ -26,6 +26,10 @@ PFNGLGETQUERYOBJECTIVPROC glGetQueryObjectiv = nullptr;
 PFNGLBEGINTRANSFORMFEEDBACKPROC glBeginTransformFeedback = nullptr;
 PFNGLENDTRANSFORMFEEDBACKPROC glEndTransformFeedback = nullptr;
 PFNGLGETBUFFERSUBDATAPROC glGetBufferSubData = nullptr;
+PFNGLGENTRANSFORMFEEDBACKSPROC glGenTransformFeedbacks = nullptr;
+PFNGLBINDTRANSFORMFEEDBACKPROC glBindTransformFeedback = nullptr;
+PFNGLDRAWTRANSFORMFEEDBACKPROC glDrawTransformFeedback = nullptr;
+PFNGLDELETETRANSFORMFEEDBACKSPROC glDeleteTransformFeedbacks = nullptr;
 
 #define LOADGLFUNC(funcname, type) funcname = reinterpret_cast<type>(osg::getGLExtensionFuncPtr(#funcname)); \
     if (funcname == nullptr) std::cerr << "Cant find function " #funcname ", program will self-destruct" << std::endl 
@@ -56,4 +60,8 @@ void glFuncsInit()
     LOADGLFUNC(glEndTransformFeedback, PFNGLENDTRANSFORMFEEDBACKPROC);
     LOADGLFUNC(glGetQueryObjectiv, PFNGLGETQUERYOBJECTIVPROC);
     LOADGLFUNC(glGetBufferSubData, PFNGLGETBUFFERSUBDATAPROC);
+    LOADGLFUNC(glGenTransformFeedbacks, PFNGLGENTRANSFORMFEEDBACKSPROC);
+    LOADGLFUNC(glBindTransformFeedback, PFNGLBINDTRANSFORMFEEDBACKPROC);
+    LOADGLFUNC(glDrawTransformFeedback, PFNGLDRAWTRANSFORMFEEDBACKPROC);
+    LOADGLFUNC(glDeleteTransformFeedbacks, PFNGLDELETETRANSFORMFEEDBACKSPROC);
 }

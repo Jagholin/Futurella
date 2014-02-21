@@ -99,10 +99,10 @@ add_executable(Futurella
     src/NodeCallbackService.cpp
     src/ChaseCam.cpp
     src/ChaseCam.h
-    src/glincludes.h
-    src/glincludes.cpp
     src/ShaderWrapper.h
     src/ShaderWrapper.cpp
+    src/gl_40.h
+    src/gl_40.c
     )
 
 add_lib(Futurella OPENTHREADS)

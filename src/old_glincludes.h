@@ -34,5 +34,9 @@ extern PFNGLGETQUERYOBJECTIVPROC glGetQueryObjectiv;
 extern PFNGLBEGINTRANSFORMFEEDBACKPROC glBeginTransformFeedback;
 extern PFNGLENDTRANSFORMFEEDBACKPROC glEndTransformFeedback;
 extern PFNGLGETBUFFERSUBDATAPROC glGetBufferSubData;
+extern PFNGLGENTRANSFORMFEEDBACKSPROC glGenTransformFeedbacks;
+extern PFNGLBINDTRANSFORMFEEDBACKPROC glBindTransformFeedback;
+extern PFNGLDRAWTRANSFORMFEEDBACKPROC glDrawTransformFeedback;
+extern PFNGLDELETETRANSFORMFEEDBACKSPROC glDeleteTransformFeedbacks;
 
 void glFuncsInit();

@@ -1,4 +1,4 @@
-#include "glincludes.h"
+#include "gl_40.h"
 #include "ShaderWrapper.h"
 #include "GUIApplication.h"
 

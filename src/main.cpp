@@ -1,4 +1,4 @@
-#include "glincludes.h"
+#include "gl_40.h"
 #include <osgDB/ReadFile>
 #include <osg/Group>
 #include <osg/ShapeDrawable>

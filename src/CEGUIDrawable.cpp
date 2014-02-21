@@ -1,6 +1,6 @@
 #include <algorithm>
 #include <atomic>
-#include "glincludes.h"
+#include "gl_40.h"
 #include "CEGUIDrawable.h"
 #include "GUIApplication.h"
 
@@ -230,13 +230,11 @@ void CeguiDrawable::drawImplementation( osg::RenderInfo& renderInfo ) const
     // CEGUI OpenGL renderer uses VAO to pass geometry, but doesn't restore old bindings
     glGetIntegerv(GL_VERTEX_ARRAY_BINDING, reinterpret_cast<GLint*>(&old_vao));
     glGetIntegerv(GL_ARRAY_BUFFER_BINDING, reinterpret_cast<GLint*>(&old_vbo));
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
-    glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
+    //glPushAttrib(GL_ALL_ATTRIB_BITS);
+    //glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
 
     if (!m_initDone)
     {
-        if (!glBindVertexArray)
-            glFuncsInit();
         init();
     }
 
@@ -255,8 +253,8 @@ void CeguiDrawable::drawImplementation( osg::RenderInfo& renderInfo ) const
 
     CEGUI::System::getSingleton().renderAllGUIContexts();
 
-    glPopClientAttrib();
-    glPopAttrib();
+    //glPopClientAttrib();
+    //glPopAttrib();
     glBindVertexArray(old_vao);
     glBindBuffer(GL_ARRAY_BUFFER, old_vbo);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);

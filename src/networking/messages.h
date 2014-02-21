@@ -21,6 +21,13 @@ public:
     virtual bool prefersUdp()const = 0;
     virtual bool isGameMessage()const = 0;
 
+    enum Flags{
+        MESSAGE_PREFERS_UDP = 0x100,
+        MESSAGE_OVERRIDES_PREVIOUS = 0x200,
+
+        MESSAGE_HIGH_PRIORITY = 2,
+    };
+
     template <typename T> typename T::pointer as_safe() { return std::dynamic_pointer_cast<T>(shared_from_this()); } 
     template <typename T> typename T::pointer as() { return std::static_pointer_cast<T>(shared_from_this()); } 
     template <typename T> typename T::const_pointer as_safe() const { return std::dynamic_pointer_cast<const T>(shared_from_this()); } 
@@ -228,6 +235,50 @@ protected:
     // virtual bool takeMessage(const NetMessage::const_pointer&, MessagePeer*);
 
     std::string name() const;
+};
+
+class MessageMetaData
+{
+public:
+    template <typename T>
+    T& get(const NetMessage::pointer& obj, const std::string &name) const
+    {
+        assert(m_valueNames.count(name) > 0);
+        unsigned int variableId = m_valueNames[name];
+        // Control data type
+        assert(m_valueTypes[variableId] == typeid(T));
+        return reinterpret_cast<T&>(* m_setFuncs[variableId](obj));
+    }
+
+    template <typename T>
+    const T& get(const NetMessage::const_pointer& obj, const std::string &name) const
+    {
+        assert(m_valueNames.count(name) > 0);
+        unsigned int variableId = m_valueNames[name];
+        // Control data type
+        assert(m_valueTypes[variableId] == typeid(T));
+        return reinterpret_cast<const T&>(*m_getFuncs[variableId](obj));
+    }
+
+    template<typename MSGT, typename T, unsigned int ID>
+    void declVariable(const std::string& varName)
+    {
+        m_valueNames[varName] = ID;
+        m_valueTypes[ID] = typeid(T);
+        m_setFuncs[ID] = [](const NetMessage::pointer& obj) -> void*
+        {
+            return &(std::get<ID>(obj->as<MSGT>()->m_values));
+        };
+        m_getFuncs[ID] = [](const NetMessage::const_pointer& obj) -> const void*
+        {
+            return &(std::get<ID>(obj->as<MSGT>()->m_values));
+        };
+    }
+protected:
+    std::map<std::string, unsigned int> m_valueNames;
+    std::vector<std::type_info> m_valueTypes;
+    std::vector<std::function<void*(const NetMessage::pointer&)>> m_setFuncs;
+    std::vector<std::function<const void*(NetMessage::const_pointer)>> m_getFuncs;
 };
 
 class MsgFactory
