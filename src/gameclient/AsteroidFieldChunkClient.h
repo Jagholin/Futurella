@@ -19,6 +19,8 @@ public:
 
     virtual bool takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender);
 
+    void setUseTesselation(bool on);
+
 protected:
     osg::ref_ptr<osg::Group> m_asteroidsGroup;
     osg::ref_ptr<osg::Group> m_rootGroup;

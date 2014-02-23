@@ -1,0 +1,25 @@
+#version 400
+
+layout(location = 0) in vec3 position;
+layout(location = 3) in vec3 offset;
+layout(location = 4) in float scale;
+layout(location = 5) in float _texNumber;
+
+layout(location = 1) in float uvGenMode;
+layout(location = 2) in vec2 explicitTexCoord;
+
+out vec3 vNormal;
+out vec2 vTexCoord;
+out vec4 vPos;
+out float texNumber;
+
+uniform mat4 osg_ModelViewProjectionMatrix;
+
+void main()
+{
+    vNormal = position;
+    vPos = vec4(position, 1.0);
+    vTexCoord = explicitTexCoord;
+    texNumber = _texNumber;
+    gl_Position = osg_ModelViewProjectionMatrix * vec4(position*scale + offset, 1.0f);
+}

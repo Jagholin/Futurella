@@ -5,7 +5,8 @@
 
 GLuint LevelDrawable::GLObjectsHolder::m_VBbasis = 0;
 osg::ref_ptr<ShaderWrapper> LevelDrawable::m_tessShader;
-osg::ref_ptr<ShaderWrapper> LevelDrawable::m_normalShader;
+osg::ref_ptr<ShaderWrapper> LevelDrawable::m_drawFeedbackShader;
+osg::ref_ptr<ShaderWrapper> LevelDrawable::m_noTessShader;
 LevelDrawable::GLObjectsHolder::TransformFeedbackObjects LevelDrawable::GLObjectsHolder::m_tfArray[cFeedbackBuffers];
 
 class LevelDrawableUpdateCallback : public osg::Drawable::UpdateCallback
@@ -23,10 +24,7 @@ m_owner(ld)
 {
     m_aabbDirty = m_geometryDirty = true;
     m_VBinstanceInfo = m_VAtess = 0;
-    m_VAnorm = 0;
-    //m_TransFeedback = 0;
     m_feedbackReady = false;
-    //m_TFquery = 0;
     m_tfeedback = nullptr;
 }
 
@@ -76,47 +74,35 @@ void LevelDrawable::GLObjectsHolder::draw(osg::RenderInfo& ri)
 
         if (m_tfeedback)
         { 
-            if (m_VAnorm == 0)
-            {
-                glGenVertexArrays(1, &m_VAnorm);
-                glBindVertexArray(m_VAnorm);
-                glBindBuffer(GL_ARRAY_BUFFER, m_tfeedback->m_VBfeedback);
-                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), 0);
-                glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
-                glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
-                glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(8 * sizeof(float)));
-                glEnableVertexAttribArray(0);
-                glEnableVertexAttribArray(1);
-                glEnableVertexAttribArray(2);
-                glEnableVertexAttribArray(3);
-                glBindBuffer(GL_ARRAY_BUFFER, 0);
-            }
             //glBindVertexArray(0);
 
             glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, m_tfeedback->m_TransFeedback);
             glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, m_tfeedback->m_TFquery);
             glBeginTransformFeedback(GL_TRIANGLES);
         }
-        //else
-        //    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, m_TransFeedback);
-
-        //glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, m_TFquery);
-        //glBeginTransformFeedback(GL_TRIANGLES);
 
         glBindVertexArray(m_VAtess);
         glDrawArraysInstanced(GL_PATCHES, 0, 24, m_owner.m_asteroidCount);
     }
     else if (m_owner.m_feedbackMode == USE_TRANSFORM_FEEDBACK)
     {
-        glBindVertexArray(m_VAnorm);
+        glBindVertexArray(m_tfeedback->m_VAfeedback);
         glDrawTransformFeedback(GL_TRIANGLES, m_tfeedback->m_TransFeedback);
     }
     else // NO_TRANSFORM_FEEDBACK
     {
         // if use tesselation...
-        glBindVertexArray(m_VAtess);
-        glDrawArraysInstanced(GL_PATCHES, 0, 24, m_owner.m_asteroidCount);
+        if (m_owner.m_useTess)
+        {
+            glBindVertexArray(m_VAtess);
+            glDrawArraysInstanced(GL_PATCHES, 0, 24, m_owner.m_asteroidCount);
+        }
         // else: no tesselation...
+        else
+        {
+            glBindVertexArray(m_VAtess);
+            glDrawArraysInstanced(GL_TRIANGLES, 0, 24, m_owner.m_asteroidCount);
+        }
     }
 
     glBindVertexArray(0);
@@ -139,7 +125,7 @@ void LevelDrawable::GLObjectsHolder::draw(osg::RenderInfo& ri)
 #endif
 }
 
-void LevelDrawable::GLObjectsHolder::initGLObjectsForTesselation()
+void LevelDrawable::GLObjectsHolder::initGLObjects()
 {
     if (!glGenBuffers)
         glFuncsInit();
@@ -148,37 +134,37 @@ void LevelDrawable::GLObjectsHolder::initGLObjectsForTesselation()
         glGenBuffers(1, &m_VBbasis);
         glBindBuffer(GL_ARRAY_BUFFER, m_VBbasis);
         float vertices[] = {
-            -1, 0, 0, 0, -1, -1,
-            0, 0, -1, 0, -1, -1,
+            -1, 0, 0, 0, 1.0, 0.5,
+            0, 0, -1, 0, 0.75, 0.5,
             0, -1, 0, 0, 0.875, 0,
 
-            -1, 0, 0, 1, -1, -1,
+            -1, 0, 0, 1, 0, 0.5,
             0, -1, 0, 1, 0.125, 0,// << This one requires some special attention when texture coordinates are generated
-            0, 0, 1, 1, -1, -1,
+            0, 0, 1, 1, 0.25, 0.5,
 
-            1, 0, 0, 0, -1, -1,
+            1, 0, 0, 0, 0.5, 0.5,
             0, -1, 0, 0, 0.625, 0,
-            0, 0, -1, 0, -1, -1,
+            0, 0, -1, 0, 0.75, 0.5,
 
-            1, 0, 0, 0, -1, -1,
-            0, 0, 1, 0, -1, -1,
+            1, 0, 0, 0, 0.5, 0.5,
+            0, 0, 1, 0, 0.25, 0.5,
             0, -1, 0, 0, 0.375, 0,
 
-            -1, 0, 0, 0, -1, -1,
+            -1, 0, 0, 0, 1.0, 0.5,
             0, 1, 0, 0, 0.875, 1,
-            0, 0, -1, 0, -1, -1,
+            0, 0, -1, 0, 0.75, 0.5,
 
-            -1, 0, 0, 1, -1, -1,
-            0, 0, 1, 1, -1, -1, // << As well as this one.
+            -1, 0, 0, 1, 0, 0.5,
+            0, 0, 1, 1, 0.25, 0.5, // << As well as this one.
             0, 1, 0, 1, 0.125, 1,
 
-            1, 0, 0, 0, -1, -1,
-            0, 0, -1, 0, -1, -1,
+            1, 0, 0, 0, 0.5, 0.5,
+            0, 0, -1, 0, 0.75, 0.5,
             0, 1, 0, 0, 0.625, 1,
 
-            1, 0, 0, 0, -1, -1,
+            1, 0, 0, 0, 0.5, 0.5,
             0, 1, 0, 0, 0.375, 1,
-            0, 0, 1, 0, -1, -1
+            0, 0, 1, 0, 0.25, 0.5
         };
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     }
@@ -234,12 +220,12 @@ void LevelDrawable::GLObjectsHolder::deleteGLObjects()
     //    glDeleteBuffers(1, &m_VBfeedback);
     //if (m_TFquery)
     //    glDeleteQueries(1, &m_TFquery);
-    if (m_VAnorm)
-        glDeleteVertexArrays(1, &m_VAnorm);
+    //if (m_VAnorm)
+    //    glDeleteVertexArrays(1, &m_VAnorm);
     //if (m_TransFeedback)
     //    glDeleteTransformFeedbacks(1, &m_TransFeedback);
     m_VAtess = m_VBinstanceInfo = 0;
-    m_VAnorm = 0;
+    //m_VAnorm = 0;
     //m_TransFeedback = 0;
     //m_TFquery = 0;
     m_geometryDirty = true;
@@ -248,18 +234,6 @@ void LevelDrawable::GLObjectsHolder::deleteGLObjects()
 void LevelDrawable::GLObjectsHolder::invalidateGeometry()
 {
     m_aabbDirty = m_geometryDirty = true;
-}
-
-void LevelDrawable::GLObjectsHolder::initGLObjects()
-{
-    if (m_owner.m_useTess)
-        initGLObjectsForTesselation();
-    else
-        initGLObjectsForFBDrawing();
-}
-
-void LevelDrawable::GLObjectsHolder::initGLObjectsForFBDrawing()
-{
 }
 
 bool LevelDrawable::GLObjectsHolder::isFeedbackReady() const
@@ -320,14 +294,21 @@ m_graphicsObjects(*this)
         m_tessShader->addTransformFeedbackVarying("tfTexNumber");
     }
 
-    if (m_normalShader == nullptr)
+    if (m_drawFeedbackShader == nullptr)
     {
-        m_normalShader = new ShaderWrapper;
-        m_normalShader->load(osg::Shader::VERTEX, "shader/vs_asteroids.txt");
-        m_normalShader->load(osg::Shader::FRAGMENT, "shader/fs_octahedron.txt");
+        m_drawFeedbackShader = new ShaderWrapper;
+        m_drawFeedbackShader->load(osg::Shader::VERTEX, "shader/vs_asteroids.txt");
+        m_drawFeedbackShader->load(osg::Shader::FRAGMENT, "shader/fs_octahedron.txt");
     }
 
-    getOrCreateStateSet()->setAttributeAndModes(m_tessShader, osg::StateAttribute::ON);
+    if (m_noTessShader == nullptr)
+    {
+        m_noTessShader = new ShaderWrapper;
+        m_noTessShader->load(osg::Shader::VERTEX, "shader/vs_noTessAsteroids.txt");
+        m_noTessShader->load(osg::Shader::FRAGMENT, "shader/fs_octahedron.txt");
+    }
+
+    getOrCreateStateSet()->setAttributeAndModes(m_noTessShader, osg::StateAttribute::ON);
 
     setUpdateCallback(new LevelDrawableUpdateCallback);
     m_useTess = m_newUseTess = false;
@@ -384,17 +365,19 @@ void LevelDrawable::onUpdatePhase()
     if (m_newUseTess != m_useTess)
     {
         // We either moved close or moved away.
-        m_newUseTess = m_useTess;
+        m_useTess = m_newUseTess;
 
         if (m_newUseTess)
         {
             m_feedbackMode = GEN_TRANSFORM_FEEDBACK;
             m_graphicsObjects.resetFeedbackReady();
+            getOrCreateStateSet()->setAttributeAndModes(m_tessShader);
         }
         else
         {
             m_feedbackMode = NO_TRANSFORM_FEEDBACK;
             m_graphicsObjects.releaseFeedbackBuffers();
+            getOrCreateStateSet()->setAttributeAndModes(m_noTessShader);
         }
 
         return;
@@ -406,6 +389,7 @@ void LevelDrawable::onUpdatePhase()
         {
             m_feedbackMode = GEN_TRANSFORM_FEEDBACK;
             m_graphicsObjects.resetFeedbackReady();
+            getOrCreateStateSet()->setAttributeAndModes(m_tessShader);
         }
 
         return;
@@ -414,7 +398,7 @@ void LevelDrawable::onUpdatePhase()
     if (m_feedbackMode == GEN_TRANSFORM_FEEDBACK && m_graphicsObjects.isFeedbackReady())
     {
         m_feedbackMode = USE_TRANSFORM_FEEDBACK;
-        getOrCreateStateSet()->setAttributeAndModes(m_normalShader, osg::StateAttribute::ON);
+        getOrCreateStateSet()->setAttributeAndModes(m_drawFeedbackShader, osg::StateAttribute::ON);
     }
     //m_graphicsObjects.invalidateGeometry();
 }
@@ -434,6 +418,22 @@ void LevelDrawable::GLObjectsHolder::TransformFeedbackObjects::initGLObjects()
     glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, m_VBfeedback);
     glBufferData(GL_TRANSFORM_FEEDBACK_BUFFER, 6 * 1024 * 1024, nullptr, GL_STATIC_DRAW);
     glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0);
+
+    if (m_VAfeedback == 0)
+        glGenVertexArrays(1, &m_VAfeedback);
+
+    glBindVertexArray(m_VAfeedback);
+    glBindBuffer(GL_ARRAY_BUFFER, m_VBfeedback);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), 0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(8 * sizeof(float)));
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(3);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
 
     if (m_TFquery == 0)
         glGenQueries(1, &m_TFquery);

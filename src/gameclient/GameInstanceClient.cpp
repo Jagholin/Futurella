@@ -19,7 +19,7 @@
 const int g_cubeOfChunksSize = 1;
 const unsigned int g_removeChunksDistanceSquared = 4;
 #else
-const int g_cubeOfChunksSize = 1;
+const int g_cubeOfChunksSize = 2;
 const unsigned int g_removeChunksDistanceSquared = 9;
 #endif
 
@@ -232,6 +232,11 @@ void GameInstanceClient::addAsteroidFieldChunk(GameInstanceClient::ChunkCoordina
 {
     //m_myAsteroids = asts;
     m_asteroidFieldChunks[coord] = asts;
+    osg::Vec3i dPos = coord - m_oldCoords;
+    if (std::abs(dPos.x()) > 1 || std::abs(dPos.y()) > 1 || std::abs(dPos.z()) > 1)
+        asts->setUseTesselation(false);
+    else
+        asts->setUseTesselation(true);
 }
 
 void GameInstanceClient::setGameInfo(GameInfoClient::pointer gi)
@@ -358,6 +363,10 @@ void GameInstanceClient::shipChangedPosition(const osg::Vec3f& pos, SpaceShipCli
         osg::Vec3i dPos = currentCoords - fieldChunk.first;
         if (dPos.x() * dPos.x() + dPos.y()*dPos.y() + dPos.z()*dPos.z() > g_removeChunksDistanceSquared)
             erasedCoords.push_back(fieldChunk.first);
+        else if (std::abs(dPos.x()) > 1 || std::abs(dPos.y()) > 1 || std::abs(dPos.z()) > 1)
+            fieldChunk.second->setUseTesselation(false);
+        else
+            fieldChunk.second->setUseTesselation(true);
     }
 
     // Erase old chunks that lie too far

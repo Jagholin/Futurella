@@ -45,8 +45,6 @@ protected:
         void draw(osg::RenderInfo&);
         void deleteGLObjects();
         void initGLObjects();
-        void initGLObjectsForTesselation();
-        void initGLObjectsForFBDrawing();
 
         void invalidateGeometry();
 
@@ -59,7 +57,7 @@ protected:
         struct TransformFeedbackObjects
         {
             TransformFeedbackObjects():
-                m_TransFeedback(0), m_VBfeedback(0), m_TFquery(0), m_inUse(false)
+                m_TransFeedback(0), m_VBfeedback(0), m_VAfeedback(0), m_TFquery(0), m_inUse(false)
             {
                 // no-op
             }
@@ -68,11 +66,12 @@ protected:
 
             GLuint m_TransFeedback;
             GLuint m_VBfeedback;
+            GLuint m_VAfeedback;
             GLuint m_TFquery;
             bool m_inUse;
         };
     protected:
-        GLuint m_VBinstanceInfo, m_VAtess, m_VAnorm;
+        GLuint m_VBinstanceInfo, m_VAtess;
         static GLuint m_VBbasis;
         static TransformFeedbackObjects m_tfArray[cFeedbackBuffers];
         //GLuint m_VBfeedback;
@@ -92,7 +91,7 @@ private:
     //std::vector<float> m_feedbackPrimitives;
     TransformFeedbackMode m_feedbackMode;
     mutable GLObjectsHolder m_graphicsObjects;
-    static osg::ref_ptr<ShaderWrapper> m_tessShader, m_normalShader;
+    static osg::ref_ptr<ShaderWrapper> m_tessShader, m_drawFeedbackShader, m_noTessShader;
     bool m_useTess, m_newUseTess;
     int m_asteroidCount;
 };

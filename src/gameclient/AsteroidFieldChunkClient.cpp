@@ -47,3 +47,14 @@ bool AsteroidFieldChunkClient::takeMessage(const GameMessage::const_pointer& msg
 {
     return false;
 }
+
+void AsteroidFieldChunkClient::setUseTesselation(bool on)
+{
+    unsigned int childCount = m_asteroidsGroup->getNumChildren();
+    for (unsigned int i = 0; i < childCount; ++i)
+    {
+        osg::Geode* child = m_asteroidsGroup->getChild(i)->asGeode();
+        LevelDrawable* chunk = static_cast<LevelDrawable*>(child->getDrawable(0));
+        chunk->setUseTesselation(on);
+    }
+}
