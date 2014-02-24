@@ -1,6 +1,9 @@
 #version 400
 
 in vec3 position;
+out vec3 texCoord;
+
+uniform mat4 osg_ModelViewProjectionMatrix;
 
 //out GeometryData{
 //    vec3 position;
@@ -9,7 +12,8 @@ in vec3 position;
 
 void main()
 {
-    gl_Position = vec4(position, 1);
+    texCoord = position;
+    gl_Position = osg_ModelViewProjectionMatrix * vec4(position, 1);
     //gOut.position = position;
     //gOut.texCoord = position;
 }

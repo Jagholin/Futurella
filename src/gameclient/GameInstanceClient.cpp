@@ -455,8 +455,8 @@ void GameInstanceClient::createEnvironmentCamera(osg::Group* parentGroup)
         osg::Vec3f(-1, 0, 0),
         osg::Vec3f(0, -1, 0),
         osg::Vec3f(0, 1, 0),
-        osg::Vec3f(0, 0, 1),
-        osg::Vec3f(0, 0, -1)
+        osg::Vec3f(0, 0, -1),
+        osg::Vec3f(0, 0, 1)
     };
     osg::Vec3f upVector[6] = {
         osg::Vec3f(0, 1, 0),
