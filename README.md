@@ -8,7 +8,7 @@ A game of fast delivery
 - FMod (not yet)
 - boost::asio
 - CEGUI
-- BulletPhysics 2.8.2(in add_bullet branch)
+- BulletPhysics 2.8.2
 
 
 How to build
