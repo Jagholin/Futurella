@@ -1,0 +1,36 @@
+#version 400
+
+layout (triangles) in;
+layout (triangle_strip) out;
+
+in GeometryData{
+    vec3 position;
+    vec3 texCoord;
+} gIn[3];
+
+out vec3 texCoord;
+
+uniform mat4 mvpMatrix[6];
+
+void main()
+{
+    for (int i = 0; i < 6; ++i)
+    {
+        texCoord = gIn[0].texCoord;
+        gl_Position = mvpMatrix[i] * vec4(gIn[0].position, 1.0);
+        gl_Layer = i;
+        EmitVertex();
+        
+        texCoord = gIn[1].texCoord;
+        gl_Position = mvpMatrix[i] * vec4(gIn[1].position, 1.0);
+        gl_Layer = i;
+        EmitVertex();
+        
+        texCoord = gIn[2].texCoord;
+        gl_Position = mvpMatrix[i] * vec4(gIn[2].position, 1.0);
+        gl_Layer = i;
+        EmitVertex();
+        
+        EndPrimitive();
+    }
+}

@@ -35,6 +35,7 @@ public:
     void addAsteroidFieldChunk(ChunkCoordinates coord, AsteroidFieldChunkClient::pointer asts);
     void setGameInfo(GameInfoClient::pointer gameInfo);
     osg::Group* sceneGraphRoot();
+    void createEnvironmentCamera(osg::Group* parentGroup);
 
     virtual bool takeMessage(const NetMessage::const_pointer&, MessagePeer*);
     void shipChangedPosition(const osg::Vec3f& pos, SpaceShipClient* ship);
@@ -49,6 +50,7 @@ protected:
     osg::ref_ptr<osg::Group> m_rootGraphicsGroup;
     osg::ref_ptr<osgViewer::Viewer> m_viewer;
     osg::ref_ptr<ChaseCam> m_shipCamera;
+    osg::ref_ptr<osg::TextureCubeMap> m_environmentMap;
 
     std::vector<SpaceShipClient::pointer> m_otherShips;
     SpaceShipClient::pointer m_myShip;

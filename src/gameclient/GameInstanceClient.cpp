@@ -1,3 +1,4 @@
+#include "../glincludes.h"
 #include "GameInstanceClient.h"
 #include "../gamecommon/GameObject.h"
 #include "../networking/peermanager.h"
@@ -91,37 +92,16 @@ m_orphaned(false)
     osg::Viewport* myViewport = m_viewer->getCamera()->getViewport();
     m_viewportSizeUniform->set(osg::Vec2f(myViewport->width(), myViewport->height()));
     m_rootGraphicsGroup->getOrCreateStateSet()->addUniform(m_viewportSizeUniform);
-    // Create a cube with texture cubemap
-
-    osg::TextureCubeMap *skyboxTexture = new osg::TextureCubeMap;
-    skyboxTexture->setWrap(osg::Texture::WRAP_R, osg::Texture::CLAMP_TO_EDGE);
-    skyboxTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
-    skyboxTexture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
-    osg::Image *cubeMapFaces[6];
-    std::string cubeFileNames[] = {
-        "textures/skybox1_right1.png",
-        "textures/skybox1_left2.png",
-        "textures/skybox1_bottom4.png",
-        "textures/skybox1_top3.png",
-        "textures/skybox1_front5.png",
-        "textures/skybox1_back6.png"
-    };
-    for (unsigned int i = 0; i < 6; ++i)
-    {
-        cubeMapFaces[i] = osgDB::readImageFile(cubeFileNames[i]);
-        assert(cubeMapFaces[i]);
-        skyboxTexture->setImage(osg::TextureCubeMap::POSITIVE_X + i, cubeMapFaces[i]);
-    }
 
     m_viewer->getCamera()->setClearMask(GL_DEPTH_BUFFER_BIT);
 
-    ShaderWrapper *myProgram = new ShaderWrapper;
+    osg::ref_ptr<ShaderWrapper> myProgram = new ShaderWrapper;
     myProgram->load(osg::Shader::VERTEX, "shader/vs_skybox.txt");
     myProgram->load(osg::Shader::FRAGMENT, "shader/fs_skybox.txt");
 
     // Create simple node and geode for the skybox
     // First create new prerender camera
-    osg::Camera* skyboxCamera = new osg::Camera;
+    osg::ref_ptr<osg::Camera> skyboxCamera = new osg::Camera;
     skyboxCamera->setRenderOrder(osg::Camera::PRE_RENDER);
     skyboxCamera->setClearMask(GL_DEPTH_BUFFER_BIT);
     skyboxCamera->setReferenceFrame(osg::Transform::RELATIVE_RF);
@@ -132,10 +112,14 @@ m_orphaned(false)
     // So disable near/far planes calculation.
     skyboxCamera->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
 
-    osg::Geode* skyboxBox = new osg::Geode;
+    //osg::ref_ptr<osg::Camera> environCamera = createEnvironmentCamera();
+    //skyboxCamera->addChild(environCamera);
+    createEnvironmentCamera(skyboxCamera);
+
+    osg::ref_ptr<osg::Geode> skyboxBox = new osg::Geode;
     skyboxBox->addDrawable(new osg::ShapeDrawable(new osg::Box(osg::Vec3f(0, 0, 0), 10.0f)));
     skyboxBox->getOrCreateStateSet()->setAttributeAndModes(myProgram, osg::StateAttribute::ON);
-    skyboxBox->getOrCreateStateSet()->setTextureAttributeAndModes(0, skyboxTexture, osg::StateAttribute::ON);
+    skyboxBox->getOrCreateStateSet()->setTextureAttributeAndModes(0, m_environmentMap, osg::StateAttribute::ON);
     skyboxBox->getOrCreateStateSet()->addUniform(new osg::Uniform("skyboxTex", 0));
     skyboxBox->setCullingActive(false);
     skyboxCamera->addChild(skyboxBox);
@@ -160,7 +144,7 @@ void GameInstanceClient::connectLocallyTo(MessagePeer* buddy, bool recursive /*=
 {
     // Only one single connection to the server makes sense.
     if (m_connected)
-        throw std::runtime_error("GameInstanceClient::connectLocallyTo: A GameInstanceServer cannot be connected to more than 1 server object.");
+        throw std::runtime_error("GameInstanceClient::connectLocallyTo: A GameInstanceClient cannot be connected to more than 1 server object.");
     GameMessagePeer::connectLocallyTo(buddy, recursive);
 
     m_connected = true;
@@ -302,7 +286,11 @@ void GameInstanceClient::setupPPPipeline()
     {
         tex->setTextureSize(m_viewer->getCamera()->getViewport()->width(), 
             m_viewer->getCamera()->getViewport()->height());
-        tex->setInternalFormat(GL_RGBA);
+        tex->setInternalFormat(GL_RGBA16F);
+        tex->setSourceType(GL_FLOAT);
+        tex->setSourceFormat(GL_RGBA);
+        tex->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+        tex->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
         tex->setBorderWidth(0);
         tex->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
         tex->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
@@ -321,27 +309,27 @@ void GameInstanceClient::setupPPPipeline()
 
     realRoot->addChild(sceneCamera);
 
-    osg::ref_ptr<osg::Geode> m_screenQuad = new osg::Geode;
-    osg::ref_ptr<osg::Geometry> m_drawableQuad = new osg::Geometry;
+    osg::ref_ptr<osg::Geode> screenQuad = new osg::Geode;
+    osg::ref_ptr<osg::Geometry> drawableQuad = new osg::Geometry;
     osg::Vec2 verts[] = {
         osg::Vec2(-1, -1), osg::Vec2(-1, 1), osg::Vec2(1, -1), osg::Vec2(1, 1)
     };
-    m_drawableQuad->setVertexAttribArray(0, new osg::Vec2Array(4, verts), osg::Array::BIND_PER_VERTEX);
-    m_drawableQuad->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+    drawableQuad->setVertexAttribArray(0, new osg::Vec2Array(4, verts), osg::Array::BIND_PER_VERTEX);
+    drawableQuad->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
     osg::ref_ptr<ShaderWrapper> screenQuadProgram = new ShaderWrapper;
     screenQuadProgram->load(osg::Shader::VERTEX, "shader/vs_screenquad.txt");
     screenQuadProgram->load(osg::Shader::FRAGMENT, "shader/fs_screenquad.txt");
 
-    m_screenQuad->addDrawable(m_drawableQuad);
-    m_screenQuad->getOrCreateStateSet()->setTextureAttributeAndModes(0, m_colorTexture, osg::StateAttribute::ON);
-    m_screenQuad->getOrCreateStateSet()->setTextureAttributeAndModes(1, m_normalsTexture, osg::StateAttribute::ON);
-    m_screenQuad->getOrCreateStateSet()->addUniform(new osg::Uniform("texColor", 0));
-    m_screenQuad->getOrCreateStateSet()->addUniform(new osg::Uniform("texNormals", 1));
-    m_screenQuad->getOrCreateStateSet()->setAttributeAndModes(screenQuadProgram);
-    m_screenQuad->getOrCreateStateSet()->setAttributeAndModes(new osg::BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
-    m_screenQuad->setCullingActive(false);
-    realRoot->addChild(m_screenQuad);
+    screenQuad->addDrawable(drawableQuad);
+    screenQuad->getOrCreateStateSet()->setTextureAttributeAndModes(0, m_colorTexture, osg::StateAttribute::ON);
+    screenQuad->getOrCreateStateSet()->setTextureAttributeAndModes(1, m_normalsTexture, osg::StateAttribute::ON);
+    screenQuad->getOrCreateStateSet()->addUniform(new osg::Uniform("texColor", 0));
+    screenQuad->getOrCreateStateSet()->addUniform(new osg::Uniform("texNormals", 1));
+    screenQuad->getOrCreateStateSet()->setAttributeAndModes(screenQuadProgram);
+    screenQuad->getOrCreateStateSet()->setAttributeAndModes(new osg::BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
+    screenQuad->setCullingActive(false);
+    realRoot->addChild(screenQuad);
 
     m_viewer->getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
 }
@@ -422,4 +410,109 @@ void GameInstanceClient::removeNodeFromScene(osg::Node* aNode)
 boost::asio::io_service* GameInstanceClient::eventService()
 {
     return &m_updateCallbackService;
+}
+
+void GameInstanceClient::createEnvironmentCamera(osg::Group* parentGroup)
+{
+    // Create a cube with texture cubemap
+
+    osg::ref_ptr<osg::TextureCubeMap> skyboxTexture = new osg::TextureCubeMap;
+    skyboxTexture->setWrap(osg::Texture::WRAP_R, osg::Texture::CLAMP_TO_EDGE);
+    skyboxTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
+    skyboxTexture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
+    osg::Image *cubeMapFaces[6];
+    std::string cubeFileNames[] = {
+        "textures/skybox1_right1.png",
+        "textures/skybox1_left2.png",
+        "textures/skybox1_bottom4.png",
+        "textures/skybox1_top3.png",
+        "textures/skybox1_front5.png",
+        "textures/skybox1_back6.png"
+    };
+    for (unsigned int i = 0; i < 6; ++i)
+    {
+        cubeMapFaces[i] = osgDB::readImageFile(cubeFileNames[i]);
+        assert(cubeMapFaces[i]);
+        skyboxTexture->setImage(osg::TextureCubeMap::POSITIVE_X + i, cubeMapFaces[i]);
+    }
+
+    osg::ref_ptr<ShaderWrapper> myProgram = new ShaderWrapper;
+    myProgram->load(osg::Shader::VERTEX, "shader/vs_background.txt");
+    //myProgram->load(osg::Shader::GEOMETRY, "shader/gs_background.txt");
+    myProgram->load(osg::Shader::FRAGMENT, "shader/fs_background.txt");
+
+    osg::ref_ptr<osg::Geode> skyboxBox = new osg::Geode;
+    skyboxBox->addDrawable(new osg::ShapeDrawable(new osg::Box(osg::Vec3f(0, 0, 0), 0.9f)));
+    skyboxBox->getOrCreateStateSet()->setAttributeAndModes(myProgram, osg::StateAttribute::ON);
+    skyboxBox->getOrCreateStateSet()->setTextureAttributeAndModes(0, skyboxTexture, osg::StateAttribute::ON);
+    skyboxBox->getOrCreateStateSet()->addUniform(new osg::Uniform("skyboxTex", 0));
+    skyboxBox->setCullingActive(false);
+
+    osg::Matrixf viewMat, projMat;
+    projMat.makePerspective(90, 1, 0.1, 5000);
+    osg::Vec3f lookAtVector[6] = {
+        osg::Vec3f(1, 0, 0),
+        osg::Vec3f(-1, 0, 0),
+        osg::Vec3f(0, -1, 0),
+        osg::Vec3f(0, 1, 0),
+        osg::Vec3f(0, 0, 1),
+        osg::Vec3f(0, 0, -1)
+    };
+    osg::Vec3f upVector[6] = {
+        osg::Vec3f(0, 1, 0),
+        osg::Vec3f(0, 1, 0),
+        osg::Vec3f(0, 0, -1),
+        osg::Vec3f(0, 0, 1),
+        osg::Vec3f(0, 1, 0),
+        osg::Vec3f(0, 1, 0)
+    };
+
+    m_environmentMap = new osg::TextureCubeMap;
+    m_environmentMap->setTextureSize(512, 512);
+    m_environmentMap->setInternalFormat(GL_RGBA16F);
+    m_environmentMap->setSourceFormat(GL_RGBA);
+    m_environmentMap->setSourceType(GL_FLOAT);
+    m_environmentMap->setBorderWidth(0);
+    m_environmentMap->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
+    m_environmentMap->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
+    m_environmentMap->setWrap(osg::Texture::WRAP_R, osg::Texture::CLAMP_TO_EDGE);
+    m_environmentMap->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
+    m_environmentMap->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
+
+    osg::ref_ptr<osg::Geode> screenQuad = new osg::Geode;
+    osg::ref_ptr<osg::Geometry> drawableQuad = new osg::Geometry;
+    osg::Vec2 verts[] = {
+        osg::Vec2(-1, -1), osg::Vec2(-1, 1), osg::Vec2(1, -1), osg::Vec2(1, 1)
+    };
+    drawableQuad->setVertexAttribArray(0, new osg::Vec2Array(4, verts), osg::Array::BIND_PER_VERTEX);
+    drawableQuad->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+    screenQuad->addDrawable(drawableQuad);
+    screenQuad->getOrCreateStateSet()->setAttributeAndModes(myProgram);
+    screenQuad->setCullingActive(false);
+
+    osg::ref_ptr<osg::Camera> renderToCube[6];
+    for (unsigned int i = 0; i < 6; ++i)
+    {
+        renderToCube[i] = new osg::Camera;
+
+        renderToCube[i]->setRenderOrder(osg::Camera::PRE_RENDER);
+        renderToCube[i]->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
+        renderToCube[i]->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+        renderToCube[i]->setViewport(0, 0, 512, 512);
+
+        renderToCube[i]->attach(osg::Camera::COLOR_BUFFER0, m_environmentMap, 0, i);
+        renderToCube[i]->attach(osg::Camera::DEPTH_BUFFER, GL_DEPTH_COMPONENT16);
+
+        renderToCube[i]->addChild(skyboxBox);
+        //renderToCube[i]->addChild(screenQuad);
+
+        renderToCube[i]->setViewMatrixAsLookAt(osg::Vec3(0, 0, 0), lookAtVector[i], upVector[i]);
+        renderToCube[i]->setProjectionMatrixAsPerspective(90, 1, 0.1, 5000);
+        renderToCube[i]->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
+        renderToCube[i]->setCullingActive(false);
+
+        parentGroup->addChild(renderToCube[i]);
+    }
+
+    //return renderToCube.release();
 }

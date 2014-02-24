@@ -116,7 +116,7 @@ void LevelDrawable::GLObjectsHolder::draw(osg::RenderInfo& ri)
 
         GLint primitiveCount = 0;
         glGetQueryObjectiv(m_tfeedback->m_TFquery, GL_QUERY_RESULT, &primitiveCount);
-        std::cout << primitiveCount << "\n";
+        //std::cout << primitiveCount << "\n";
     }
     //glDisable(GL_CULL_FACE);
 

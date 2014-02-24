@@ -22,11 +22,19 @@ public:
     virtual bool isGameMessage()const = 0;
 
     enum Flags{
+        MESSAGE_NO_FLAGS = 0,
         MESSAGE_PREFERS_UDP = 0x100,
         MESSAGE_OVERRIDES_PREVIOUS = 0x200,
-
         MESSAGE_HIGH_PRIORITY = 2,
     };
+
+    virtual Flags messageFlags()
+    {
+        if (prefersUdp())
+            return MESSAGE_PREFERS_UDP;
+        else
+            return MESSAGE_NO_FLAGS;
+    }
 
     template <typename T> typename T::pointer as_safe() { return std::dynamic_pointer_cast<T>(shared_from_this()); } 
     template <typename T> typename T::pointer as() { return std::static_pointer_cast<T>(shared_from_this()); } 

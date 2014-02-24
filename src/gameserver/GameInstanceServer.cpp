@@ -278,7 +278,7 @@ void GameServerThread::run()
         std::chrono::steady_clock::time_point startTick = std::chrono::steady_clock::now();
 
         // Don't run more work items than you can do per tick
-        // 8 ms is a soft boundary here
+        // half tick is a soft boundary here
         std::chrono::steady_clock::time_point timepoint;
         // TODO: implement a priority queue
         while (m_serverObject->m_eventService.poll_one() > 0)
@@ -297,9 +297,7 @@ void GameServerThread::run()
         timepoint = std::chrono::steady_clock::now();
         //dt = std::chrono::duration_cast<std::chrono::microseconds>(timepoint - startTick).count() / 1000.0f;
 
-        if (timepoint - startTick >= g_serverTick)
-            std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(timepoint - startTick).count() << "\n";
-        else
+        if (timepoint - startTick < g_serverTick)
             microSleep(g_serverTick.count() - std::chrono::duration_cast<std::chrono::microseconds>(timepoint - startTick).count());
     }
 }

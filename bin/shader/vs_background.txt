@@ -1,0 +1,15 @@
+#version 400
+
+in vec3 position;
+
+//out GeometryData{
+//    vec3 position;
+//    vec3 texCoord;
+//} gOut;
+
+void main()
+{
+    gl_Position = vec4(position, 1);
+    //gOut.position = position;
+    //gOut.texCoord = position;
+}
