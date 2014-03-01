@@ -3,17 +3,19 @@
 #include "../gamecommon/GameObject.h"
 #include <osg/Quat>
 
-BEGIN_DECLGAMEMESSAGE(GameInfoConstructionData, 5006, false)
-uint32_t ownerId;
-END_DECLGAMEMESSAGE()
+// BEGIN_DECLGAMEMESSAGE(GameInfoConstructionData, 5006, false)
+// uint32_t ownerId;
+// END_DECLGAMEMESSAGE()
+// 
+// BEGIN_DECLGAMEMESSAGE(RoundData, 5007, false)
+// osg::Vec3f startPoint;
+// osg::Vec3f finishAreaCenter;
+// float finishAreaRadius;
+// uint32_t ownerId; // why?
+// END_DECLGAMEMESSAGE()
 
-BEGIN_DECLGAMEMESSAGE(RoundData, 5007, false)
-osg::Vec3f startPoint;
-osg::Vec3f finishAreaCenter;
-float finishAreaRadius;
-uint32_t ownerId; // why?
-END_DECLGAMEMESSAGE()
-
+typedef GenericGameMessage<5006, uint32_t> GameGameInfoConstructionDataMessage; // varNames: "ownerId"
+typedef GenericGameMessage<5007, osg::Vec3f, osg::Vec3f, float, uint32_t> GameRoundDataMessage; // varNames: "startPoint", "finishAreaCenter", "finishAreaRadius", "ownerId"
 
 class GameInstanceServer;
 

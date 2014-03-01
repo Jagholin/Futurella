@@ -43,7 +43,7 @@ GameObject::pointer GameObject::createFromGameMessage(const GameMessage::const_p
 
 void GameObject::messageToPartner(const GameMessage::pointer& msg)
 {
-    msg->objectId = m_myObjectId;
+    msg->objectId(m_myObjectId);
     m_context->messageToPartner(msg);
 }
 

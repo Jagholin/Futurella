@@ -41,9 +41,9 @@ bool GameInfoClient::takeMessage(const GameMessage::const_pointer& msg, MessageP
     {
         GameRoundDataMessage::const_pointer realMsg = msg->as<GameRoundDataMessage>();
 
-        m_startingPoint = realMsg->startPoint;
-        m_finishArea = realMsg->finishAreaCenter;
-        m_finishAreaSize = realMsg->finishAreaRadius;
+        m_startingPoint = realMsg->get<osg::Vec3f>("startPoint");
+        m_finishArea = realMsg->get<osg::Vec3f>("finishAreaCenter");
+        m_finishAreaSize = realMsg->get<float>("finishAreaRadius");
 
         osg::Matrix mat;
         mat.setTrans(m_finishArea);
@@ -62,7 +62,7 @@ GameInfoClient::pointer GameInfoClient::createFromGameMessage(const GameMessage:
 {
     GameGameInfoConstructionDataMessage::const_pointer realMsg = msg->as<GameGameInfoConstructionDataMessage>();
     GameInstanceClient* context = static_cast<GameInstanceClient*>(ctx);
-    GameInfoClient::pointer gameInfo{ new GameInfoClient(realMsg->objectId, realMsg->ownerId, context) };
+    GameInfoClient::pointer gameInfo{ new GameInfoClient(realMsg->objectId(), realMsg->get<uint32_t>("ownerId"), context) };
 
     context->setGameInfo(gameInfo);
 

@@ -12,16 +12,18 @@ AsteroidFieldChunkClient::AsteroidFieldChunkClient(const GameAsteroidFieldDataMe
 GameObject(objId, ownId, ctx)
 {
     m_rootGroup = ctx->sceneGraphRoot();
-    m_chunkCoord = createMessage->chunkCoord;
+    m_chunkCoord = createMessage->get<osg::Vec3i>("chunkCoord");
     m_asteroidsGroup = new osg::MatrixTransform(osg::Matrix::translate(GameInstanceServer::chunkToPosition(m_chunkCoord)));
     osg::Geode * asteroidsGeode = new osg::Geode;
     LevelDrawable* myLevel = new LevelDrawable;
     asteroidsGeode->addDrawable(myLevel);
     m_asteroidsGroup->addChild(asteroidsGeode);
 
-    for (int i = 0; i < createMessage->position.size(); i++)
+    auto const& posVector = createMessage->get<std::vector<osg::Vec3f>>("position");
+    auto const& radVector = createMessage->get<std::vector<float>>("radius");
+    for (int i = 0; i < posVector.size(); i++)
     {
-        myLevel->addAsteroid(createMessage->position.at(i), createMessage->radius.at(i));
+        myLevel->addAsteroid(posVector.at(i), radVector.at(i));
     }
     //m_rootGroup->addChild(m_asteroidsGroup);
     ctx->addNodeToScene(m_asteroidsGroup);
@@ -37,9 +39,9 @@ AsteroidFieldChunkClient::pointer AsteroidFieldChunkClient::createFromGameMessag
 {
     GameAsteroidFieldDataMessage::const_pointer realMsg = msg->as<GameAsteroidFieldDataMessage>();
     GameInstanceClient* context = static_cast<GameInstanceClient*>(ctx);
-    AsteroidFieldChunkClient::pointer result{ new AsteroidFieldChunkClient(realMsg, realMsg->objectId, realMsg->ownerId, context) };
+    AsteroidFieldChunkClient::pointer result{ new AsteroidFieldChunkClient(realMsg, realMsg->objectId(), realMsg->get<uint32_t>("ownerId"), context) };
 
-    context->addAsteroidFieldChunk(realMsg->chunkCoord, result);
+    context->addAsteroidFieldChunk(realMsg->get<osg::Vec3i>("chunkCoord"), result);
     return result;
 }
 

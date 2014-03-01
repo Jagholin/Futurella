@@ -4,23 +4,42 @@
 
 struct GameMessage : public NetMessage
 {
-    uint16_t objectId;
+    virtual uint16_t objectId() const = 0;
+    virtual void objectId(uint16_t) = 0;
 
     typedef std::shared_ptr<GameMessage> pointer;
     typedef std::shared_ptr<const GameMessage> const_pointer;
 };
 
 template<int MessageTypeID, typename... Types>
-struct GenericGameMessage : public GenericNetMessage<MessageTypeID, Types..., uint16_t>
+struct GenericGameMessage : public GenericNetMessage_Base<GameMessage, MessageTypeID, Types..., uint16_t>
 {
     typedef std::shared_ptr<GenericGameMessage<MessageTypeID, Types...>> pointer;
     typedef std::shared_ptr<const GenericGameMessage<MessageTypeID, Types...>> const_pointer;
+    typedef GenericNetMessage_Base<GameMessage, MessageTypeID, Types..., uint16_t> base;
 
     static void postMetaInit(MessageMetaData& md)
     {
         md.declVariable<GenericGameMessage<MessageTypeID, Types...>, uint16_t, sizeof...(Types)>
             ("objectId");
     }
+
+    uint16_t objectId() const override
+    {
+        return get<uint16_t>("objectId");
+    }
+
+    void objectId(uint16_t id) override
+    {
+        get<uint16_t>("objectId") = id;
+    }
+
+    bool isGameMessage() const override
+    {
+        return true;
+    }
+    
+    static unsigned int mtype;
 };
 
 #define BEGIN_DECLGAMEMESSAGE(name, number, udppref) DECLMESSAGE_BASE(name, number, udppref, true, Game, GameMessage)

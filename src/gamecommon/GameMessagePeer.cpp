@@ -18,9 +18,9 @@ bool GameMessagePeer::takeMessage(const NetMessage::const_pointer& msg, MessageP
     if (msg->isGameMessage())
     {
         GameMessage::const_pointer gameMsg = msg->as<GameMessage>();
-        if (m_messageListeners.count(gameMsg->objectId) == 0)
+        if (m_messageListeners.count(gameMsg->objectId()) == 0)
             return unknownObjectIdMessage(gameMsg, sender);
-        GameObject* receiver = m_messageListeners.at(gameMsg->objectId);
+        GameObject* receiver = m_messageListeners.at(gameMsg->objectId());
         receiver->takeMessage(gameMsg, sender);
         // takeMessage(msg->as<GameMessage>(), sender);
     }

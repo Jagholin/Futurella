@@ -3,31 +3,17 @@
 #include "../gamecommon/PhysicsEngine.h"
 #include "../gamecommon/ShipPhysicsActor.h"
 
-BEGIN_GAMETORAWMESSAGE_QCONVERT(SpaceShipConstructionData)
-out << pos << orient << ownerId;
-END_GAMETORAWMESSAGE_QCONVERT()
-BEGIN_RAWTOGAMEMESSAGE_QCONVERT(SpaceShipConstructionData)
-in >> pos >> orient >> ownerId;
-END_RAWTOGAMEMESSAGE_QCONVERT()
+template <> MessageMetaData
+GameSpaceShipConstructionDataMessage::base::m_metaData = MessageMetaData::createMetaData<GameSpaceShipConstructionDataMessage>("pos\norient\nownerId");
 
-BEGIN_GAMETORAWMESSAGE_QCONVERT(SpaceShipControl)
-out << inputType << isOn;
-END_GAMETORAWMESSAGE_QCONVERT()
-BEGIN_RAWTOGAMEMESSAGE_QCONVERT(SpaceShipControl)
-in >> inputType >> isOn;
-END_RAWTOGAMEMESSAGE_QCONVERT()
+template <> MessageMetaData
+GameSpaceShipControlMessage::base::m_metaData = MessageMetaData::createMetaData<GameSpaceShipControlMessage>("inputType\nisOn", NetMessage::MESSAGE_PREFERS_UDP | NetMessage::MESSAGE_HIGH_PRIORITY);
 
-BEGIN_GAMETORAWMESSAGE_QCONVERT(SpaceShipPhysicsUpdate)
-out << pos << orient << velocity;
-END_GAMETORAWMESSAGE_QCONVERT()
-BEGIN_RAWTOGAMEMESSAGE_QCONVERT(SpaceShipPhysicsUpdate)
-in >> pos >> orient >> velocity;
-END_RAWTOGAMEMESSAGE_QCONVERT()
+template <> MessageMetaData
+GameSpaceShipPhysicsUpdateMessage::base::m_metaData = MessageMetaData::createMetaData<GameSpaceShipPhysicsUpdateMessage>("pos\norient\nvelocity", NetMessage::MESSAGE_PREFERS_UDP | NetMessage::MESSAGE_OVERRIDES_PREVIOUS);
 
-BEGIN_GAMETORAWMESSAGE_QCONVERT(SpaceShipCollision)
-END_GAMETORAWMESSAGE_QCONVERT()
-BEGIN_RAWTOGAMEMESSAGE_QCONVERT(SpaceShipCollision)
-END_RAWTOGAMEMESSAGE_QCONVERT()
+template <> MessageMetaData
+GameSpaceShipCollisionMessage::base::m_metaData = MessageMetaData::createMetaData<GameSpaceShipCollisionMessage>("", NetMessage::MESSAGE_PREFERS_UDP);
 
 SpaceShipServer::SpaceShipServer(osg::Vec3f startPos, osg::Quat orient, uint32_t ownerId, GameInstanceServer* ctx, const std::shared_ptr<PhysicsEngine>& eng):
 GameObject(ownerId, ctx),
@@ -51,7 +37,7 @@ bool SpaceShipServer::takeMessage(const GameMessage::const_pointer& msg, Message
     if (msg->gettype() == GameSpaceShipControlMessage::type)
     {
         GameSpaceShipControlMessage::const_pointer realMsg = msg->as<GameSpaceShipControlMessage>();
-        onControlMessage(realMsg->inputType, realMsg->isOn);
+        onControlMessage(realMsg->get<uint16_t>("inputType"), realMsg->get<bool>("isOn"));
         return true;
     }
     return false;
@@ -91,10 +77,10 @@ GameMessage::pointer SpaceShipServer::creationMessage() const
     btVector3 translate(trans.getOrigin());
     btQuaternion rotate(trans.getRotation());
 
-    msg->pos.set(translate.x(), translate.y(), translate.z());
-    msg->orient.set(rotate.x(), rotate.y(), rotate.z(), rotate.w());
-    msg->objectId = m_myObjectId;
-    msg->ownerId = m_myOwnerId;
+    msg->get<osg::Vec3f>("pos").set(translate.x(), translate.y(), translate.z());
+    msg->get<osg::Vec4f>("orient").set(rotate.x(), rotate.y(), rotate.z(), rotate.w());
+    msg->get<uint16_t>("objectId") = m_myObjectId;
+    msg->get<uint32_t>("ownerId") = m_myOwnerId;
     return msg;
 }
 
@@ -109,10 +95,10 @@ void SpaceShipServer::onPhysicsUpdate(const osg::Vec3f& newPos, const osg::Quat&
     m_lastUpdate = tpNow;
 
     GameSpaceShipPhysicsUpdateMessage::pointer msg{ new GameSpaceShipPhysicsUpdateMessage };
-    msg->pos = newPos;
-    msg->orient = newRot.asVec4();
-    msg->velocity.set(0, 0, 0);
-    msg->objectId = m_myObjectId;
+    msg->get<osg::Vec3f>("pos") = newPos;
+    msg->get<osg::Vec4f>("orient") = newRot.asVec4();
+    msg->get<osg::Vec3f>("velocity").set(0, 0, 0);
+    msg->objectId(m_myObjectId);
     messageToPartner(msg);
 }
 

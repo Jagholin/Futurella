@@ -53,7 +53,7 @@ bool GameInstanceServer::unknownObjectIdMessage(const GameMessage::const_pointer
 {
     // The creation of objects on the client side is not allowed.
 
-    std::cerr << "WTF? GameInstanceServer just received a message from an object with non-existing objectId[" << msg->objectId << "]\n";
+    std::cerr << "WTF? GameInstanceServer just received a message from an object with non-existing objectId[" << msg->objectId() << "]\n";
     return false;
 }
 

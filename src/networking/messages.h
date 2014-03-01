@@ -112,6 +112,16 @@ public:
         return (*this);
     }
 
+    template<typename T>
+    binaryStream& operator<<(const std::vector<T> &val){
+        uint32_t size = val.size();
+        (*this) << size;
+        for (uint32_t i = 0; i < size; ++i){
+            (*this) << val[i];
+        }
+        return (*this);
+    }
+
     /// Input
 
     template<typename T>
@@ -166,6 +176,17 @@ public:
     template<typename... Types>
     binaryStream& operator>>(std::tuple<Types...> &val){
         inTupleImpl<std::integral_constant<size_t, 0>, Types...>::exec(*this, val);
+        return (*this);
+    }
+
+    template<typename T>
+    binaryStream& operator>>(std::vector<T> &val){
+        uint32_t size;
+        (*this) >> size;
+        val.resize(size);
+        for (uint32_t i = 0; i < size; ++i){
+            (*this) >> val[i];
+        }
         return (*this);
     }
     
@@ -322,11 +343,11 @@ public:
     };
 
     template<typename MSGT>
-    static MessageMetaData createMetaData(const std::string &varNames, NetMessage::Flags flags = NetMessage::MESSAGE_NO_FLAGS)
+    static MessageMetaData createMetaData(const std::string &varNames, int flags = NetMessage::MESSAGE_NO_FLAGS)
     {
         MessageMetaData result;
         registerVariable<std::integral_constant<unsigned int, 0>, MSGT>::exec(result, varNames);
-        result.m_flags = flags;
+        result.m_flags = static_cast<NetMessage::Flags>(flags);
         MSGT::postMetaInit(result);
         return result;
     }
@@ -372,15 +393,15 @@ public:
     }
 };
 
-template <int MessageTypeID, typename... Types>
-class GenericNetMessage : public NetMessage
+template <typename BaseClass, int MessageTypeID, typename... Types>
+class GenericNetMessage_Base : public BaseClass
 {
 public:
     typedef std::tuple<Types...> values_type;
     values_type m_values;
 
-    typedef std::shared_ptr<GenericNetMessage<MessageTypeID, Types...>> pointer;
-    typedef std::shared_ptr<const GenericNetMessage<MessageTypeID, Types...>> const_pointer;
+    typedef std::shared_ptr<GenericNetMessage_Base<BaseClass, MessageTypeID, Types...>> pointer;
+    typedef std::shared_ptr<const GenericNetMessage_Base<BaseClass, MessageTypeID, Types...>> const_pointer;
     enum {type = MessageTypeID};
 
     template<typename T>
@@ -460,9 +481,16 @@ public:
         return m_metaData.flags();
     }
 
+    static MessageMetaData& meta()
+    {
+        return m_metaData;
+    }
+
 protected:
     static unsigned int mtype;
 
     static MessageMetaData m_metaData;
 };
 
+template<int MessageTypeId, typename... Types>
+using GenericNetMessage = GenericNetMessage_Base<NetMessage, MessageTypeId, Types...>;

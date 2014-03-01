@@ -1,19 +1,11 @@
 #include "GameInstanceServer.h"
 #include "GameInfoServer.h"
 
-BEGIN_GAMETORAWMESSAGE_QCONVERT(GameInfoConstructionData)
-out << ownerId;
-END_GAMETORAWMESSAGE_QCONVERT()
-BEGIN_RAWTOGAMEMESSAGE_QCONVERT(GameInfoConstructionData)
-in >> ownerId;
-END_RAWTOGAMEMESSAGE_QCONVERT()
+template <> MessageMetaData
+GameGameInfoConstructionDataMessage::base::m_metaData = MessageMetaData::createMetaData<GameGameInfoConstructionDataMessage>("ownerId");
 
-BEGIN_RAWTOGAMEMESSAGE_QCONVERT(RoundData)
-in >> ownerId >> startPoint >> finishAreaCenter >> finishAreaRadius;
-END_RAWTOGAMEMESSAGE_QCONVERT()
-BEGIN_GAMETORAWMESSAGE_QCONVERT(RoundData)
-out << ownerId << startPoint << finishAreaCenter << finishAreaRadius;
-END_GAMETORAWMESSAGE_QCONVERT()
+template <> MessageMetaData
+GameRoundDataMessage::base::m_metaData = MessageMetaData::createMetaData<GameRoundDataMessage>("startPoint\nfinishAreaCenter\nfinishAreaRadius\nownerId");
 
 REGISTER_GAMEMESSAGE(GameInfoConstructionData)
 REGISTER_GAMEMESSAGE(RoundData)
@@ -46,19 +38,19 @@ GameMessage::pointer GameInfoServer::objectiveMessage() const
 {
     //build and send message to client
     GameRoundDataMessage::pointer msg{ new GameRoundDataMessage };
-    msg->startPoint = m_startingPoint;
-    msg->finishAreaCenter = m_finishArea;
-    msg->finishAreaRadius = m_finishAreaSize;
-    msg->objectId = m_myObjectId;
-    msg->ownerId = m_myOwnerId;
+    msg->objectId(m_myObjectId);
+    msg->get<osg::Vec3f>("startPoint") = m_startingPoint;
+    msg->get<osg::Vec3f>("finishAreaCenter") = m_finishArea;
+    msg->get<float>("finishAreaRadius") = m_finishAreaSize;
+    msg->get<uint32_t>("ownerId") = m_myOwnerId;
     return msg;
 }
 
 GameMessage::pointer GameInfoServer::creationMessage() const
 {
     GameGameInfoConstructionDataMessage::pointer msg{ new GameGameInfoConstructionDataMessage };
-    msg->objectId = m_myObjectId;
-    msg->ownerId = m_myOwnerId;
+    msg->objectId(m_myObjectId);
+    msg->get<uint32_t>("ownerId") = m_myOwnerId;
     return msg;
 }
 

@@ -3,12 +3,7 @@
 #include "../AsteroidField.h"
 #include <osg/Vec3i>
 
-BEGIN_DECLGAMEMESSAGE(AsteroidFieldData, 5001, false)
-std::vector<osg::Vec3f> position;
-std::vector<float> radius;
-uint32_t ownerId;
-osg::Vec3i chunkCoord;
-END_DECLGAMEMESSAGE()
+typedef GenericGameMessage<5001, std::vector<osg::Vec3f>, std::vector<float>, uint32_t, osg::Vec3i> GameAsteroidFieldDataMessage; // varNames: "position", "radius", "ownerId", "chunkCoord"
 
 class GameInstanceServer;
 class PhysicsEngine;
