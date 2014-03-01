@@ -82,6 +82,7 @@ protected:
     std::string m_name;
 
     boost::asio::io_service m_eventService;
+    boost::asio::io_service m_highPriorityService;
 
     GameServerThread m_serverThread;
 

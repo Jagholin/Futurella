@@ -42,22 +42,7 @@ struct GenericGameMessage : public GenericNetMessage_Base<GameMessage, MessageTy
     static unsigned int mtype;
 };
 
-#define BEGIN_DECLGAMEMESSAGE(name, number, udppref) DECLMESSAGE_BASE(name, number, udppref, true, Game, GameMessage)
-
-#define END_DECLGAMEMESSAGE() };
-
 #define REGISTER_GAMEMESSAGE(name) REGISTER_MESSAGE_BASE(name, Game)
-
-#define BEGIN_GAMETORAWMESSAGE_QCONVERT(name) BEGIN_TORAWMESSAGE_QCONVERTBASE(name, Game) \
-    out << objectId;
-
-#define END_GAMETORAWMESSAGE_QCONVERT() } result->msgBytes = out.str(); \
-    return result; }
-
-#define BEGIN_RAWTOGAMEMESSAGE_QCONVERT(name) BEGIN_TONETMESSAGE_QCONVERTBASE(name, Game) \
-    in >> objectId;
-
-#define END_RAWTOGAMEMESSAGE_QCONVERT() }
 
 class GameObject;
 

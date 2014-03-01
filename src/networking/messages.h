@@ -206,30 +206,9 @@ public:
     bool isGameMessage()const { return (isgamemsg); } \
     void fromRaw(const std::string&);
 
-#define BEGIN_DECLNETMESSAGE(name, number, udppref) DECLMESSAGE_BASE(name, number, udppref, false, Net, NetMessage)
-
-#define END_DECLNETMESSAGE() };
-
 #define REGISTER_MESSAGE_BASE(name, prefix) unsigned int prefix##name##Message::mtype = MsgFactory::regFactory<prefix##name##Message>(prefix##name##Message::type);
 
 #define REGISTER_NETMESSAGE(name) REGISTER_MESSAGE_BASE(name, Net)
-
-#define BEGIN_TORAWMESSAGE_QCONVERTBASE(name, prefix) RawMessage::pointer prefix##name##Message::toRaw() const { \
-    RawMessage::pointer result(new RawMessage); \
-    result->msgType = mtype; \
-    binaryStream out; {
-
-#define BEGIN_NETTORAWMESSAGE_QCONVERT(name) BEGIN_TORAWMESSAGE_QCONVERTBASE(name, Net)
-
-#define END_NETTORAWMESSAGE_QCONVERT() } result->msgBytes = out.str(); \
-    return result; }
-
-#define BEGIN_TONETMESSAGE_QCONVERTBASE(name, prefix) void prefix##name##Message::fromRaw(const std::string& str) { \
-    binaryStream in(str);  
-
-#define BEGIN_RAWTONETMESSAGE_QCONVERT(name) BEGIN_TONETMESSAGE_QCONVERTBASE(name, Net)
-
-#define END_RAWTONETMESSAGE_QCONVERT() }
 
 class MessagePeer
 {
