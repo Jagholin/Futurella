@@ -10,6 +10,19 @@ struct GameMessage : public NetMessage
     typedef std::shared_ptr<const GameMessage> const_pointer;
 };
 
+template<int MessageTypeID, typename... Types>
+struct GenericGameMessage : public GenericNetMessage<MessageTypeID, Types..., uint16_t>
+{
+    typedef std::shared_ptr<GenericGameMessage<MessageTypeID, Types...>> pointer;
+    typedef std::shared_ptr<const GenericGameMessage<MessageTypeID, Types...>> const_pointer;
+
+    static void postMetaInit(MessageMetaData& md)
+    {
+        md.declVariable<GenericGameMessage<MessageTypeID, Types...>, uint16_t, sizeof...(Types)>
+            ("objectId");
+    }
+};
+
 #define BEGIN_DECLGAMEMESSAGE(name, number, udppref) DECLMESSAGE_BASE(name, number, udppref, true, Game, GameMessage)
 
 #define END_DECLGAMEMESSAGE() };

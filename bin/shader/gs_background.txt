@@ -1,7 +1,7 @@
 #version 400
 
 layout (triangles) in;
-layout (triangle_strip) out;
+layout (triangle_strip, max_vertices = 18) out;
 
 in GeometryData{
     vec3 position;
@@ -10,27 +10,29 @@ in GeometryData{
 
 out vec3 texCoord;
 
-uniform mat4 mvpMatrix[6];
+uniform mat4 mvpMatrix;
 
 void main()
 {
+    //int i = 6;
     for (int i = 0; i < 6; ++i)
     {
         texCoord = gIn[0].texCoord;
-        gl_Position = mvpMatrix[i] * vec4(gIn[0].position, 1.0);
+        gl_Position = mvpMatrix * vec4(gIn[0].position, 1.0);
         gl_Layer = i;
         EmitVertex();
         
         texCoord = gIn[1].texCoord;
-        gl_Position = mvpMatrix[i] * vec4(gIn[1].position, 1.0);
+        gl_Position = mvpMatrix * vec4(gIn[1].position, 1.0);
         gl_Layer = i;
         EmitVertex();
         
         texCoord = gIn[2].texCoord;
-        gl_Position = mvpMatrix[i] * vec4(gIn[2].position, 1.0);
+        gl_Position = mvpMatrix * vec4(gIn[2].position, 1.0);
         gl_Layer = i;
         EmitVertex();
         
+        gl_Layer = i;
         EndPrimitive();
     }
 }

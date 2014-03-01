@@ -14,7 +14,7 @@ public:
     ~AsteroidField();
     Asteroid* addAsteroid(osg::Vec3f pos, float radius);
     Asteroid* getAsteroid(int id);
-    int getLength();
+    unsigned int getLength();
     std::list<Asteroid*> getAsteroidsInBlock(osg::Vec3f blockCenter, osg::Vec3f blockWidth);
 private:
     Node* treeAddAsteroid(Asteroid *asteroid, Node* node);

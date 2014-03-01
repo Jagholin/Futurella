@@ -1,7 +1,7 @@
 #pragma once
 #include "GameMessagePeer.h"
 
-typedef GenericNetMessage<7394, false, uint16_t> NetRemoveGameObjectMessage;
+typedef GenericNetMessage<7394, uint16_t> NetRemoveGameObjectMessage; // varNames: "objectId"
 
 class GameObject
 {

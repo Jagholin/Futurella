@@ -22,7 +22,7 @@ AsteroidField::getAsteroid(int id)
     return m_asteroidIndex[id];
 }
 
-int
+unsigned int
 AsteroidField::getLength()
 {
     return m_asteroidIndex.size();

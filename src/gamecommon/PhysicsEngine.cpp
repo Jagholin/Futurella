@@ -240,7 +240,7 @@ void PhysicsEngine::physicsTick(float msDelta)
             assert(m_physicsWorld->stepSimulation(1.f / 180.f, 1, 1.f/180.f) == 1);
     }*/
 
-    m_physicsWorld->stepSimulation(msDelta / 1000.f, 30, 1. / 120.);
+    m_physicsWorld->stepSimulation(msDelta / 1000.f, 30, 1.f / 120.f);
 
     //if ((++a) % 50 == 0)
       //  std::cerr << "Real: " << m_realTime << "ms, Physics: " << m_physicsTime << "ms\n";

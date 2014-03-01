@@ -4,7 +4,7 @@
 #include <osg/Drawable>
 #include <osg/RenderInfo>
 
-const unsigned int cFeedbackBuffers = 30;
+const unsigned int cFeedbackBuffers = 27; // 3*3*3
 
 class LevelDrawable : public osg::Drawable
 {
@@ -74,9 +74,6 @@ protected:
         GLuint m_VBinstanceInfo, m_VAtess;
         static GLuint m_VBbasis;
         static TransformFeedbackObjects m_tfArray[cFeedbackBuffers];
-        //GLuint m_VBfeedback;
-        //GLuint m_TransFeedback;
-        //GLuint m_TFquery;
         TransformFeedbackObjects* m_tfeedback;
         bool m_geometryDirty, m_aabbDirty;
         osg::BoundingBox m_aabb;
@@ -87,8 +84,6 @@ protected:
 private:
 
     std::vector<float> m_instanceRawData;
-    //std::vector<float> m_normalLines;
-    //std::vector<float> m_feedbackPrimitives;
     TransformFeedbackMode m_feedbackMode;
     mutable GLObjectsHolder m_graphicsObjects;
     static osg::ref_ptr<ShaderWrapper> m_tessShader, m_drawFeedbackShader, m_noTessShader;

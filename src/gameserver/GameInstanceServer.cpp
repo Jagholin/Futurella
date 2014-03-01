@@ -15,6 +15,15 @@ REGISTER_NETMESSAGE(RequestChunkData)
 REGISTER_NETMESSAGE(StopChunkTracking)
 REGISTER_NETMESSAGE(PlayerScoreInfo)
 
+template<> MessageMetaData 
+NetRequestChunkDataMessage::m_metaData = MessageMetaData::createMetaData<NetRequestChunkDataMessage>("coordinate");
+
+template<> MessageMetaData
+NetStopChunkTrackingMessage::m_metaData = MessageMetaData::createMetaData<NetStopChunkTrackingMessage>("coordinate");
+
+template<> MessageMetaData
+NetPlayerScoreInfoMessage::m_metaData = MessageMetaData::createMetaData<NetPlayerScoreInfoMessage>("playerName\nscore");
+
 GameInstanceServer::GameInstanceServer(const std::string &name) :
 //m_physicsEngine(new PhysicsEngine),
 m_name(name),
@@ -211,7 +220,8 @@ bool GameInstanceServer::takeMessage(const NetMessage::const_pointer& msg, Messa
     if (msg->gettype() == NetRequestChunkDataMessage::type)
     {
         NetRequestChunkDataMessage::const_pointer realMsg = msg->as<NetRequestChunkDataMessage>();
-        osg::Vec3i chunkCoord = std::get<0>(realMsg->m_values);
+        osg::Vec3i chunkCoord = //std::get<0>(realMsg->m_values);
+            realMsg->get<osg::Vec3i>("coordinate");
         // A client has requested data about the chunk.
         // First look if we have it in our dictionary
         if (m_universe.count(chunkCoord) == 0)

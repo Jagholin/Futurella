@@ -21,7 +21,7 @@ const int g_cubeOfChunksSize = 1;
 const unsigned int g_removeChunksDistanceSquared = 4;
 #else
 const int g_cubeOfChunksSize = 2;
-const unsigned int g_removeChunksDistanceSquared = 9;
+const unsigned int g_removeChunksDistanceSquared = 13;
 #endif
 
 class TrackGameInfoUpdate : public osg::NodeCallback
@@ -448,8 +448,6 @@ void GameInstanceClient::createEnvironmentCamera(osg::Group* parentGroup)
     skyboxBox->getOrCreateStateSet()->addUniform(new osg::Uniform("skyboxTex", 0));
     skyboxBox->setCullingActive(false);
 
-    osg::Matrixf viewMat, projMat;
-    projMat.makePerspective(90, 1, 0.1, 5000);
     osg::Vec3f lookAtVector[6] = {
         osg::Vec3f(1, 0, 0),
         osg::Vec3f(-1, 0, 0),
@@ -479,17 +477,6 @@ void GameInstanceClient::createEnvironmentCamera(osg::Group* parentGroup)
     m_environmentMap->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
     m_environmentMap->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
 
-    osg::ref_ptr<osg::Geode> screenQuad = new osg::Geode;
-    osg::ref_ptr<osg::Geometry> drawableQuad = new osg::Geometry;
-    osg::Vec2 verts[] = {
-        osg::Vec2(-1, -1), osg::Vec2(-1, 1), osg::Vec2(1, -1), osg::Vec2(1, 1)
-    };
-    drawableQuad->setVertexAttribArray(0, new osg::Vec2Array(4, verts), osg::Array::BIND_PER_VERTEX);
-    drawableQuad->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 4));
-    screenQuad->addDrawable(drawableQuad);
-    screenQuad->getOrCreateStateSet()->setAttributeAndModes(myProgram);
-    screenQuad->setCullingActive(false);
-
     osg::ref_ptr<osg::Camera> renderToCube[6];
     for (unsigned int i = 0; i < 6; ++i)
     {
@@ -504,7 +491,6 @@ void GameInstanceClient::createEnvironmentCamera(osg::Group* parentGroup)
         renderToCube[i]->attach(osg::Camera::DEPTH_BUFFER, GL_DEPTH_COMPONENT16);
 
         renderToCube[i]->addChild(skyboxBox);
-        //renderToCube[i]->addChild(screenQuad);
 
         renderToCube[i]->setViewMatrixAsLookAt(osg::Vec3(0, 0, 0), lookAtVector[i], upVector[i]);
         renderToCube[i]->setProjectionMatrixAsPerspective(90, 1, 0.1, 5000);
@@ -513,6 +499,4 @@ void GameInstanceClient::createEnvironmentCamera(osg::Group* parentGroup)
 
         parentGroup->addChild(renderToCube[i]);
     }
-
-    //return renderToCube.release();
 }

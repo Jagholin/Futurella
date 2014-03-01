@@ -12,7 +12,6 @@ Copyright (C) 2009 - 2014 Belskiy Pavel, github.com/Jagholin
 
 #include <osg/Referenced>
 #include "sigslot.h"
-class NetHalloMessage;
 class NetConnection;
 
 // Remote Message peer is an endpoint in the local network graph, that represents a service
@@ -82,7 +81,7 @@ protected:
     virtual void netConnected();
 
 private:
-    void halloProceed(const std::shared_ptr<const NetHalloMessage>& hallo);
+    void halloProceed(const NetMessage::const_pointer& hallo);
     NetMessage::pointer createHalloMsg()const;
 };
 
@@ -132,4 +131,4 @@ protected:
     void onPeerActivated(const RemoteMessagePeer::pointer& sender);
 };
 
-typedef GenericNetMessage<100, true, std::string, std::time_t> NetChatMessage;
+typedef GenericNetMessage<100, std::string, std::time_t> NetChatMessage;

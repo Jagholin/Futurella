@@ -15,6 +15,7 @@ endmacro()
 if (WIN32)
     get_WIN32_WINNT(ver)
     add_definitions(-D_WIN32_WINNT=${ver})
+    add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 endif()
 
 set(BULLET_ROOT $ENV{BULLET_ROOT})
