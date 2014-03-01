@@ -330,7 +330,8 @@ public:
             varName = varNames.substr(begName, endName - begName);
 
             md.declVariable<MSGT, varType, IDtype::value>(varName);
-            registerVariable<std::integral_constant<unsigned int, IDtype::value + 1>, MSGT>::exec(md, varNames);
+            if (endName != std::string::npos)
+                registerVariable<std::integral_constant<unsigned int, IDtype::value + 1>, MSGT>::exec(md, varNames);
         }
     };
 
