@@ -5,7 +5,7 @@ A game of fast delivery
 
 - OpenSceneGraph 3
 - CMake
-- FMod (not yet)
+- FMod
 - boost::asio
 - CEGUI
 - BulletPhysics 2.8.2
