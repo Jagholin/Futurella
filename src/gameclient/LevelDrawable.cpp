@@ -414,7 +414,7 @@ void LevelDrawable::GLObjectsHolder::TransformFeedbackObjects::initGLObjects()
         glGenTransformFeedbacks(1, &m_TransFeedback);
     if (m_VBfeedback == 0)
         glGenBuffers(1, &m_VBfeedback);
-    // It is somehow important to allocate data store for a buffer before binding it with glBindBufferBase
+    // It is somehow important to allocate data storage for a buffer before binding it with glBindBufferBase
     // At least OpenGL standard demands this. Well, whatever
     glBindBuffer(GL_ARRAY_BUFFER, m_VBfeedback);
     glBufferData(GL_ARRAY_BUFFER, 6 * 1024 * 1024, nullptr, GL_STATIC_DRAW);

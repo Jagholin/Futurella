@@ -330,7 +330,7 @@ void RemoteMessagePeer::halloProceed(const NetMessage::const_pointer& halloMsg)
             m_activationWaitingQueue.pop_front();
         }
         // Send a message to other peers about the new peer
-        NetAvailablePeerMessage* msg = new NetAvailablePeerMessage;
+        NetAvailablePeerMessage::pointer msg{ new NetAvailablePeerMessage };
         msg->get<std::string>("buddyName") = m_buddyName;
         msg->get<uint32_t>("peerId") = m_peerIdentityKey;
         RemotePeersManager::getManager()->broadcast(NetMessage::const_pointer(msg), this);

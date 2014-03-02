@@ -91,6 +91,8 @@ void AsioThread::run()
             }
         });
     }
+    catch (...)
+    { }
 
     m_guiService->post([](){
         GUIContext& gui = System::getSingleton().getDefaultGUIContext();
