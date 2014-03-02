@@ -13,6 +13,11 @@
 class GUIApplication;
 class TrackGameInfoUpdate;
 
+namespace FMOD{
+    class System;
+    class Sound;
+}
+
 class GameInstanceClient : public GameMessagePeer
 {
 public:
@@ -66,6 +71,9 @@ protected:
     TrackGameInfoUpdate* m_fieldGoalUpdater;
 
     boost::asio::io_service m_updateCallbackService;
+
+    FMOD::System* soundSystem;
+    FMOD::Sound* backgroundSound;
 
     void createTextureArrays();
     void setupPPPipeline();

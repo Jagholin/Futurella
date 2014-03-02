@@ -249,7 +249,7 @@ public:
     {
         assert(m_valueNames.count(name) > 0);
         unsigned int variableId = m_valueNames.at(name);
-        // Control data type
+        // Check data type
         assert(m_valueTypes[variableId] == typeid(T));
         return *(reinterpret_cast<T*>(m_setFuncs[variableId](obj)));
     }
@@ -259,7 +259,7 @@ public:
     {
         assert(m_valueNames.count(name) > 0);
         unsigned int variableId = m_valueNames.at(name);
-        // Control data type
+        // Check data type
         assert(m_valueTypes[variableId] == typeid(T));
         return *(reinterpret_cast<const T*>(m_getFuncs.at(variableId)(obj)));
     }

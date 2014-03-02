@@ -15,6 +15,8 @@
 #include <osg/Geode>
 #include <osg/BlendFunc>
 #include <osgUtil/CullVisitor>
+#include <fmod.hpp>
+#include <fmod_errors.h>
 
 #ifdef _DEBUG
 const int g_cubeOfChunksSize = 1;
@@ -147,12 +149,24 @@ m_orphaned(false)
     //m_rootGraphicsGroup->setUpdateCallback(new NodeCallbackService(m_updateCallbackService));
     m_rootGraphicsGroup->setUpdateCallback(new MessageUpdateCallback(this));
     m_rootGraphicsGroup->setDataVariance(osg::Object::DYNAMIC);
+
+    // Initialize FMOD engine
+    FMOD_RESULT result;
+
+    result = FMOD::System_Create(&soundSystem);     // Create the main system object.
+    result = soundSystem->init(100, FMOD_INIT_NORMAL, 0);   // Initialize FMOD.
+
+    soundSystem->createStream("music/ambience2.mp3", FMOD_DEFAULT, nullptr, &backgroundSound);
+
+    soundSystem->playSound(FMOD_CHANNEL_FREE, backgroundSound, false, 0);
 }
 
 GameInstanceClient::~GameInstanceClient()
 {
     m_viewer->setCameraManipulator(new osgGA::TrackballManipulator);
     m_viewer->getCamera()->removeUpdateCallback(m_fieldGoalUpdater);
+    backgroundSound->release();
+    soundSystem->release();
     //delete m_fieldGoalUpdater;
 }
 

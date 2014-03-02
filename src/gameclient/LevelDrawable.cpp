@@ -204,9 +204,6 @@ void LevelDrawable::GLObjectsHolder::initGLObjects()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    //if (!m_TFquery)
-    //    glGenQueries(1, &m_TFquery);
-
     m_geometryDirty = false;
 }
 
@@ -216,18 +213,7 @@ void LevelDrawable::GLObjectsHolder::deleteGLObjects()
         glDeleteVertexArrays(1, &m_VAtess);
     if (m_VBinstanceInfo)
         glDeleteBuffers(1, &m_VBinstanceInfo);
-    //if (m_VBfeedback)
-    //    glDeleteBuffers(1, &m_VBfeedback);
-    //if (m_TFquery)
-    //    glDeleteQueries(1, &m_TFquery);
-    //if (m_VAnorm)
-    //    glDeleteVertexArrays(1, &m_VAnorm);
-    //if (m_TransFeedback)
-    //    glDeleteTransformFeedbacks(1, &m_TransFeedback);
     m_VAtess = m_VBinstanceInfo = 0;
-    //m_VAnorm = 0;
-    //m_TransFeedback = 0;
-    //m_TFquery = 0;
     m_geometryDirty = true;
 }
 
