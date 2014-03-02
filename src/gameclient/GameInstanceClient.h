@@ -45,6 +45,9 @@ public:
     // These methods are thread-safe
     void addNodeToScene(osg::Node* aNode);
     void removeNodeFromScene(osg::Node* aNode);
+
+    // Function called once during an update callback
+    void onUpdatePhase();
 protected:
     addstd::signal<void()> m_clientOrphaned;
     osg::ref_ptr<osg::Group> m_rootGraphicsGroup;

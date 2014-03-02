@@ -77,6 +77,21 @@ protected:
     GUIApplication* m_hud;
 };
 
+class MessageUpdateCallback : public osg::NodeCallback
+{
+public:
+    MessageUpdateCallback(GameInstanceClient* cl):
+        m_client(cl) {}
+    virtual void operator()(osg::Node* n, osg::NodeVisitor* nv) override
+    {
+        m_client->onUpdatePhase();
+        if (n->getNumChildrenRequiringUpdateTraversal() > 0)
+            nv->traverse(*n);
+    }
+protected:
+    GameInstanceClient* m_client;
+};
+
 GameInstanceClient::GameInstanceClient(osg::Group* rootGroup, osgViewer::Viewer* viewer, GUIApplication* guiApp):
 m_rootGraphicsGroup(rootGroup),
 m_viewer(viewer),
@@ -129,7 +144,8 @@ m_orphaned(false)
     createTextureArrays();
 
     m_viewer->getCamera()->setUpdateCallback(m_fieldGoalUpdater);
-    m_rootGraphicsGroup->setUpdateCallback(new NodeCallbackService(m_updateCallbackService));
+    //m_rootGraphicsGroup->setUpdateCallback(new NodeCallbackService(m_updateCallbackService));
+    m_rootGraphicsGroup->setUpdateCallback(new MessageUpdateCallback(this));
     m_rootGraphicsGroup->setDataVariance(osg::Object::DYNAMIC);
 }
 
@@ -499,4 +515,31 @@ void GameInstanceClient::createEnvironmentCamera(osg::Group* parentGroup)
 
         parentGroup->addChild(renderToCube[i]);
     }
+}
+
+void GameInstanceClient::onUpdatePhase()
+{
+    // We don't do much optimizations here, just take all messages from highPriorityQueue and then from the other queue
+
+    auto runQueue = [this](std::deque<MessagePeer::workPair>& msgQueue) {
+        while (true)
+        {
+            workPair wP;
+            {
+                OpenThreads::ScopedLock<OpenThreads::Mutex> lock(m_messageQueueMutex);
+                if (msgQueue.empty())
+                    return;
+                wP = msgQueue.front();
+                msgQueue.pop_front();
+            }
+
+            takeMessage(wP.first, wP.second);
+        }
+    };
+
+    runQueue(m_highPriorityQueue);
+    runQueue(m_messageQueue);
+
+    m_updateCallbackService.poll();
+    m_updateCallbackService.reset();
 }

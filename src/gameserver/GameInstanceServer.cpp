@@ -281,6 +281,23 @@ GameServerThread::GameServerThread(GameInstanceServer* srv)
 
 void GameServerThread::run()
 {
+    // small lambda takes and runs next message from the given queue
+    // returns false if queue was empty; true otherwise.
+    auto pullAndRunNextMessage = [this](std::deque<MessagePeer::workPair> &msgQueue) -> bool{
+        MessagePeer::workPair wP;
+        {
+            OpenThreads::ScopedLock<OpenThreads::Mutex> lock(m_serverObject->m_messageQueueMutex);
+
+            if (msgQueue.empty())
+                return false;
+            wP = msgQueue.front();
+            msgQueue.pop_front();
+        }
+
+        m_serverObject->takeMessage(wP.first, wP.second);
+        return true;
+    };
+
     // VS steady_clock has about 1 ms precision, which is good enough here
     m_previousTime = std::chrono::steady_clock::now();
     while (m_continueRun)
@@ -288,10 +305,24 @@ void GameServerThread::run()
         std::chrono::steady_clock::time_point startTick = std::chrono::steady_clock::now();
 
         // Don't run more work items than you can do per tick
-        // half tick is a soft boundary here
-        std::chrono::steady_clock::time_point timepoint;
-        // TODO: implement a priority queue
-        while (m_serverObject->m_eventService.poll_one() > 0)
+        // half a tick is a soft boundary here
+        std::chrono::steady_clock::time_point timepoint = std::chrono::steady_clock::now();
+        // First, dispatch all high priority messages
+        while (pullAndRunNextMessage(m_serverObject->m_highPriorityQueue))
+        {
+            timepoint = std::chrono::steady_clock::now();
+            if (timepoint - startTick >= g_serverTick / 2)
+                break;
+        }
+        // Then dispatch normal priority messages, if we have time still
+        if (timepoint - startTick < g_serverTick / 2) while (pullAndRunNextMessage(m_serverObject->m_messageQueue))
+        {
+            timepoint = std::chrono::steady_clock::now();
+            if (timepoint - startTick >= g_serverTick / 2)
+                break;
+        }
+        // And then, run the eventService
+        /*if (timepoint - startTick < g_serverTick / 2) */while (m_serverObject->m_eventService.poll_one() > 0)
         {
             timepoint = std::chrono::steady_clock::now();
             if (timepoint - startTick >= g_serverTick/2)
