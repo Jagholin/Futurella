@@ -105,6 +105,8 @@ add_executable(Futurella
     src/glincludes.cpp
     src/ShaderWrapper.h
     src/ShaderWrapper.cpp
+    src/LargeScaleCoords.h
+    src/LargeScaleCoords.cpp
     )
 
 add_lib(Futurella OPENTHREADS)
