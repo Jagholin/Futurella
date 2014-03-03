@@ -4,6 +4,7 @@
 #include "SpaceShipServer.h"
 #include "AsteroidFieldChunkServer.h"
 #include "GameInfoServer.h"
+#include "PlanetarySystemServer.h"
 
 #include <boost/asio/io_service.hpp>
 #include <osg/Vec3i>
@@ -77,6 +78,7 @@ protected:
     std::map<MessagePeer*, ScoreData> m_scores;
     //AsteroidFieldChunkServer::pointer m_asteroidField;
     GameInfoServer::pointer m_gameInfo;
+    PlanetarySystemServer::pointer m_planetSystem;
 
     std::map<ChunkCoordinates, ServerChunkData> m_universe;
     std::string m_name;

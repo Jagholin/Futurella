@@ -24,7 +24,7 @@ LargeScaleCoord::LargeScaleCoord(const osg::Vec3d& realCoord)
 
 osg::Vec3d LargeScaleCoord::realCoordinate() const
 {
-    return m_largeScale * sizeFactor + m_smallScale;
+    return osg::Vec3d(m_largeScale) * sizeFactor + m_smallScale;
 }
 
 bool LargeScaleCoord::changeLargeScale(const LargeScaleCoord& rhs)

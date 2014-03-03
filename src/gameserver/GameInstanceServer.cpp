@@ -31,6 +31,7 @@ m_serverThread(this)
 {
     m_eventService.dispatch([this](){
         m_physicsEngine = std::make_shared<PhysicsEngine>();
+        m_planetSystem = std::make_shared<PlanetarySystemServer>(150, this);
     });
     m_gameInfo = std::make_shared<GameInfoServer>(0, this);
     m_waitingForPlayers = true;
@@ -83,6 +84,8 @@ void GameInstanceServer::connectLocallyTo(MessagePeer* buddy, bool recursive /*=
         GameMessage::pointer constructGameInfoMsg = m_gameInfo->creationMessage();
         buddy->send(constructGameInfoMsg);
 
+        GameMessage::pointer constructPlanetSystem = m_planetSystem->creationMessage();
+        buddy->send(constructPlanetSystem);
 
         if (m_peerSpaceShips.size() >= MINPLAYERS && m_waitingForPlayers)
         {
