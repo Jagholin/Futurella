@@ -311,10 +311,12 @@ void GameInstanceClient::setupPPPipeline()
 
     osg::ref_ptr<osg::Geode> screenQuad = new osg::Geode;
     osg::ref_ptr<osg::Geometry> drawableQuad = new osg::Geometry;
-    osg::Vec2 verts[] = {
-        osg::Vec2(-1, -1), osg::Vec2(-1, 1), osg::Vec2(1, -1), osg::Vec2(1, 1)
-    };
-    drawableQuad->setVertexAttribArray(0, new osg::Vec2Array(4, verts), osg::Array::BIND_PER_VERTEX);
+    osg::Vec3Array *quadVertices = new osg::Vec3Array;
+    quadVertices->push_back(osg::Vec3(-1, -1, 0));
+    quadVertices->push_back(osg::Vec3(1, -1, 0));
+    quadVertices->push_back(osg::Vec3(-1, 1, 0));
+    quadVertices->push_back(osg::Vec3(1, 1, 0));
+    drawableQuad->setVertexArray(quadVertices);
     drawableQuad->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
     osg::ref_ptr<ShaderWrapper> screenQuadProgram = new ShaderWrapper;
@@ -330,6 +332,7 @@ void GameInstanceClient::setupPPPipeline()
     screenQuad->getOrCreateStateSet()->setAttributeAndModes(new osg::BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
     screenQuad->setCullingActive(false);
     realRoot->addChild(screenQuad);
+
 
     m_viewer->getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
 }
