@@ -13,6 +13,11 @@
 class GUIApplication;
 class TrackGameInfoUpdate;
 
+namespace FMOD{
+    class System;
+    class Sound;
+}
+
 class GameInstanceClient : public GameMessagePeer
 {
 public:
@@ -45,6 +50,9 @@ public:
     // These methods are thread-safe
     void addNodeToScene(osg::Node* aNode);
     void removeNodeFromScene(osg::Node* aNode);
+
+    // Function called once during an update callback
+    void onUpdatePhase();
 protected:
     addstd::signal<void()> m_clientOrphaned;
     osg::ref_ptr<osg::Group> m_rootGraphicsGroup;
@@ -63,6 +71,9 @@ protected:
     TrackGameInfoUpdate* m_fieldGoalUpdater;
 
     boost::asio::io_service m_updateCallbackService;
+
+    FMOD::System* soundSystem;
+    FMOD::Sound* backgroundSound;
 
     void createTextureArrays();
     void setupPPPipeline();

@@ -16,29 +16,25 @@
 
 RemotePeersManager* RemotePeersManager::mSingleton = nullptr;
 
-BEGIN_DECLNETMESSAGE(Hallo, 1000, false)
-std::string buddyName;
-uint32_t halloStat;
-uint32_t peerId;
-uint16_t udpPort;
-uint16_t version;
-END_DECLNETMESSAGE()
+typedef GenericNetMessage<1000, std::string, uint32_t, uint32_t, uint16_t, uint16_t> NetHalloMessage; // varNames: "buddyName", "halloStat", "peerId", "udpPort", "version"
+typedef GenericNetMessage<1001, std::string, uint32_t> NetAvailablePeerMessage; // varNames: "buddyName", "peerId"
+typedef GenericNetMessage<1002, uint32_t, uint32_t, uint32_t, std::string> NetTunneledMessage; // varNames: "peerIdWhom", "peerIdFrom", "msgType", "msgData"
+typedef GenericNetMessage<1003, uint32_t> NetPeerUnavailableMessage; // varNames: "peerId"
 
-BEGIN_DECLNETMESSAGE(AvailablePeer, 1001, false)
-std::string buddyName;
-uint32_t peerId;
-END_DECLNETMESSAGE()
+template<> MessageMetaData 
+NetChatMessage::m_metaData = MessageMetaData::createMetaData<NetChatMessage>("message\ntime", NetMessage::MESSAGE_PREFERS_UDP);
 
-BEGIN_DECLNETMESSAGE(Tunneled, 1002, false)
-uint32_t peerIdWhom;
-uint32_t peerIdFrom;
-uint32_t msgType;
-std::string msgData;
-END_DECLNETMESSAGE()
+template<> MessageMetaData
+NetHalloMessage::m_metaData = MessageMetaData::createMetaData<NetHalloMessage>("buddyName\nhalloStat\npeerId\nudpPort\nversion");
 
-BEGIN_DECLNETMESSAGE(PeerUnavailable, 1003, false)
-uint32_t peerId;
-END_DECLNETMESSAGE()
+template<> MessageMetaData
+NetAvailablePeerMessage::m_metaData = MessageMetaData::createMetaData<NetAvailablePeerMessage>("buddyName\npeerId");
+
+template<> MessageMetaData
+NetTunneledMessage::m_metaData = MessageMetaData::createMetaData<NetTunneledMessage>("peerIdWhom\npeerIdFrom\nmsgType\nmsgData");
+
+template<> MessageMetaData
+NetPeerUnavailableMessage::m_metaData = MessageMetaData::createMetaData<NetPeerUnavailableMessage>("peerId");
 
 class TunnelingFuturellaPeer: public RemoteMessagePeer
 {
@@ -59,8 +55,8 @@ TunnelingFuturellaPeer::TunnelingFuturellaPeer(RemoteMessagePeer::pointer tunnel
     RemoteMessagePeer(tunnel->m_netService), mTunnel(tunnel)
 {
     bool failedBorn = false;
-    m_peerIdentityKey = msg->peerId;
-    m_buddyName = msg->buddyName;
+    m_peerIdentityKey = msg->get<uint32_t>("peerId");
+    m_buddyName = msg->get<std::string>("buddyName");
     if (RemotePeersManager::getManager()->registerPeerId(m_peerIdentityKey, this) == false)
         failedBorn = true;
     RemotePeersManager::getManager()->regFuturellaPeer(this);
@@ -92,12 +88,12 @@ bool TunnelingFuturellaPeer::takeMessage(const NetMessage::const_pointer& msg, M
     if (msg->gettype() == NetTunneledMessage::type)
         return mTunnel->send(msg);
     NetTunneledMessage* message = new NetTunneledMessage;
-    message->peerIdWhom = m_peerIdentityKey;
-    message->peerIdFrom = RemotePeersManager::getManager()->m_myPeerId;
-    message->msgType = msg->gettype();
+    message->get<uint32_t> ("peerIdWhom") = m_peerIdentityKey;
+    message->get<uint32_t> ("peerIdFrom") = RemotePeersManager::getManager()->m_myPeerId;
+    message->get<uint32_t> ("msgType") = msg->gettype();
     RawMessage::const_pointer toSend = msg->toRaw();
     if (!toSend->msgBytes.empty())
-        message->msgData = toSend->msgBytes;
+        message->get<std::string> ("msgData") = toSend->msgBytes;
     return mTunnel->send(NetMessage::const_pointer(message));
 }
 
@@ -152,7 +148,7 @@ RemoteMessagePeer::~RemoteMessagePeer()
     if (m_active && m_connectLine != 0)
     {
         NetPeerUnavailableMessage* msg = new NetPeerUnavailableMessage;
-        msg->peerId = m_peerIdentityKey;
+        msg->get<uint32_t>("peerId") = m_peerIdentityKey;
         RemotePeersManager::getManager()->broadcast(NetMessage::const_pointer(msg), this);
     }
     if (m_peerIdentityKey)
@@ -206,32 +202,33 @@ void RemoteMessagePeer::netMessageReceived(RawMessage::pointer msg)
             else if (realMsg->gettype() == NetTunneledMessage::type)
             {
                 const NetTunneledMessage* tunnelMsg = static_cast<const NetTunneledMessage*>(realMsg.get());
-                if (tunnelMsg->peerIdWhom == RemotePeersManager::getManager()->m_myPeerId)
+                if (tunnelMsg->get<uint32_t>("peerIdWhom") == RemotePeersManager::getManager()->m_myPeerId)
                 {
                     RawMessage::pointer innerMsg(new RawMessage);
-                    RemoteMessagePeer::pointer tunneledPeer = RemotePeersManager::getManager()->peerFromId(tunnelMsg->peerIdFrom);
+                    RemoteMessagePeer::pointer tunneledPeer = RemotePeersManager::getManager()->peerFromId(tunnelMsg->get<uint32_t>("peerIdFrom"));
                     if (tunneledPeer == 0)
                     {
                         // It shouldn't happen, but it's still possible to create a new TunnelingFuturellaPeer object
                         //qDebug() << "Unexpected message from unknown source, id " << tunnelMsg->peerIdFrom << ". Creating tunnel...";
-                        tunneledPeer = new TunnelingFuturellaPeer(this, tunnelMsg->peerIdFrom);
+                        tunneledPeer = new TunnelingFuturellaPeer(this, tunnelMsg->get<uint32_t>("peerIdFrom"));
                     }
-                    innerMsg->msgType = tunnelMsg->msgType;
-                    innerMsg->msgBytes.assign(tunnelMsg->msgData.data(), tunnelMsg->msgData.data() + tunnelMsg->msgData.size());
+                    innerMsg->msgType = tunnelMsg->get<uint32_t>("msgType");
+                    innerMsg->msgBytes.assign(tunnelMsg->get<std::string>("msgData").data(), tunnelMsg->get<std::string>("msgData").data() 
+                        + tunnelMsg->get<std::string>("msgData").size());
                     tunneledPeer->netMessageReceived(innerMsg);
                     return;
                 }
                 // The message isn't ours,
                 // send it further
-                RemoteMessagePeer::pointer destinPeer = RemotePeersManager::getManager()->peerFromId(tunnelMsg->peerIdWhom);
+                RemoteMessagePeer::pointer destinPeer = RemotePeersManager::getManager()->peerFromId(tunnelMsg->get<uint32_t>("peerIdWhom"));
                 if (destinPeer)
                     destinPeer->send(realMsg);
                 else
                 {
                     // We must tell the sender that the receiver doesn't exist any more
                     NetPeerUnavailableMessage::pointer unavailableMsg{ new NetPeerUnavailableMessage };
-                    unavailableMsg->peerId = tunnelMsg->peerIdWhom;
-                    destinPeer = RemotePeersManager::getManager()->peerFromId(tunnelMsg->peerIdFrom);
+                    unavailableMsg->get<uint32_t>("peerId") = tunnelMsg->get<uint32_t>("peerIdWhom");
+                    destinPeer = RemotePeersManager::getManager()->peerFromId(tunnelMsg->get<uint32_t>("peerIdFrom"));
                     if (destinPeer)
                         destinPeer->send(NetMessage::const_pointer(unavailableMsg));
                 }
@@ -239,7 +236,7 @@ void RemoteMessagePeer::netMessageReceived(RawMessage::pointer msg)
             else if (realMsg->gettype() == NetPeerUnavailableMessage::type)
             {
                 const NetPeerUnavailableMessage* tunnelMsg = static_cast<const NetPeerUnavailableMessage*>(realMsg.get());
-                RemoteMessagePeer::pointer deletedPeer = RemotePeersManager::getManager()->peerFromId(tunnelMsg->peerId);
+                RemoteMessagePeer::pointer deletedPeer = RemotePeersManager::getManager()->peerFromId(tunnelMsg->get<uint32_t>("peerId"));
                 if (deletedPeer && deletedPeer->isTunnel())
                     m_netService.post([=](){ delete deletedPeer; });
             }
@@ -252,11 +249,11 @@ void RemoteMessagePeer::netMessageReceived(RawMessage::pointer msg)
         else
         {
             //std::cout << "active=false\n";
-            std::shared_ptr<const NetHalloMessage> halloMsg = std::dynamic_pointer_cast<const NetHalloMessage>(realMsg);
-            if (halloMsg)
-                halloProceed(halloMsg);
-            else
-                throw std::bad_cast();
+            //NetHalloMessage::const_pointer halloMsg = std::dynamic_pointer_cast<const NetHalloMessage>(realMsg);
+            //if (halloMsg)
+                halloProceed(realMsg);
+            //else
+            //    throw std::bad_cast();
         }
     }
     catch(std::bad_cast)
@@ -288,9 +285,10 @@ void RemoteMessagePeer::netConnected()
     m_connectLine->sendMessage(createHalloMsg()->toRaw());
 }
 
-void RemoteMessagePeer::halloProceed(const std::shared_ptr<const NetHalloMessage>& hallo)
+void RemoteMessagePeer::halloProceed(const NetMessage::const_pointer& halloMsg)
 {
-    if (hallo->version != protokoll_version || hallo->halloStat != m_halloStatus)
+    NetHalloMessage::const_pointer hallo = halloMsg->as_safe<NetHalloMessage>();
+    if (hallo->get<uint16_t>("version") != protokoll_version || hallo->get<uint32_t>("halloStat") != m_halloStatus)
     {
         // Wrong hallo packet, break it down
         m_connectLine->close();
@@ -300,7 +298,7 @@ void RemoteMessagePeer::halloProceed(const std::shared_ptr<const NetHalloMessage
     }
     if (m_peerIdentityKey == 0)
     {
-        m_peerIdentityKey = hallo->peerId;
+        m_peerIdentityKey = hallo->get<uint32_t>("peerId");
         if (RemotePeersManager::getManager()->registerPeerId(m_peerIdentityKey, this) == false)
         {
             m_peerIdentityKey = 0;
@@ -310,7 +308,7 @@ void RemoteMessagePeer::halloProceed(const std::shared_ptr<const NetHalloMessage
             return;
         }
     }
-    m_buddyName = hallo->buddyName;
+    m_buddyName = hallo->get<std::string>("buddyName");
     if (m_halloStatus != 3)
         m_connectLine->sendMessage(createHalloMsg()->toRaw());
     if (m_halloStatus >= 2)
@@ -324,7 +322,7 @@ void RemoteMessagePeer::halloProceed(const std::shared_ptr<const NetHalloMessage
         {
             m_status = MP_SERVER;
         }
-        m_connectLine->setupUdpSocket(hallo->udpPort);
+        m_connectLine->setupUdpSocket(hallo->get<uint16_t>("udpPort"));
         // sending all messages from the waiting queue
         while(!m_activationWaitingQueue.empty())
         {
@@ -332,9 +330,9 @@ void RemoteMessagePeer::halloProceed(const std::shared_ptr<const NetHalloMessage
             m_activationWaitingQueue.pop_front();
         }
         // Send a message to other peers about the new peer
-        NetAvailablePeerMessage* msg = new NetAvailablePeerMessage;
-        msg->buddyName = m_buddyName;
-        msg->peerId = m_peerIdentityKey;
+        NetAvailablePeerMessage::pointer msg{ new NetAvailablePeerMessage };
+        msg->get<std::string>("buddyName") = m_buddyName;
+        msg->get<uint32_t>("peerId") = m_peerIdentityKey;
         RemotePeersManager::getManager()->broadcast(NetMessage::const_pointer(msg), this);
 
         m_statusChanged();
@@ -344,14 +342,14 @@ void RemoteMessagePeer::halloProceed(const std::shared_ptr<const NetHalloMessage
 
 NetMessage::pointer RemoteMessagePeer::createHalloMsg() const
 {
-    NetHalloMessage* myMsg = new NetHalloMessage;
-    myMsg->buddyName = m_myName;
-    myMsg->halloStat = ++m_halloStatus;
+    NetHalloMessage::pointer myMsg{ new NetHalloMessage };
+    myMsg->get<std::string>("buddyName") = m_myName;
+    myMsg->get<uint32_t>("halloStat") = ++m_halloStatus;
     ++m_halloStatus;
-    myMsg->udpPort = RemotePeersManager::getManager()->m_myUdpPort;
-    myMsg->version = protokoll_version;
-    myMsg->peerId = RemotePeersManager::getManager()->m_myPeerId;
-    return NetMessage::pointer(myMsg);
+    myMsg->get<uint16_t>("udpPort") = RemotePeersManager::getManager()->m_myUdpPort;
+    myMsg->get<uint16_t>("version") = protokoll_version;
+    myMsg->get<uint32_t>("peerId") = RemotePeersManager::getManager()->m_myPeerId;
+    return myMsg;
 }
 
 RemoteMessagePeer::PeerStatus RemoteMessagePeer::getStatus() const
@@ -466,8 +464,8 @@ void RemotePeersManager::onPeerActivated(const RemoteMessagePeer::pointer& sendP
     {
         if (it->second == sendPeer) continue;
         NetAvailablePeerMessage* msg = new NetAvailablePeerMessage;
-        msg->buddyName = it->second->getRemoteName();
-        msg->peerId = it->first;
+        msg->get<std::string>("buddyName") = it->second->getRemoteName();
+        msg->get<uint32_t>("peerId") = it->first;
         sendPeer->send(NetMessage::const_pointer(msg));
     }
 }
@@ -491,38 +489,6 @@ uint32_t RemotePeersManager::getPeersId(MessagePeer* peer) const
     }
     return getMyId();
 }
-
-BEGIN_NETTORAWMESSAGE_QCONVERT(Hallo)
-out << buddyName << halloStat << peerId << udpPort << version;
-END_NETTORAWMESSAGE_QCONVERT()
-
-BEGIN_RAWTONETMESSAGE_QCONVERT(Hallo)
-in >> buddyName >> halloStat >> peerId >> udpPort >> version;
-END_RAWTONETMESSAGE_QCONVERT()
-
-BEGIN_NETTORAWMESSAGE_QCONVERT(AvailablePeer)
-out << buddyName << peerId;
-END_NETTORAWMESSAGE_QCONVERT()
-
-BEGIN_RAWTONETMESSAGE_QCONVERT(AvailablePeer)
-in >> buddyName >> peerId;
-END_RAWTONETMESSAGE_QCONVERT()
-
-BEGIN_NETTORAWMESSAGE_QCONVERT(Tunneled)
-out << peerIdWhom << peerIdFrom << msgType << msgData;
-END_NETTORAWMESSAGE_QCONVERT()
-
-BEGIN_RAWTONETMESSAGE_QCONVERT(Tunneled)
-in >> peerIdWhom >> peerIdFrom >> msgType >> msgData;
-END_RAWTONETMESSAGE_QCONVERT()
-
-BEGIN_NETTORAWMESSAGE_QCONVERT(PeerUnavailable)
-out << peerId;
-END_NETTORAWMESSAGE_QCONVERT()
-
-BEGIN_RAWTONETMESSAGE_QCONVERT(PeerUnavailable)
-in >> peerId;
-END_RAWTONETMESSAGE_QCONVERT()
 
 REGISTER_NETMESSAGE(Chat)
 REGISTER_NETMESSAGE(Hallo)

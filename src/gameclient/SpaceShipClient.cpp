@@ -64,7 +64,7 @@ SpaceShipClient::pointer SpaceShipClient::createFromGameMessage(const GameMessag
 {
     GameSpaceShipConstructionDataMessage::const_pointer realMsg = msg->as<GameSpaceShipConstructionDataMessage>();
     GameInstanceClient* context = static_cast<GameInstanceClient*>(ctx);
-    SpaceShipClient::pointer newShip{ new SpaceShipClient(realMsg->pos, realMsg->orient, realMsg->objectId, realMsg->ownerId, context) };
+    SpaceShipClient::pointer newShip{ new SpaceShipClient(realMsg->get<osg::Vec3f>("pos"), realMsg->get<osg::Vec4f>("orient"), realMsg->get<uint16_t>("objectId"), realMsg->get<uint32_t>("ownerId"), context) };
 
     context->addExternalSpaceShip(newShip);
 
@@ -78,10 +78,10 @@ bool SpaceShipClient::takeMessage(const GameMessage::const_pointer& msg, Message
         GameSpaceShipPhysicsUpdateMessage::const_pointer realMsg = msg->as<GameSpaceShipPhysicsUpdateMessage>();
 
         // TODO
-        setTransform(realMsg->pos, realMsg->orient);
+        setTransform(realMsg->get<osg::Vec3f>("pos"), realMsg->get<osg::Vec4f>("orient"));
         GameInstanceClient* context = static_cast<GameInstanceClient*>(m_context);
-        context->shipChangedPosition(realMsg->pos, this);
-        m_projVelocity = realMsg->velocity;
+        context->shipChangedPosition(realMsg->get<osg::Vec3f>("pos"), this);
+        m_projVelocity = realMsg->get<osg::Vec3f>("velocity");
         return true;
     }
     return false;
@@ -112,9 +112,9 @@ void SpaceShipClient::sendInput(SpaceShipServer::inputType inType, bool isOn)
 
     m_inputCache[inType] = isOn;
     GameSpaceShipControlMessage::pointer msg{ new GameSpaceShipControlMessage };
-    msg->objectId = m_myObjectId;
-    msg->inputType = inType;
-    msg->isOn = isOn;
+    msg->objectId(m_myObjectId);
+    msg->get<uint16_t>("inputType") = inType;
+    msg->get<bool>("isOn") = isOn;
     messageToPartner(msg);
 }
 

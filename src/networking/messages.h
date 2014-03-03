@@ -11,6 +11,7 @@
 #include "networking.h"
 #include <osg/Vec3>
 #include <osg/Vec4>
+#include <typeindex>
 
 class NetMessage : public std::enable_shared_from_this<NetMessage>
 {
@@ -28,7 +29,7 @@ public:
         MESSAGE_HIGH_PRIORITY = 2,
     };
 
-    virtual Flags messageFlags()
+    virtual Flags messageFlags() const
     {
         if (prefersUdp())
             return MESSAGE_PREFERS_UDP;
@@ -88,17 +89,17 @@ public:
 
     // Special case for std::tuple<...>
 
-    template<int Index, typename... Types>
+    template<typename IndexType, typename... Types>
     struct outTupleImpl
     {
         static void exec(binaryStream& s, const std::tuple<Types...> &val){
-            s << std::get<Index>(val);
-            outTupleImpl<Index + 1, Types...>::exec(s, val);
+            s << std::get<IndexType::value>(val);
+            outTupleImpl<std::integral_constant<size_t, IndexType::value + 1>, Types...>::exec(s, val);
         }
     };
 
     template<typename... Types>
-    struct outTupleImpl<sizeof...(Types), Types...>
+    struct outTupleImpl<std::integral_constant<size_t, std::tuple_size<std::tuple<Types...>>::value>, Types...>
     {
         static void exec(binaryStream& s, const std::tuple<Types...> &val){
             // nop
@@ -107,7 +108,17 @@ public:
 
     template<typename... Types>
     binaryStream& operator<<(const std::tuple<Types...> &val){
-        outTupleImpl<0, Types...>::exec(*this, val);
+        outTupleImpl<std::integral_constant<size_t, 0>, Types...>::exec(*this, val);
+        return (*this);
+    }
+
+    template<typename T>
+    binaryStream& operator<<(const std::vector<T> &val){
+        uint32_t size = val.size();
+        (*this) << size;
+        for (uint32_t i = 0; i < size; ++i){
+            (*this) << val[i];
+        }
         return (*this);
     }
 
@@ -145,17 +156,17 @@ public:
 
     // Special case for std::tuple<...>
 
-    template<int Index, typename... Types>
+    template<typename IndexType, typename... Types>
     struct inTupleImpl
     {
         static void exec(binaryStream& s, std::tuple<Types...> &val){
-            s >> std::get<Index>(val);
-            inTupleImpl<Index + 1, Types...>::exec(s, val);
+            s >> std::get<IndexType::value>(val);
+            inTupleImpl<std::integral_constant<size_t, IndexType::value + 1>, Types...>::exec(s, val);
         }
     };
 
     template<typename... Types>
-    struct inTupleImpl<sizeof...(Types), Types...>
+    struct inTupleImpl < std::integral_constant<size_t, std::tuple_size<std::tuple<Types...>>::value>, Types...>
     {
         static void exec(binaryStream& s, std::tuple<Types...> &val){
             // nop
@@ -164,7 +175,18 @@ public:
 
     template<typename... Types>
     binaryStream& operator>>(std::tuple<Types...> &val){
-        inTupleImpl<0, Types...>::exec(*this, val);
+        inTupleImpl<std::integral_constant<size_t, 0>, Types...>::exec(*this, val);
+        return (*this);
+    }
+
+    template<typename T>
+    binaryStream& operator>>(std::vector<T> &val){
+        uint32_t size;
+        (*this) >> size;
+        val.resize(size);
+        for (uint32_t i = 0; i < size; ++i){
+            (*this) >> val[i];
+        }
         return (*this);
     }
     
@@ -173,41 +195,9 @@ public:
     }
 };
 
-#define DECLMESSAGE_BASE(name, number, udppref, isgamemsg, prefix, baseclass) class prefix##name##Message : public baseclass { \
-    public: typedef std::shared_ptr<prefix##name##Message> pointer; \
-    typedef std::shared_ptr<const prefix##name##Message> const_pointer; \
-    public: RawMessage::pointer toRaw()const; \
-    enum { type = (number) }; \
-    protected: static unsigned int mtype; \
-    public: unsigned int gettype()const { return mtype; } \
-    bool prefersUdp()const { return (udppref); } \
-    bool isGameMessage()const { return (isgamemsg); } \
-    void fromRaw(const std::string&);
-
-#define BEGIN_DECLNETMESSAGE(name, number, udppref) DECLMESSAGE_BASE(name, number, udppref, false, Net, NetMessage)
-
-#define END_DECLNETMESSAGE() };
-
 #define REGISTER_MESSAGE_BASE(name, prefix) unsigned int prefix##name##Message::mtype = MsgFactory::regFactory<prefix##name##Message>(prefix##name##Message::type);
 
 #define REGISTER_NETMESSAGE(name) REGISTER_MESSAGE_BASE(name, Net)
-
-#define BEGIN_TORAWMESSAGE_QCONVERTBASE(name, prefix) RawMessage::pointer prefix##name##Message::toRaw() const { \
-    RawMessage::pointer result(new RawMessage); \
-    result->msgType = mtype; \
-    binaryStream out; {
-
-#define BEGIN_NETTORAWMESSAGE_QCONVERT(name) BEGIN_TORAWMESSAGE_QCONVERTBASE(name, Net)
-
-#define END_NETTORAWMESSAGE_QCONVERT() } result->msgBytes = out.str(); \
-    return result; }
-
-#define BEGIN_TONETMESSAGE_QCONVERTBASE(name, prefix) void prefix##name##Message::fromRaw(const std::string& str) { \
-    binaryStream in(str);  
-
-#define BEGIN_RAWTONETMESSAGE_QCONVERT(name) BEGIN_TONETMESSAGE_QCONVERTBASE(name, Net)
-
-#define END_RAWTONETMESSAGE_QCONVERT() }
 
 class MessagePeer
 {
@@ -248,45 +238,100 @@ protected:
 class MessageMetaData
 {
 public:
+    MessageMetaData():
+        m_flags(NetMessage::MESSAGE_NO_FLAGS)
+    {
+
+    }
+
     template <typename T>
     T& get(const NetMessage::pointer& obj, const std::string &name) const
     {
         assert(m_valueNames.count(name) > 0);
-        unsigned int variableId = m_valueNames[name];
-        // Control data type
+        unsigned int variableId = m_valueNames.at(name);
+        // Check data type
         assert(m_valueTypes[variableId] == typeid(T));
-        return reinterpret_cast<T&>(* m_setFuncs[variableId](obj));
+        return *(reinterpret_cast<T*>(m_setFuncs[variableId](obj)));
     }
 
     template <typename T>
     const T& get(const NetMessage::const_pointer& obj, const std::string &name) const
     {
         assert(m_valueNames.count(name) > 0);
-        unsigned int variableId = m_valueNames[name];
-        // Control data type
+        unsigned int variableId = m_valueNames.at(name);
+        // Check data type
         assert(m_valueTypes[variableId] == typeid(T));
-        return reinterpret_cast<const T&>(*m_getFuncs[variableId](obj));
+        return *(reinterpret_cast<const T*>(m_getFuncs.at(variableId)(obj)));
     }
 
     template<typename MSGT, typename T, unsigned int ID>
     void declVariable(const std::string& varName)
     {
         m_valueNames[varName] = ID;
-        m_valueTypes[ID] = typeid(T);
-        m_setFuncs[ID] = [](const NetMessage::pointer& obj) -> void*
+        m_valueTypes.emplace(m_valueTypes.begin() + ID, typeid(T));
+        m_setFuncs.emplace(m_setFuncs.begin() + ID, [](const NetMessage::pointer& obj) -> void*
         {
             return &(std::get<ID>(obj->as<MSGT>()->m_values));
-        };
-        m_getFuncs[ID] = [](const NetMessage::const_pointer& obj) -> const void*
+        });
+        m_getFuncs.emplace(m_getFuncs.begin() + ID, [](const NetMessage::const_pointer& obj) -> const void*
         {
             return &(std::get<ID>(obj->as<MSGT>()->m_values));
-        };
+        });
     }
+
+    // IDtype here and everywhere else is a std::integral_constant<unsigned int, ID>.
+    template <typename IDtype, typename MSGT>
+    struct registerVariable
+    {
+        static void exec(MessageMetaData& md, const std::string& varNames)
+        {
+            typedef typename std::tuple_element<IDtype::value, typename MSGT::values_type>::type varType;
+            std::string varName;
+            // find (n-1)th newline symbol
+            std::string::size_type begName = 0, endName;
+            for (unsigned int i = 0; i < IDtype::value; ++i)
+            {
+                begName = varNames.find('\n', begName);
+                begName += 1;
+            }
+            endName = varNames.find('\n', begName);
+            varName = varNames.substr(begName, endName - begName);
+
+            md.declVariable<MSGT, varType, IDtype::value>(varName);
+            if (endName != std::string::npos)
+                registerVariable<std::integral_constant<unsigned int, IDtype::value + 1>, MSGT>::exec(md, varNames);
+        }
+    };
+
+    template <typename MSGT>
+    struct registerVariable < std::integral_constant<unsigned int, std::tuple_size<typename MSGT::values_type>::value>, MSGT>
+    {
+        static void exec(MessageMetaData& md, const std::string& varNames)
+        {
+        }
+    };
+
+    template<typename MSGT>
+    static MessageMetaData createMetaData(const std::string &varNames, int flags = NetMessage::MESSAGE_NO_FLAGS)
+    {
+        MessageMetaData result;
+        registerVariable<std::integral_constant<unsigned int, 0>, MSGT>::exec(result, varNames);
+        result.m_flags = static_cast<NetMessage::Flags>(flags);
+        MSGT::postMetaInit(result);
+        return result;
+    }
+
+    NetMessage::Flags flags() const
+    {
+        return m_flags;
+    }
+
 protected:
     std::map<std::string, unsigned int> m_valueNames;
-    std::vector<std::type_info> m_valueTypes;
+    std::vector<std::type_index> m_valueTypes;
     std::vector<std::function<void*(const NetMessage::pointer&)>> m_setFuncs;
     std::vector<std::function<const void*(NetMessage::const_pointer)>> m_getFuncs;
+    NetMessage::Flags m_flags;
 };
 
 class MsgFactory
@@ -317,16 +362,28 @@ public:
     }
 };
 
-template <int MessageTypeID, bool UDP, typename... Types>
-class GenericNetMessage : public NetMessage
+template <typename BaseClass, int MessageTypeID, typename... Types>
+class GenericNetMessage_Base : public BaseClass
 {
 public:
-    std::tuple<Types...> m_values;
+    typedef std::tuple<Types...> values_type;
+    values_type m_values;
 
-public:
-    typedef std::shared_ptr<GenericNetMessage<MessageTypeID, UDP, Types...>> pointer;
-    typedef std::shared_ptr<const GenericNetMessage<MessageTypeID, UDP, Types...>> const_pointer;
+    typedef std::shared_ptr<GenericNetMessage_Base<BaseClass, MessageTypeID, Types...>> pointer;
+    typedef std::shared_ptr<const GenericNetMessage_Base<BaseClass, MessageTypeID, Types...>> const_pointer;
     enum {type = MessageTypeID};
+
+    template<typename T>
+    T& get(const std::string& name)
+    {
+        return m_metaData.get<T>(shared_from_this(), name);
+    }
+
+    template<typename T>
+    const T& get(const std::string& name) const
+    {
+        return m_metaData.get<T>(shared_from_this(), name);
+    }
 
     unsigned int gettype() const override final
     {
@@ -335,7 +392,7 @@ public:
 
     bool prefersUdp() const override final
     {
-        return UDP;
+        return (messageFlags() & NetMessage::MESSAGE_PREFERS_UDP) != 0;
     }
 
     bool isGameMessage() const override
@@ -383,6 +440,26 @@ public:
         fromRawImpl(str);
     }
 
+    static void postMetaInit(MessageMetaData& md)
+    {
+
+    }
+
+    virtual NetMessage::Flags messageFlags() const override
+    {
+        return m_metaData.flags();
+    }
+
+    static MessageMetaData& meta()
+    {
+        return m_metaData;
+    }
+
 protected:
     static unsigned int mtype;
+
+    static MessageMetaData m_metaData;
 };
+
+template<int MessageTypeId, typename... Types>
+using GenericNetMessage = GenericNetMessage_Base<NetMessage, MessageTypeId, Types...>;

@@ -15,7 +15,6 @@
 #include "GUIApplication.h"
 #include "gameclient/LevelDrawable.h"
 #include "Asteroid.h"
-#include "SpaceShip.h"
 #include "ChaseCam.h"
 
 int main()

@@ -15,6 +15,7 @@ endmacro()
 if (WIN32)
     get_WIN32_WINNT(ver)
     add_definitions(-D_WIN32_WINNT=${ver})
+    add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 endif()
 
 set(BULLET_ROOT $ENV{BULLET_ROOT})
@@ -28,6 +29,7 @@ find_package(osgGA REQUIRED)
 find_package(CEGUI REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(Bullet REQUIRED)
+find_package(FMOD REQUIRED)
 
 find_package(BOOST 1.54.0 REQUIRED COMPONENTS system asio)
 # add_definitions(-DBOOST_ASIO_ENABLE_HANDLER_TRACKING)
@@ -103,6 +105,8 @@ add_executable(Futurella
     src/glincludes.cpp
     src/ShaderWrapper.h
     src/ShaderWrapper.cpp
+    src/LargeScaleCoords.h
+    src/LargeScaleCoords.cpp
     )
 
 add_lib(Futurella OPENTHREADS)
@@ -115,3 +119,4 @@ add_lib(Futurella CEGUI)
 add_lib(Futurella Boost)
 add_lib(Futurella OPENGL)
 add_lib(Futurella BULLET)
+add_lib(Futurella FMOD)

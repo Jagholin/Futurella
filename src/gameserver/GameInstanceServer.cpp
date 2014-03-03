@@ -15,6 +15,15 @@ REGISTER_NETMESSAGE(RequestChunkData)
 REGISTER_NETMESSAGE(StopChunkTracking)
 REGISTER_NETMESSAGE(PlayerScoreInfo)
 
+template<> MessageMetaData 
+NetRequestChunkDataMessage::m_metaData = MessageMetaData::createMetaData<NetRequestChunkDataMessage>("coordinate");
+
+template<> MessageMetaData
+NetStopChunkTrackingMessage::m_metaData = MessageMetaData::createMetaData<NetStopChunkTrackingMessage>("coordinate");
+
+template<> MessageMetaData
+NetPlayerScoreInfoMessage::m_metaData = MessageMetaData::createMetaData<NetPlayerScoreInfoMessage>("playerName\nscore");
+
 GameInstanceServer::GameInstanceServer(const std::string &name) :
 //m_physicsEngine(new PhysicsEngine),
 m_name(name),
@@ -44,7 +53,7 @@ bool GameInstanceServer::unknownObjectIdMessage(const GameMessage::const_pointer
 {
     // The creation of objects on the client side is not allowed.
 
-    std::cerr << "WTF? GameInstanceServer just received a message from an object with non-existing objectId[" << msg->objectId << "]\n";
+    std::cerr << "WTF? GameInstanceServer just received a message from an object with non-existing objectId[" << msg->objectId() << "]\n";
     return false;
 }
 
@@ -211,7 +220,8 @@ bool GameInstanceServer::takeMessage(const NetMessage::const_pointer& msg, Messa
     if (msg->gettype() == NetRequestChunkDataMessage::type)
     {
         NetRequestChunkDataMessage::const_pointer realMsg = msg->as<NetRequestChunkDataMessage>();
-        osg::Vec3i chunkCoord = std::get<0>(realMsg->m_values);
+        osg::Vec3i chunkCoord = //std::get<0>(realMsg->m_values);
+            realMsg->get<osg::Vec3i>("coordinate");
         // A client has requested data about the chunk.
         // First look if we have it in our dictionary
         if (m_universe.count(chunkCoord) == 0)
@@ -271,6 +281,23 @@ GameServerThread::GameServerThread(GameInstanceServer* srv)
 
 void GameServerThread::run()
 {
+    // small lambda takes and runs next message from the given queue
+    // returns false if queue was empty; true otherwise.
+    auto pullAndRunNextMessage = [this](std::deque<MessagePeer::workPair> &msgQueue) -> bool{
+        MessagePeer::workPair wP;
+        {
+            OpenThreads::ScopedLock<OpenThreads::Mutex> lock(m_serverObject->m_messageQueueMutex);
+
+            if (msgQueue.empty())
+                return false;
+            wP = msgQueue.front();
+            msgQueue.pop_front();
+        }
+
+        m_serverObject->takeMessage(wP.first, wP.second);
+        return true;
+    };
+
     // VS steady_clock has about 1 ms precision, which is good enough here
     m_previousTime = std::chrono::steady_clock::now();
     while (m_continueRun)
@@ -278,10 +305,24 @@ void GameServerThread::run()
         std::chrono::steady_clock::time_point startTick = std::chrono::steady_clock::now();
 
         // Don't run more work items than you can do per tick
-        // half tick is a soft boundary here
-        std::chrono::steady_clock::time_point timepoint;
-        // TODO: implement a priority queue
-        while (m_serverObject->m_eventService.poll_one() > 0)
+        // half a tick is a soft boundary here
+        std::chrono::steady_clock::time_point timepoint = std::chrono::steady_clock::now();
+        // First, dispatch all high priority messages
+        while (pullAndRunNextMessage(m_serverObject->m_highPriorityQueue))
+        {
+            timepoint = std::chrono::steady_clock::now();
+            if (timepoint - startTick >= g_serverTick / 2)
+                break;
+        }
+        // Then dispatch normal priority messages, if we have time still
+        if (timepoint - startTick < g_serverTick / 2) while (pullAndRunNextMessage(m_serverObject->m_messageQueue))
+        {
+            timepoint = std::chrono::steady_clock::now();
+            if (timepoint - startTick >= g_serverTick / 2)
+                break;
+        }
+        // And then, run the eventService
+        /*if (timepoint - startTick < g_serverTick / 2) */while (m_serverObject->m_eventService.poll_one() > 0)
         {
             timepoint = std::chrono::steady_clock::now();
             if (timepoint - startTick >= g_serverTick/2)

@@ -3,6 +3,9 @@
 
 REGISTER_NETMESSAGE(RemoveGameObject)
 
+template<> MessageMetaData
+NetRemoveGameObjectMessage::m_metaData = MessageMetaData::createMetaData<NetRemoveGameObjectMessage>("objectId");
+
 GameObject::GameObject(uint32_t ownerId, GameMessagePeer* context):
 m_context(context),
 m_myOwnerId(ownerId)
@@ -40,7 +43,7 @@ GameObject::pointer GameObject::createFromGameMessage(const GameMessage::const_p
 
 void GameObject::messageToPartner(const GameMessage::pointer& msg)
 {
-    msg->objectId = m_myObjectId;
+    msg->objectId(m_myObjectId);
     m_context->messageToPartner(msg);
 }
 

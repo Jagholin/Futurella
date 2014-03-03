@@ -6,30 +6,8 @@
 #include <random>
 #include <memory>
 
-BEGIN_RAWTOGAMEMESSAGE_QCONVERT(AsteroidFieldData)
-uint16_t size;
-in >> ownerId >> size;
-for (unsigned int i = 0; i < size; ++i)
-{
-    osg::Vec3f pos;
-    float rad;
-    in >> pos >> rad;
-    position.push_back(pos);
-    radius.push_back(rad);
-}
-in >> chunkCoord;
-END_RAWTOGAMEMESSAGE_QCONVERT()
-BEGIN_GAMETORAWMESSAGE_QCONVERT(AsteroidFieldData)
-uint16_t size = position.size();
-out << ownerId << size;
-for (int i = 0; i < position.size(); ++i)
-{
-    osg::Vec3f pos = position.at(i);
-    float rad = radius.at(i);
-    out << position.at(i) << radius.at(i);
-}
-out << chunkCoord;
-END_GAMETORAWMESSAGE_QCONVERT()
+template <> MessageMetaData
+GameAsteroidFieldDataMessage::base::m_metaData = MessageMetaData::createMetaData<GameAsteroidFieldDataMessage>("position\nradius\nownerId\nchunkCoord");
 
 REGISTER_GAMEMESSAGE(AsteroidFieldData)
 
@@ -100,15 +78,16 @@ AsteroidFieldChunkServer::~AsteroidFieldChunkServer()
 GameMessage::pointer AsteroidFieldChunkServer::creationMessage() const
 {
     GameAsteroidFieldDataMessage::pointer msg{ new GameAsteroidFieldDataMessage };
+    auto &posVector = msg->get<std::vector<osg::Vec3f>>("position");
+    auto &radVector = msg->get<std::vector<float>>("radius");
     for (unsigned int i = 0; i < m_asteroids->getLength(); ++i)
     {
-        msg->position.push_back(m_asteroids->getAsteroid(i)->getPosition());
-        msg->radius.push_back(m_asteroids->getAsteroid(i)->getRadius());
+        posVector.push_back(m_asteroids->getAsteroid(i)->getPosition());
+        radVector.push_back(m_asteroids->getAsteroid(i)->getRadius());
     }
-    msg->objectId = m_myObjectId;
-    msg->ownerId = m_myOwnerId;
-    msg->chunkCoord = m_chunkCoord;
-    msg->objectId = m_myObjectId;
+    msg->objectId(m_myObjectId);
+    msg->get<uint32_t>("ownerId") = m_myOwnerId;
+    msg->get<osg::Vec3i>("chunkCoord") = m_chunkCoord;
     return msg;
 }
 

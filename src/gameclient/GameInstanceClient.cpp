@@ -15,13 +15,15 @@
 #include <osg/Geode>
 #include <osg/BlendFunc>
 #include <osgUtil/CullVisitor>
+#include <fmod.hpp>
+#include <fmod_errors.h>
 
 #ifdef _DEBUG
 const int g_cubeOfChunksSize = 1;
 const unsigned int g_removeChunksDistanceSquared = 4;
 #else
 const int g_cubeOfChunksSize = 2;
-const unsigned int g_removeChunksDistanceSquared = 9;
+const unsigned int g_removeChunksDistanceSquared = 13;
 #endif
 
 class TrackGameInfoUpdate : public osg::NodeCallback
@@ -77,6 +79,21 @@ protected:
     GUIApplication* m_hud;
 };
 
+class MessageUpdateCallback : public osg::NodeCallback
+{
+public:
+    MessageUpdateCallback(GameInstanceClient* cl):
+        m_client(cl) {}
+    virtual void operator()(osg::Node* n, osg::NodeVisitor* nv) override
+    {
+        m_client->onUpdatePhase();
+        if (n->getNumChildrenRequiringUpdateTraversal() > 0)
+            nv->traverse(*n);
+    }
+protected:
+    GameInstanceClient* m_client;
+};
+
 GameInstanceClient::GameInstanceClient(osg::Group* rootGroup, osgViewer::Viewer* viewer, GUIApplication* guiApp):
 m_rootGraphicsGroup(rootGroup),
 m_viewer(viewer),
@@ -129,14 +146,27 @@ m_orphaned(false)
     createTextureArrays();
 
     m_viewer->getCamera()->setUpdateCallback(m_fieldGoalUpdater);
-    m_rootGraphicsGroup->setUpdateCallback(new NodeCallbackService(m_updateCallbackService));
+    //m_rootGraphicsGroup->setUpdateCallback(new NodeCallbackService(m_updateCallbackService));
+    m_rootGraphicsGroup->setUpdateCallback(new MessageUpdateCallback(this));
     m_rootGraphicsGroup->setDataVariance(osg::Object::DYNAMIC);
+
+    // Initialize FMOD engine
+    FMOD_RESULT result;
+
+    result = FMOD::System_Create(&soundSystem);     // Create the main system object.
+    result = soundSystem->init(100, FMOD_INIT_NORMAL, 0);   // Initialize FMOD.
+
+    soundSystem->createStream("music/ambience2.mp3", FMOD_DEFAULT, nullptr, &backgroundSound);
+
+    soundSystem->playSound(FMOD_CHANNEL_FREE, backgroundSound, false, 0);
 }
 
 GameInstanceClient::~GameInstanceClient()
 {
     m_viewer->setCameraManipulator(new osgGA::TrackballManipulator);
     m_viewer->getCamera()->removeUpdateCallback(m_fieldGoalUpdater);
+    backgroundSound->release();
+    soundSystem->release();
     //delete m_fieldGoalUpdater;
 }
 
@@ -451,8 +481,6 @@ void GameInstanceClient::createEnvironmentCamera(osg::Group* parentGroup)
     skyboxBox->getOrCreateStateSet()->addUniform(new osg::Uniform("skyboxTex", 0));
     skyboxBox->setCullingActive(false);
 
-    osg::Matrixf viewMat, projMat;
-    projMat.makePerspective(90, 1, 0.1, 5000);
     osg::Vec3f lookAtVector[6] = {
         osg::Vec3f(1, 0, 0),
         osg::Vec3f(-1, 0, 0),
@@ -482,17 +510,6 @@ void GameInstanceClient::createEnvironmentCamera(osg::Group* parentGroup)
     m_environmentMap->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
     m_environmentMap->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
 
-    osg::ref_ptr<osg::Geode> screenQuad = new osg::Geode;
-    osg::ref_ptr<osg::Geometry> drawableQuad = new osg::Geometry;
-    osg::Vec2 verts[] = {
-        osg::Vec2(-1, -1), osg::Vec2(-1, 1), osg::Vec2(1, -1), osg::Vec2(1, 1)
-    };
-    drawableQuad->setVertexAttribArray(0, new osg::Vec2Array(4, verts), osg::Array::BIND_PER_VERTEX);
-    drawableQuad->addPrimitiveSet(new osg::DrawArrays(GL_TRIANGLE_STRIP, 0, 4));
-    screenQuad->addDrawable(drawableQuad);
-    screenQuad->getOrCreateStateSet()->setAttributeAndModes(myProgram);
-    screenQuad->setCullingActive(false);
-
     osg::ref_ptr<osg::Camera> renderToCube[6];
     for (unsigned int i = 0; i < 6; ++i)
     {
@@ -507,7 +524,6 @@ void GameInstanceClient::createEnvironmentCamera(osg::Group* parentGroup)
         renderToCube[i]->attach(osg::Camera::DEPTH_BUFFER, GL_DEPTH_COMPONENT16);
 
         renderToCube[i]->addChild(skyboxBox);
-        //renderToCube[i]->addChild(screenQuad);
 
         renderToCube[i]->setViewMatrixAsLookAt(osg::Vec3(0, 0, 0), lookAtVector[i], upVector[i]);
         renderToCube[i]->setProjectionMatrixAsPerspective(90, 1, 0.1, 5000);
@@ -516,6 +532,31 @@ void GameInstanceClient::createEnvironmentCamera(osg::Group* parentGroup)
 
         parentGroup->addChild(renderToCube[i]);
     }
+}
 
-    //return renderToCube.release();
+void GameInstanceClient::onUpdatePhase()
+{
+    // We don't do much optimizations here, just take all messages from highPriorityQueue and then from the other queue
+
+    auto runQueue = [this](std::deque<MessagePeer::workPair>& msgQueue) {
+        while (true)
+        {
+            workPair wP;
+            {
+                OpenThreads::ScopedLock<OpenThreads::Mutex> lock(m_messageQueueMutex);
+                if (msgQueue.empty())
+                    return;
+                wP = msgQueue.front();
+                msgQueue.pop_front();
+            }
+
+            takeMessage(wP.first, wP.second);
+        }
+    };
+
+    runQueue(m_highPriorityQueue);
+    runQueue(m_messageQueue);
+
+    m_updateCallbackService.poll();
+    m_updateCallbackService.reset();
 }

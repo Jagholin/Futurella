@@ -17,13 +17,22 @@ using namespace CEGUI;
 // Some netmessages that inform about existing GameInstanceServers or request a connection
 // between GameInstanceServer and GameInstanceClient
 
-typedef GenericNetMessage<1400, false, std::string> NetGameServerAvailableMessage;
-typedef GenericNetMessage<1401, false> NetGameConnectRequestMessage;
-typedef GenericNetMessage<1402, false, std::string> NetGameConnectDeniedMessage;
+typedef GenericNetMessage<1400, std::string> NetGameServerAvailableMessage; // varNames: "serverName"
+typedef GenericNetMessage<1401> NetGameConnectRequestMessage; // no vars
+typedef GenericNetMessage<1402, std::string> NetGameConnectDeniedMessage; // varNames: "reason"
 
 REGISTER_NETMESSAGE(GameServerAvailable)
 REGISTER_NETMESSAGE(GameConnectRequest)
 REGISTER_NETMESSAGE(GameConnectDenied)
+
+template<> MessageMetaData
+NetGameServerAvailableMessage::m_metaData = MessageMetaData::createMetaData<NetGameServerAvailableMessage>("serverName");
+
+template<> MessageMetaData
+NetGameConnectRequestMessage::m_metaData = MessageMetaData::createMetaData<NetGameConnectRequestMessage>("");
+
+template<> MessageMetaData
+NetGameConnectDeniedMessage::m_metaData = MessageMetaData::createMetaData<NetGameConnectDeniedMessage>("reason");
 
 AsioThread::AsioThread() :
 m_destructionSignal("AsioThread::destructionSignal")
@@ -82,6 +91,8 @@ void AsioThread::run()
             }
         });
     }
+    catch (...)
+    { }
 
     m_guiService->post([](){
         GUIContext& gui = System::getSingleton().getDefaultGUIContext();

@@ -4,25 +4,10 @@
 #include <osg/Quat>
 #include <chrono>
 
-BEGIN_DECLGAMEMESSAGE(SpaceShipConstructionData, 5002, false)
-osg::Vec3f pos;
-osg::Vec4f orient;
-uint32_t ownerId;
-END_DECLGAMEMESSAGE()
-
-BEGIN_DECLGAMEMESSAGE(SpaceShipControl, 5003, true)
-uint16_t inputType;
-bool isOn;
-END_DECLGAMEMESSAGE()
-
-BEGIN_DECLGAMEMESSAGE(SpaceShipPhysicsUpdate, 5004, true)
-osg::Vec3f pos;
-osg::Vec4f orient;
-osg::Vec3f velocity;
-END_DECLGAMEMESSAGE()
-
-BEGIN_DECLGAMEMESSAGE(SpaceShipCollision, 5005, true)
-END_DECLGAMEMESSAGE()
+typedef GenericGameMessage<5002, osg::Vec3f, osg::Vec4f, uint32_t> GameSpaceShipConstructionDataMessage; // varNames: "pos", "orient", "ownerId"
+typedef GenericGameMessage<5003, uint16_t, bool> GameSpaceShipControlMessage; // varNames: "inputType", "isOn"
+typedef GenericGameMessage<5004, osg::Vec3f, osg::Vec4f, osg::Vec3f> GameSpaceShipPhysicsUpdateMessage; // varNames: "pos", "orient", "velocity"
+typedef GenericGameMessage<5005> GameSpaceShipCollisionMessage; // varNames:
 
 class GameInstanceServer;
 class PhysicsEngine;

@@ -204,9 +204,6 @@ void LevelDrawable::GLObjectsHolder::initGLObjects()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    //if (!m_TFquery)
-    //    glGenQueries(1, &m_TFquery);
-
     m_geometryDirty = false;
 }
 
@@ -216,18 +213,7 @@ void LevelDrawable::GLObjectsHolder::deleteGLObjects()
         glDeleteVertexArrays(1, &m_VAtess);
     if (m_VBinstanceInfo)
         glDeleteBuffers(1, &m_VBinstanceInfo);
-    //if (m_VBfeedback)
-    //    glDeleteBuffers(1, &m_VBfeedback);
-    //if (m_TFquery)
-    //    glDeleteQueries(1, &m_TFquery);
-    //if (m_VAnorm)
-    //    glDeleteVertexArrays(1, &m_VAnorm);
-    //if (m_TransFeedback)
-    //    glDeleteTransformFeedbacks(1, &m_TransFeedback);
     m_VAtess = m_VBinstanceInfo = 0;
-    //m_VAnorm = 0;
-    //m_TransFeedback = 0;
-    //m_TFquery = 0;
     m_geometryDirty = true;
 }
 
@@ -414,9 +400,14 @@ void LevelDrawable::GLObjectsHolder::TransformFeedbackObjects::initGLObjects()
         glGenTransformFeedbacks(1, &m_TransFeedback);
     if (m_VBfeedback == 0)
         glGenBuffers(1, &m_VBfeedback);
+    // It is somehow important to allocate data storage for a buffer before binding it with glBindBufferBase
+    // At least OpenGL standard demands this. Well, whatever
+    glBindBuffer(GL_ARRAY_BUFFER, m_VBfeedback);
+    glBufferData(GL_ARRAY_BUFFER, 6 * 1024 * 1024, nullptr, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
     glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, m_TransFeedback);
     glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, m_VBfeedback);
-    glBufferData(GL_TRANSFORM_FEEDBACK_BUFFER, 6 * 1024 * 1024, nullptr, GL_STATIC_DRAW);
     glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0);
 
     if (m_VAfeedback == 0)
