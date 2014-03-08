@@ -266,7 +266,7 @@ void GameInstanceClient::createTextureArrays()
 
     const unsigned int textures = 17;
     std::string textureNames[] = {
-        "textures/spherical_noise2.png",
+        "textures/sphericalnoise0.png",
         "textures/sphericalnoise1.png",
         "textures/sphericalnoise2.png",
         "textures/sphericalnoise3.png",

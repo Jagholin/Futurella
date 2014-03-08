@@ -39,15 +39,18 @@ void main()
         + gl_TessCoord.z * inVertex[2].position;
     point = normalize(point);
 
-    // Transform point coordinates into latitude/longitude, and then to the
-    // u/v spherically mapped texture coordinates.
+    // Transform point coordinates into latitude/longitude
+
     float lat = asin(clamp(point.y, -0.999f, 0.999f));
-    float v = lat / (PI * 0.5); // v still in [-1, 1]
     float lon = atan(- point.z, point.x);
     if (inVertex[0].uvGenMode > 0.5 && lon > 0)
         lon -= 2*PI;
+
+    // transform to u/v spherically mapped texture coordinates.
     float u = (lon + PI) / (2*PI);
+    float v = lat / (PI * 0.5); // v still in [-1, 1]
     v = (v + 1.0) * 0.5; // map v to [0, 1]
+
     vTexCoord = vec2(u, v);
     texNumber = inVertex[0].texNumber;
 
@@ -60,7 +63,7 @@ void main()
 
     // Read height at (u, v) from the texture array
     vec4 scaleFromTex = texture(array512Tex, vec3(u, v, texNumber));
-    float addScale = scaleFromTex.x;
+    float addScale = scaleFromTex.a;
     addScale = (addScale - 0.5) * 0.5 + 1.0;
 
     // In the next step we need to calculate normal vector to the perturbed surface.
