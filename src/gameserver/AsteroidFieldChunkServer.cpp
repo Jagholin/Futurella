@@ -11,7 +11,7 @@ GameAsteroidFieldDataMessage::base::m_metaData = MessageMetaData::createMetaData
 
 REGISTER_GAMEMESSAGE(AsteroidFieldData)
 
-AsteroidFieldChunkServer::AsteroidFieldChunkServer(int asteroidNumber, float chunkSideLength, uint32_t ownerId, osg::Vec3i chunk, GameInstanceServer* ctx, PhysicsEngine* engine):
+AsteroidFieldChunkServer::AsteroidFieldChunkServer(int asteroidNumber, float chunkSideLength, float astMinSize, float astMaxSize, uint32_t ownerId, osg::Vec3i chunk, GameInstanceServer* ctx, PhysicsEngine* engine) :
 GameObject(ownerId, ctx)
 {
     m_chunkCoord = chunk;
@@ -20,9 +20,9 @@ GameObject(ownerId, ctx)
 
     //Generate Asteroid Field
     //step 1: scatter asteroids. save to AsteroidField
-    std::shared_ptr<AsteroidField> scatteredAsteroids = std::make_shared<AsteroidField>();
-    float astSizeDif = m_astMaxSize - m_astMinSize;
-    float asteroidSpaceCubeSidelength = m_astMaxSize * 2;
+    m_asteroids = std::make_shared<AsteroidField>();
+    float astSizeDif = astMaxSize - astMinSize;
+    float asteroidCubeMaxSidelength = astMaxSize * 2;
     m_asteroidFieldSpaceCubeSideLength = chunkSideLength;
     float radius;
     osg::Vec3f pos;
@@ -32,32 +32,36 @@ GameObject(ownerId, ctx)
             randDevice()*m_asteroidFieldSpaceCubeSideLength / randDevice.max(),
             randDevice()*m_asteroidFieldSpaceCubeSideLength / randDevice.max(),
             randDevice()*m_asteroidFieldSpaceCubeSideLength / randDevice.max());
-        radius = (randDevice()*astSizeDif / randDevice.max() + m_astMinSize)*0.5f;
-        scatteredAsteroids->addAsteroid(pos, radius);
+        radius = ( ( randDevice() * 1.0f / randDevice.max() ) * ( randDevice() * 1.0f / randDevice.max() ) * astSizeDif + astMinSize ) * 0.5f;
+        m_asteroids->addAsteroid(pos, radius);
     }
 
     //step 2: move asteroids to avoid overlappings (heuristic). save to Level::asteroidField
-    m_asteroids = std::make_shared<AsteroidField>();
-    for (int i = 0; i < asteroidNumber; i++)
+    int accuracy = 2; //how often d'you wanna apply heuristic?
+    for (int iterations = 0; iterations < accuracy; iterations++)
     {
-        float favoredDistance = (asteroidSpaceCubeSidelength - m_astMaxSize) / 2 + scatteredAsteroids->getAsteroid(i)->getRadius();
-        float boundingBoxRadius = favoredDistance + m_astMaxSize / 2;
-        std::list<Asteroid*> candidates = scatteredAsteroids->getAsteroidsInBlock(scatteredAsteroids->getAsteroid(i)->getPosition(), osg::Vec3f(boundingBoxRadius, boundingBoxRadius, boundingBoxRadius));
-        osg::Vec3f shift(0, 0, 0);
-        int numberOfCloseAsteroids = 0;
-        for (std::list<Asteroid*>::iterator it = candidates.begin(); it != candidates.end(); it++) {
-            if (*it != scatteredAsteroids->getAsteroid(i)) {
-                osg::Vec3f d = scatteredAsteroids->getAsteroid(i)->getPosition() - (*it)->getPosition();
-                float scale = -((d.length() - (*it)->getRadius()) - favoredDistance);
-                if (scale > 0) {
-                    d.normalize();
-                    shift += shift + (d * scale *0.5f); //push away from other close asteroids
-                    numberOfCloseAsteroids++;
+        std::shared_ptr<AsteroidField> previousScattering = m_asteroids;
+        m_asteroids = std::make_shared<AsteroidField>();
+        for (int i = 0; i < asteroidNumber; i++)
+        {
+            float favoredDistance = (asteroidCubeMaxSidelength - astMaxSize) / 2 + previousScattering->getAsteroid(i)->getRadius();
+            float boundingBoxRadius = favoredDistance + astMaxSize / 2;
+            std::list<Asteroid*> candidates = previousScattering->getAsteroidsInBlock(previousScattering->getAsteroid(i)->getPosition(), osg::Vec3f(boundingBoxRadius, boundingBoxRadius, boundingBoxRadius));
+            osg::Vec3f shift(0, 0, 0);
+            int numberOfCloseAsteroids = 0;
+            for (std::list<Asteroid*>::iterator it = candidates.begin(); it != candidates.end(); it++) {
+                if (*it != previousScattering->getAsteroid(i)) {
+                    osg::Vec3f d = previousScattering->getAsteroid(i)->getPosition() - (*it)->getPosition();
+                    float scale = -((d.length() - (*it)->getRadius()) - favoredDistance);
+                    if (scale > 0) {
+                        d.normalize();
+                        shift += shift + (d * scale *0.5f); //push away from other close asteroids
+                        numberOfCloseAsteroids++;
+                    }
                 }
             }
+            m_asteroids->addAsteroid(previousScattering->getAsteroid(i)->getPosition() + shift, previousScattering->getAsteroid(i)->getRadius());
         }
-        m_asteroids->addAsteroid(scatteredAsteroids->getAsteroid(i)->getPosition() + shift, scatteredAsteroids->getAsteroid(i)->getRadius());
-
     }
 
     // Add asteroids as collision bodies to the engine

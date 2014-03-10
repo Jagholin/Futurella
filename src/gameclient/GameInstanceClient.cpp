@@ -266,23 +266,23 @@ void GameInstanceClient::createTextureArrays()
 
     const unsigned int textures = 17;
     std::string textureNames[] = {
-        "textures/sphericalnoise0.png",
-        "textures/sphericalnoise1.png",
-        "textures/sphericalnoise2.png",
-        "textures/sphericalnoise3.png",
-        "textures/sphericalnoise4.png",
-        "textures/sphericalnoise5.png",
-        "textures/sphericalnoise6.png",
-        "textures/sphericalnoise7.png",
-        "textures/sphericalnoise8.png",
-        "textures/sphericalnoise9.png",
-        "textures/sphericalnoise10.png",
-        "textures/sphericalnoise11.png",
-        "textures/sphericalnoise12.png",
-        "textures/sphericalnoise13.png",
-        "textures/sphericalnoise14.png",
-        "textures/sphericalnoise15.png",
-        "textures/sphericalnoise16.png",
+        "sphericalnoise0.png",
+        "sphericalnoise1.png",
+        "sphericalnoise2.png",
+        "sphericalnoise3.png",
+        "sphericalnoise4.png",
+        "sphericalnoise5.png",
+        "sphericalnoise6.png",
+        "sphericalnoise7.png",
+        "sphericalnoise8.png",
+        "sphericalnoise9.png",
+        "sphericalnoise10.png",
+        "sphericalnoise11.png",
+        "sphericalnoise12.png",
+        "sphericalnoise13.png",
+        "sphericalnoise14.png",
+        "sphericalnoise15.png",
+        "sphericalnoise16.png",
     };
     myTex512Array->setTextureHeight(512);
     myTex512Array->setTextureWidth(512);
@@ -291,9 +291,7 @@ void GameInstanceClient::createTextureArrays()
     myTex512Array->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
     myTex512Array->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
     for (int i = 0; i < textures; ++i)
-    {
-        myTex512Array->setImage(i, osgDB::readImageFile(textureNames[i]));
-    }
+        myTex512Array->setImage(i, osgDB::readImageFile(std::string("textures/asteroids/geometry/").append(textureNames[i])));
 
     m_rootGraphicsGroup->getOrCreateStateSet()->setTextureAttribute(1, myTex512Array);
     m_rootGraphicsGroup->getOrCreateStateSet()->addUniform(new osg::Uniform("array512Tex", 1));
@@ -305,13 +303,14 @@ void GameInstanceClient::setupPPPipeline()
     //m_rootGraphicsGroup = new osg::Group;
 
     osg::ref_ptr<osg::Texture2D> m_normalsTexture, m_colorTexture/*, m_backgroundColor*/;
-
     m_normalsTexture = new osg::Texture2D;
     m_colorTexture = new osg::Texture2D;
+
     //m_backgroundColor = new osg::Texture2D;
     osg::Texture2D* textures[] = {
         m_colorTexture, m_normalsTexture, //m_backgroundColor
     };
+
     for (osg::Texture2D* tex : textures)
     {
         tex->setTextureSize(m_viewer->getCamera()->getViewport()->width(), 
@@ -325,6 +324,7 @@ void GameInstanceClient::setupPPPipeline()
         tex->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
         tex->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
     }
+
     // create RTT Camera
     osg::ref_ptr<osg::Camera> sceneCamera = new osg::Camera;
     m_rootGraphicsGroup = sceneCamera;
@@ -353,13 +353,33 @@ void GameInstanceClient::setupPPPipeline()
     screenQuadProgram->load(osg::Shader::VERTEX, "shader/vs_screenquad.txt");
     screenQuadProgram->load(osg::Shader::FRAGMENT, "shader/fs_screenquad.txt");
 
+    osg::ref_ptr<osg::TextureCubeMap> envLightMap = new osg::TextureCubeMap;
+    //we should somehow obtain cubemap from postrender camera here, that creates a low res blurred env light texture which is for now loaded from file.
+    std::string face[] = {
+        "textures/lightmap/lightmap_r.png",
+        "textures/lightmap/lightmap_l.png",
+        "textures/lightmap/lightmap_d.png",
+        "textures/lightmap/lightmap_t.png",
+        "textures/lightmap/lightmap_f.png",
+        "textures/lightmap/lightmap_b.png"
+    };
+    for (unsigned int i = 0; i < 6; ++i)
+        envLightMap->setImage(osg::TextureCubeMap::POSITIVE_X + i, osgDB::readImageFile(face[i]));
+
+    envLightMap->setWrap(osg::Texture::WRAP_R, osg::Texture::CLAMP_TO_EDGE);
+    envLightMap->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
+    envLightMap->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
+    
     screenQuad->addDrawable(drawableQuad);
-    screenQuad->getOrCreateStateSet()->setTextureAttributeAndModes(0, m_colorTexture, osg::StateAttribute::ON);
-    screenQuad->getOrCreateStateSet()->setTextureAttributeAndModes(1, m_normalsTexture, osg::StateAttribute::ON);
-    screenQuad->getOrCreateStateSet()->addUniform(new osg::Uniform("texColor", 0));
-    screenQuad->getOrCreateStateSet()->addUniform(new osg::Uniform("texNormals", 1));
-    screenQuad->getOrCreateStateSet()->setAttributeAndModes(screenQuadProgram);
-    screenQuad->getOrCreateStateSet()->setAttributeAndModes(new osg::BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
+    osg::StateSet* stateset = screenQuad->getOrCreateStateSet();
+    stateset->setTextureAttributeAndModes(0, m_colorTexture, osg::StateAttribute::ON);
+    stateset->setTextureAttributeAndModes(1, m_normalsTexture, osg::StateAttribute::ON);
+    stateset->setTextureAttributeAndModes(2, envLightMap, osg::StateAttribute::ON);
+    stateset->addUniform(new osg::Uniform("texColor", 0));
+    stateset->addUniform(new osg::Uniform("texNormals", 1));
+    stateset->addUniform(new osg::Uniform("lightEnvMap", 2)); //use normals to add diffuse light thingy
+    stateset->setAttributeAndModes(screenQuadProgram);
+    stateset->setAttributeAndModes(new osg::BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
     screenQuad->setCullingActive(false);
     realRoot->addChild(screenQuad);
 
@@ -453,7 +473,7 @@ void GameInstanceClient::createEnvironmentCamera(osg::Group* parentGroup)
     skyboxTexture->setWrap(osg::Texture::WRAP_R, osg::Texture::CLAMP_TO_EDGE);
     skyboxTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
     skyboxTexture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
-    osg::Image *cubeMapFaces[6];
+    osg::Image *cubeMapFaces[6]; 
     std::string cubeFileNames[] = {
         "textures/skybox1_right1.png",
         "textures/skybox1_left2.png",
@@ -464,7 +484,7 @@ void GameInstanceClient::createEnvironmentCamera(osg::Group* parentGroup)
     };
     for (unsigned int i = 0; i < 6; ++i)
     {
-        cubeMapFaces[i] = osgDB::readImageFile(cubeFileNames[i]);
+        cubeMapFaces[i] = osgDB::readImageFile(cubeFileNames[i]);//Mem leak?
         assert(cubeMapFaces[i]);
         skyboxTexture->setImage(osg::TextureCubeMap::POSITIVE_X + i, cubeMapFaces[i]);
     }

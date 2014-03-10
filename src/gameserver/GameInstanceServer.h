@@ -71,7 +71,7 @@ public:
 
     friend class GameServerThread;
 protected:
-    
+    static const float chunksize;
     std::shared_ptr<PhysicsEngine> m_physicsEngine;
 
     std::map<MessagePeer*, SpaceShipServer::pointer> m_peerSpaceShips;

@@ -6,10 +6,13 @@ layout(location = 0) out vec4 fragColor;
 
 uniform sampler2D texColor;
 uniform sampler2D texNormals;
+uniform samplerCube lightEnvMap;
 
 void main()
-{
-    fragColor = texture(texColor, texCoord);
-    //fragColor.rgb += texture(texNormals, texCoord).rgb;
-    //fragColor.rgb /= 2.0;
+{    
+	
+	vec4 color = texture(texColor, texCoord); 
+	vec3 normal = texture(texNormals, texCoord).rgb;
+	fragColor = color * texture(lightEnvMap, normal);
+	
 }

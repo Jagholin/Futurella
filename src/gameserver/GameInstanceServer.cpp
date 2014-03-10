@@ -1,4 +1,7 @@
 #include "GameInstanceServer.h"
+
+const float GameInstanceServer::chunksize = 16;
+
 #include "../networking/peermanager.h"
 #include "../gamecommon/PhysicsEngine.h"
 
@@ -103,7 +106,7 @@ void GameInstanceServer::newRound()
 
         std::random_device randDevice;
         //float range = m_asteroidField->getCubeSideLength();
-        float range = 16.0; // todo: new range calculation?
+        float range = chunksize; // todo: new range calculation?
         float maxRand = randDevice.max();
 
         osg::Vec3f startingPoint = osg::Vec3f(
@@ -210,9 +213,10 @@ void GameInstanceServer::checkForEndround()
 
 GameInstanceServer::ChunkCoordinates GameInstanceServer::positionToChunk(const osg::Vec3f& pos)
 {
-    return ChunkCoordinates(std::floor(pos.x() / 16.0),
-        std::floor(pos.y() / 16.0),
-        std::floor(pos.z() / 16.0));
+    return ChunkCoordinates(
+        std::floor(pos.x() / chunksize),
+        std::floor(pos.y() / chunksize),
+        std::floor(pos.z() / chunksize));
 }
 
 bool GameInstanceServer::takeMessage(const NetMessage::const_pointer& msg, MessagePeer* peer)
@@ -231,7 +235,7 @@ bool GameInstanceServer::takeMessage(const NetMessage::const_pointer& msg, Messa
         {
             // The chunk doesn't exist yet, generate it
             ServerChunkData newChunk;
-            newChunk.m_asteroidField = std::make_shared<AsteroidFieldChunkServer>(100, 16.0f, 0, chunkCoord, this, m_physicsEngine.get());
+            newChunk.m_asteroidField = std::make_shared<AsteroidFieldChunkServer>(10, chunksize, 0.2f, 7.0f, 0, chunkCoord, this, m_physicsEngine.get());
             m_universe.insert(std::make_pair(chunkCoord, newChunk));
         }
 
@@ -267,7 +271,7 @@ bool GameInstanceServer::takeMessage(const NetMessage::const_pointer& msg, Messa
 
 osg::Vec3f GameInstanceServer::chunkToPosition(const osg::Vec3i& pos)
 {
-    return osg::Vec3f(pos.x() * 16.0, pos.y()*16.0, pos.z()*16.0);
+    return osg::Vec3f(pos.x() * chunksize, pos.y() * chunksize, pos.z() * chunksize);
 }
 
 boost::asio::io_service* GameInstanceServer::eventService()

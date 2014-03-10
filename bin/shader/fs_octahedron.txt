@@ -21,8 +21,9 @@ void main()
     //else 
 
     //fragColor = vec4(vTexCoord, 0, 1);
-    fragColor = texture(array512Tex, vec3(vTexCoord, texNumber));
-    fragNormal = vNormal;
+	
+    fragColor = vec4(0.5,0.5,0.5,1); //replace by surface texture (sand, stone..)!
+    fragNormal = texture(array512Tex, vec3(vTexCoord, texNumber)).rgb;
 
     //fragColor = vec4(0, 1, 1, 1);
 }
