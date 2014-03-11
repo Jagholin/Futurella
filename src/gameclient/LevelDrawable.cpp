@@ -87,9 +87,9 @@ void LevelDrawable::GLObjectsHolder::draw(osg::RenderInfo& ri)
     else if (m_owner.m_feedbackMode == USE_TRANSFORM_FEEDBACK)
     {
         glBindVertexArray(m_tfeedback->m_VAfeedback);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDrawTransformFeedback(GL_TRIANGLES, m_tfeedback->m_TransFeedback);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    //    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
     else // NO_TRANSFORM_FEEDBACK
     {
