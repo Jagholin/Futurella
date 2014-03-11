@@ -20,11 +20,8 @@ public:
 
     virtual bool takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender);
 
-    float getCubeSideLength();
-
 protected:
 
-    float m_asteroidFieldSpaceCubeSideLength;
     osg::Vec3i m_chunkCoord;
     std::shared_ptr<AsteroidField> m_asteroids;
     std::vector<unsigned int> m_physicsIds;

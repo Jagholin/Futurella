@@ -23,21 +23,20 @@ GameObject(ownerId, ctx)
     m_asteroids = std::make_shared<AsteroidField>();
     float astSizeDif = astMaxSize - astMinSize;
     float asteroidCubeMaxSidelength = astMaxSize * 2;
-    m_asteroidFieldSpaceCubeSideLength = chunkSideLength;
     float radius;
     osg::Vec3f pos;
     for (int i = 0; i < asteroidNumber; i++)
     {
         pos.set(
-            randDevice()*m_asteroidFieldSpaceCubeSideLength / randDevice.max(),
-            randDevice()*m_asteroidFieldSpaceCubeSideLength / randDevice.max(),
-            randDevice()*m_asteroidFieldSpaceCubeSideLength / randDevice.max());
+            randDevice()*1.0f / randDevice.max() * chunkSideLength,
+            randDevice()*1.0f / randDevice.max() * chunkSideLength,
+            randDevice()*1.0f / randDevice.max() * chunkSideLength);
         radius = ( ( randDevice() * 1.0f / randDevice.max() ) * ( randDevice() * 1.0f / randDevice.max() ) * astSizeDif + astMinSize ) * 0.5f;
         m_asteroids->addAsteroid(pos, radius);
     }
 
     //step 2: move asteroids to avoid overlappings (heuristic). save to Level::asteroidField
-    int accuracy = 2; //how often d'you wanna apply heuristic?
+    int accuracy = 10; //how often d'you wanna apply heuristic?
     for (int iterations = 0; iterations < accuracy; iterations++)
     {
         std::shared_ptr<AsteroidField> previousScattering = m_asteroids;
@@ -98,9 +97,4 @@ GameMessage::pointer AsteroidFieldChunkServer::creationMessage() const
 bool AsteroidFieldChunkServer::takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender)
 {
     return false;
-}
-
-float AsteroidFieldChunkServer::getCubeSideLength()
-{
-    return m_asteroidFieldSpaceCubeSideLength;
 }
