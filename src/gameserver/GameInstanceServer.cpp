@@ -1,6 +1,6 @@
 #include "GameInstanceServer.h"
 
-const float GameInstanceServer::chunksize = 16;
+const float GameInstanceServer::chunksize = 64;
 
 #include "../networking/peermanager.h"
 #include "../gamecommon/PhysicsEngine.h"
@@ -235,7 +235,7 @@ bool GameInstanceServer::takeMessage(const NetMessage::const_pointer& msg, Messa
         {
             // The chunk doesn't exist yet, generate it
             ServerChunkData newChunk;
-            newChunk.m_asteroidField = std::make_shared<AsteroidFieldChunkServer>(10, chunksize, 0.2f, 7.0f, 0, chunkCoord, this, m_physicsEngine.get());
+            newChunk.m_asteroidField = std::make_shared<AsteroidFieldChunkServer>(10, chunksize, 3.2f, 24.0f, 0, chunkCoord, this, m_physicsEngine.get());
             m_universe.insert(std::make_pair(chunkCoord, newChunk));
         }
 

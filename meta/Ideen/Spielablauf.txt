@@ -1,0 +1,19 @@
+Spiel Starten. 
+Repeat: 
+	Vor dem Spiel interface um server zu erstellen oder connecten. 
+	
+	- server erstellen: einstellungen: world size, "länge der route" (gui mit buttons!)
+	- clients connecten server (haben namen und shipmodel!) (gui mit buttons und texteingabe)
+	
+	Nach dem connecten /server aufsetzen: Interface mit "disconnect"-button. "ready"-checkbox
+	- warten bis alle clients "ready" - checkbox aktivieren => Spiel startet:
+	
+	1. beam players to one point
+	2. Repeat "länge der route" times:
+		a) leave all players where they are (with their speed and rotation)
+		b) select one planet (früher "asteroiden" genannt) 
+		c) wait until someone hits the goal planet
+		d) add 1 to hitting players score
+	3. display Game Stats
+	
+	- clients/server disconnect

@@ -1,0 +1,8 @@
+- chunk culling
+- client side physics interpolation
+- Determine float tesslevel on CPU. Recalculate first order chunk when spaceship moves x. Recalcualte second order chunk when spaceship moves 2x...
+	- if tesslevel = 10,5 that means:
+		you have 16 subdivisions (round up next 2^x)
+		you multiply the effect of the lates subdivision with 
+			(tesslevel - (round down 2^x)) / (round down 2^x))
+	=> fluid transitions between lods

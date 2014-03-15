@@ -1,0 +1,32 @@
+- Startbildschirm background image
+
+- UI hinzufügen (beschrieben in "Spielablauf.txt")
+
+(- Explosionen bei: ship hits planet)
+
+- Mit parametern rumspielen: betrifft 
+	Planeten Größe - schiffverhältnis
+	Steuerung
+	Rendering
+
+- Level = Planetenfeld anhand 3d-heatmap generieren
+
+- 3 verschiedene Schiffsmodells mit verschiedener Beschleunigung/Lenkung
+
+- Distant objects rendering pass
+- Distant objects to minimap
+
+- camera muss nachhängen
+
+- Planetendrehung + höhere geomerty maps
+
+- planet atmospheres
+
+- lod sprünge rausbekommen
+
+Priorisierung:
+
+"nach spiel aussehen" =>
+UI
+Spielverlauf + Endstatistik
+1 Schiff wichtiger als 3 Schiffe

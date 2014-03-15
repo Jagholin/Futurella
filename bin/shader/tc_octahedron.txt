@@ -34,8 +34,8 @@ void main()
     outVertex[gl_InvocationID].texNumber = inVertex[gl_InvocationID].texNumber;
 
     vec4 eyeOffset = osg_ModelViewMatrix * vec4(inVertex[0].offset, 1.0);
-    float eyeSpaceDistanceInv = eyeOffset.w / length(eyeOffset.xyz);
-    float tessLevel = clamp(30.0 * eyeSpaceDistanceInv * inVertex[0].scale, 0, 50);
+    float eyeSpaceDistanceInv = eyeOffset.w / sqrt(length(eyeOffset.xyz));
+    float tessLevel = clamp(50 * eyeSpaceDistanceInv * inVertex[0].scale, 0, 50);
 
     eyeOffset = osg_ProjectionMatrix * eyeOffset;
 	
