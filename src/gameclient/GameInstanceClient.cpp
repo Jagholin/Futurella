@@ -112,9 +112,6 @@ m_orphaned(false)
 
     m_viewer->getCamera()->setClearMask(GL_DEPTH_BUFFER_BIT);
 
-    osg::ref_ptr<ShaderWrapper> myProgram = new ShaderWrapper;
-    myProgram->load(osg::Shader::VERTEX, "shader/vs_skybox.txt");
-    myProgram->load(osg::Shader::FRAGMENT, "shader/fs_skybox.txt");
 
     // Create simple node and geode for the skybox
     // First create new prerender camera
@@ -132,6 +129,10 @@ m_orphaned(false)
     //osg::ref_ptr<osg::Camera> environCamera = createEnvironmentCamera();
     //skyboxCamera->addChild(environCamera);
     createEnvironmentCamera(skyboxCamera);
+    
+    osg::ref_ptr<ShaderWrapper> myProgram = new ShaderWrapper;
+    myProgram->load(osg::Shader::VERTEX, "shader/vs_skybox.txt");
+    myProgram->load(osg::Shader::FRAGMENT, "shader/fs_skybox.txt");
 
     osg::ref_ptr<osg::Geode> skyboxBox = new osg::Geode;
     skyboxBox->addDrawable(new osg::ShapeDrawable(new osg::Box(osg::Vec3f(0, 0, 0), 10.0f)));
@@ -293,6 +294,7 @@ void GameInstanceClient::createTextureArrays()
     for (int i = 0; i < textures; ++i)
         myTex512Array->setImage(i, osgDB::readImageFile(std::string("textures/asteroids/geometry/").append(textureNames[i])));
 
+    m_rootGraphicsGroup->getOrCreateStateSet()->addUniform(new osg::Uniform());
     m_rootGraphicsGroup->getOrCreateStateSet()->setTextureAttribute(1, myTex512Array);
     m_rootGraphicsGroup->getOrCreateStateSet()->addUniform(new osg::Uniform("array512Tex", 1));
 }

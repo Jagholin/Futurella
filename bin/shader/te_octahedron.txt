@@ -26,6 +26,7 @@ out GeometryOut {
 
 uniform mat4 osg_ModelViewProjectionMatrix;
 uniform mat4 osg_ModelMatrix;
+uniform mat4 planetRotation;
 uniform sampler2DArray array512Tex;
 
 const float PI = 3.14159f;

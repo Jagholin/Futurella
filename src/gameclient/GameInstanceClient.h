@@ -60,6 +60,8 @@ protected:
     osg::ref_ptr<ChaseCam> m_shipCamera;
     osg::ref_ptr<osg::TextureCubeMap> m_environmentMap;
 
+    osg::ref_ptr<osg::Uniform> m_planetRotationUniform;
+
     std::vector<SpaceShipClient::pointer> m_otherShips;
     SpaceShipClient::pointer m_myShip;
     std::map<ChunkCoordinates, AsteroidFieldChunkClient::pointer> m_asteroidFieldChunks;

@@ -5,7 +5,7 @@ template <> MessageMetaData
 GameGameInfoConstructionDataMessage::base::m_metaData = MessageMetaData::createMetaData<GameGameInfoConstructionDataMessage>("ownerId");
 
 template <> MessageMetaData
-GameRoundDataMessage::base::m_metaData = MessageMetaData::createMetaData<GameRoundDataMessage>("startPoint\nfinishAreaCenter\nfinishAreaRadius\nownerId");
+GameRoundDataMessage::base::m_metaData = MessageMetaData::createMetaData<GameRoundDataMessage>("finishAreaCenter\nfinishAreaRadius\nownerId");
 
 REGISTER_GAMEMESSAGE(GameInfoConstructionData)
 REGISTER_GAMEMESSAGE(RoundData)
@@ -21,9 +21,8 @@ bool GameInfoServer::takeMessage(const GameMessage::const_pointer& msg, MessageP
     return false;
 }
 
-void GameInfoServer::setObjective(osg::Vec3f start, osg::Vec3f finish, float finishRadius)
+void GameInfoServer::setObjective(osg::Vec3f finish, float finishRadius)
 {
-    m_startingPoint = start;
     m_finishArea = finish;
     m_finishAreaSize = finishRadius;
 }
@@ -39,7 +38,6 @@ GameMessage::pointer GameInfoServer::objectiveMessage() const
     //build and send message to client
     GameRoundDataMessage::pointer msg{ new GameRoundDataMessage };
     msg->objectId(m_myObjectId);
-    msg->get<osg::Vec3f>("startPoint") = m_startingPoint;
     msg->get<osg::Vec3f>("finishAreaCenter") = m_finishArea;
     msg->get<float>("finishAreaRadius") = m_finishAreaSize;
     msg->get<uint32_t>("ownerId") = m_myOwnerId;

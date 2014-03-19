@@ -20,6 +20,8 @@ public:
 
     virtual bool takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender);
 
+    AsteroidField* getAsteroidField();
+
 protected:
 
     osg::Vec3i m_chunkCoord;

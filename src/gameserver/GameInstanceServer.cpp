@@ -36,6 +36,7 @@ m_serverThread(this)
         m_physicsEngine = std::make_shared<PhysicsEngine>();
         m_planetSystem = std::make_shared<PlanetarySystemServer>(150, this);
     });
+
     m_gameInfo = std::make_shared<GameInfoServer>(0, this);
     m_waitingForPlayers = true;
     m_serverThread.setSchedulePriority(OpenThreads::Thread::THREAD_PRIORITY_HIGH);
@@ -109,6 +110,16 @@ void GameInstanceServer::newRound()
         float range = chunksize; // todo: new range calculation?
         float maxRand = randDevice.max();
 
+        /* THIS IS FOR SELECTING A PLANET AS OBJECTIVE. It doesnt work right now because asteroids are not static due to chunking
+        AsteroidField* chunk000Asteroids = m_universe.at(osg::Vec3i(0, 0, 0)).m_asteroidField->getAsteroidField;
+
+        //randomly select an asteroid to be set as objective
+        int id = (randDevice() / (maxRand+1.0f)) * chunk000Asteroids->getLength();
+        Asteroid* a = chunk000Asteroids->getAsteroid(id);
+        
+        osg::Vec3f finishArea = a->getPosition();
+        m_gameInfo->setObjective(finishArea, a->getRadius());*/
+        
         osg::Vec3f startingPoint = osg::Vec3f(
             range*randDevice() / maxRand,
             range*randDevice() / maxRand,
@@ -117,25 +128,12 @@ void GameInstanceServer::newRound()
             range*randDevice() / maxRand,
             range*randDevice() / maxRand,
             range*randDevice() / maxRand);
-        m_gameInfo->setObjective(startingPoint, finishArea, 1);
+        m_gameInfo->setObjective(finishArea, 1);
     
     
         GameMessage::pointer msg = m_gameInfo->objectiveMessage();
-        btTransform t;
         for (std::map<MessagePeer*, SpaceShipServer::pointer>::iterator peerSpaceShip = m_peerSpaceShips.begin(); peerSpaceShip != m_peerSpaceShips.end(); ++peerSpaceShip)
         {
-            //set ship positions to starting point
-            osg::Vec3f v1 = osg::Vec3f(0, 0, 1), v2 = startingPoint - finishArea;
-            osg::Vec3f a = v1 ^ v2;
-            float w = sqrt(v1.length2() * v2.length2()) + v1*v2;
-            btQuaternion q = btQuaternion(a.x(), a.y(), a.z(), w).normalize();
-            t.setRotation(q);
-            t.setOrigin(btVector3(startingPoint.x(), startingPoint.y(), startingPoint.z()));
-
-            unsigned int physId = peerSpaceShip->second->getPhysicsId();
-        
-            m_physicsEngine->setShipTransformation(physId, t);
-
             //inform clients about new objective
             MessagePeer* buddy = peerSpaceShip->first;
             buddy->send(msg);
@@ -233,9 +231,9 @@ bool GameInstanceServer::takeMessage(const NetMessage::const_pointer& msg, Messa
         // First look if we have it in our dictionary
         if (m_universe.count(chunkCoord) == 0)
         {
-            // The chunk doesn't exist yet, generate it
+            //answer with empty chunk. 
             ServerChunkData newChunk;
-            newChunk.m_asteroidField = std::make_shared<AsteroidFieldChunkServer>(10, chunksize, 3.2f, 24.0f, 0, chunkCoord, this, m_physicsEngine.get());
+            newChunk.m_asteroidField = std::make_shared<AsteroidFieldChunkServer>(40, chunksize, 2.2f, 9.0f, 0, chunkCoord, this, m_physicsEngine.get());
             m_universe.insert(std::make_pair(chunkCoord, newChunk));
         }
 

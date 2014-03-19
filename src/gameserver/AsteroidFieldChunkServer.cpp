@@ -98,3 +98,9 @@ bool AsteroidFieldChunkServer::takeMessage(const GameMessage::const_pointer& msg
 {
     return false;
 }
+
+
+AsteroidField* AsteroidFieldChunkServer::getAsteroidField()
+{
+    return m_asteroids.get();
+}

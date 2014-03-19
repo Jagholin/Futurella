@@ -15,7 +15,7 @@
 // END_DECLGAMEMESSAGE()
 
 typedef GenericGameMessage<5006, uint32_t> GameGameInfoConstructionDataMessage; // varNames: "ownerId"
-typedef GenericGameMessage<5007, osg::Vec3f, osg::Vec3f, float, uint32_t> GameRoundDataMessage; // varNames: "startPoint", "finishAreaCenter", "finishAreaRadius", "ownerId"
+typedef GenericGameMessage<5007, osg::Vec3f, float, uint32_t> GameRoundDataMessage; // varNames: "finishAreaCenter", "finishAreaRadius", "ownerId"
 
 class GameInstanceServer;
 
@@ -33,11 +33,11 @@ public:
     GameMessage::pointer creationMessage() const;
 
     bool shipInFinishArea(osg::Vec3f shipPosition);
-    void setObjective(osg::Vec3f start, osg::Vec3f finish, float finishRadius);
+    void setObjective(osg::Vec3f finish, float finishRadius);
 
 protected:
 
-    osg::Vec3f m_startingPoint, m_finishArea;
+    osg::Vec3f m_finishArea;
     float m_finishAreaSize;
 
     // event related functions

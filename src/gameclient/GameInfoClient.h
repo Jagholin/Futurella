@@ -27,7 +27,7 @@ protected:
 
     osg::ref_ptr<osg::MatrixTransform> m_transformGroup;
 
-    osg::Vec3f m_startingPoint, m_finishArea;
+    osg::Vec3f m_finishArea;
     float m_finishAreaSize;
 
     static int m_dummy;

@@ -5,13 +5,14 @@
 #include <osg/Geode>
 #include <osg/MatrixTransform>
 
+#include "../ShaderWrapper.h"
+
 REGISTER_GAMEOBJECT_TYPE(GameInfoClient, 5006)
 
 
 GameInfoClient::GameInfoClient(uint16_t objId, uint32_t ownerId, GameInstanceClient* ctx):
 GameObject(objId, ownerId, ctx)
 {
-    m_startingPoint = osg::Vec3f(0,0,0);
     m_finishArea = osg::Vec3f(0, 0, 0);
     m_finishAreaSize = 0;
     
@@ -22,6 +23,15 @@ GameObject(objId, ownerId, ctx)
     s->setColor(osg::Vec4(0, 1, 1, 0.5f));
     osg::ref_ptr<osg::Geode> d = new osg::Geode();
     d->addDrawable(s);
+
+    osg::ref_ptr<ShaderWrapper> myProgram = new ShaderWrapper;
+    myProgram->load(osg::Shader::VERTEX, "shader/vs_objective.txt");
+    myProgram->load(osg::Shader::FRAGMENT, "shader/fs_objective.txt");
+
+    osg::StateSet* stateSet = d->getOrCreateStateSet();
+    stateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
+    stateSet->setAttributeAndModes(myProgram, osg::StateAttribute::ON);
+    stateSet->setRenderingHint(osg::StateSet::RenderingHint::TRANSPARENT_BIN);
 
     m_finishAreaNode = d;
     m_transformGroup = new osg::MatrixTransform;
@@ -41,7 +51,6 @@ bool GameInfoClient::takeMessage(const GameMessage::const_pointer& msg, MessageP
     {
         GameRoundDataMessage::const_pointer realMsg = msg->as<GameRoundDataMessage>();
 
-        m_startingPoint = realMsg->get<osg::Vec3f>("startPoint");
         m_finishArea = realMsg->get<osg::Vec3f>("finishAreaCenter");
         m_finishAreaSize = realMsg->get<float>("finishAreaRadius");
 
