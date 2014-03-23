@@ -15,7 +15,8 @@
 // END_DECLGAMEMESSAGE()
 
 typedef GenericGameMessage<5006, uint32_t> GameGameInfoConstructionDataMessage; // varNames: "ownerId"
-typedef GenericGameMessage<5007, osg::Vec3f, float, uint32_t> GameRoundDataMessage; // varNames: "finishAreaCenter", "finishAreaRadius", "ownerId"
+typedef GenericGameMessage<5007, osg::Vec3f, float, uint32_t, uint32_t> GameRoundDataMessage; // varNames: "finishAreaCenter", "finishAreaRadius", "numberOfPlayers", "ownerId"
+typedef GenericGameMessage<5008> GameEndGameMessage; // maybe sent information like game time,...
 
 class GameInstanceServer;
 
@@ -31,11 +32,16 @@ public:
 
     GameMessage::pointer objectiveMessage() const;
     GameMessage::pointer creationMessage() const;
+    GameMessage::pointer gameOverMessage() const;
 
     bool shipInFinishArea(osg::Vec3f shipPosition);
     void setObjective(osg::Vec3f finish, float finishRadius);
 
+    void setGameRunning(bool b);
+    bool getGameRunning();
+
 protected:
+    bool m_gameRunning;
 
     osg::Vec3f m_finishArea;
     float m_finishAreaSize;

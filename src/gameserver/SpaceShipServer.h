@@ -34,11 +34,16 @@ public:
 
     unsigned int getPhysicsId();
 
+    void incrementPlayerScore();
+    int getPlayerScore();
+
     GameMessage::pointer creationMessage() const;
 
 protected:
     float m_acceleration;
     float m_steerability;
+
+    int m_playerScore;
 
     bool m_inputState[6];
     std::shared_ptr<PhysicsEngine> m_engine;

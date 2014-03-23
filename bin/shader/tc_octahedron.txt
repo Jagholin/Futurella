@@ -35,7 +35,7 @@ void main()
 
     vec4 eyeOffset = osg_ModelViewMatrix * vec4(inVertex[0].offset, 1.0);
     float eyeSpaceDistanceInv = eyeOffset.w / sqrt(length(eyeOffset.xyz));
-    float tessLevel = clamp(50 * eyeSpaceDistanceInv * inVertex[0].scale, 0, 50);
+    float tessLevel = clamp(40 * eyeSpaceDistanceInv * inVertex[0].scale, 0, 60);
 
     eyeOffset = osg_ProjectionMatrix * eyeOffset;
 	

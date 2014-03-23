@@ -1,6 +1,6 @@
 #include "GameInstanceServer.h"
 
-const float GameInstanceServer::chunksize = 64;
+const float GameInstanceServer::chunksize = 80;
 
 #include "../networking/peermanager.h"
 #include "../gamecommon/PhysicsEngine.h"
@@ -30,7 +30,9 @@ NetPlayerScoreInfoMessage::m_metaData = MessageMetaData::createMetaData<NetPlaye
 GameInstanceServer::GameInstanceServer(const std::string &name) :
 //m_physicsEngine(new PhysicsEngine),
 m_name(name),
-m_serverThread(this)
+m_serverThread(this),
+m_gameLength(3),
+m_currentRound(0)
 {
     m_eventService.dispatch([this](){
         m_physicsEngine = std::make_shared<PhysicsEngine>();
@@ -64,44 +66,54 @@ bool GameInstanceServer::unknownObjectIdMessage(const GameMessage::const_pointer
 
 void GameInstanceServer::connectLocallyTo(MessagePeer* buddy, bool recursive /*= true*/)
 {
-    // we have got a new client! Create a SpaceShip just for him
-    GameMessagePeer::connectLocallyTo(buddy, recursive);
+    if (true) //if ( ! gameinfo->getGameRunning() )
+    {
 
-    // Dispatch to server thread, if necessary(see docs on difference between 
-    // io_service::dispatch() and io_service::post()
-    m_eventService.dispatch([this, buddy](){
+        // we have got a new client! Create a SpaceShip just for him
+        GameMessagePeer::connectLocallyTo(buddy, recursive);
 
-        SpaceShipServer::pointer hisShip{
+        // Dispatch to server thread, if necessary(see docs on difference between 
+        // io_service::dispatch() and io_service::post()
+        m_eventService.dispatch([this, buddy](){
+
+            SpaceShipServer::pointer hisShip{
             new SpaceShipServer(osg::Vec3f(), osg::Quat(0, osg::Vec3f(1, 0, 0)), RemotePeersManager::getManager()->getPeersId(buddy), this, m_physicsEngine) };
 
-        //GameMessage::pointer constructItMsg = m_asteroidField->creationMessage();
-        //buddy->send(constructItMsg);
-        GameMessage::pointer constructItMsg;
-        for (std::pair<MessagePeer*, SpaceShipServer::pointer> aShip : m_peerSpaceShips)
-        {
-            constructItMsg = aShip.second->creationMessage();
-            buddy->send(constructItMsg);
-        }
-        broadcastLocally(hisShip->creationMessage());
-        m_peerSpaceShips.insert(std::make_pair(buddy, hisShip));
+            //GameMessage::pointer constructItMsg = m_asteroidField->creationMessage();
+            //buddy->send(constructItMsg);
+            GameMessage::pointer constructItMsg;
+            for (std::pair<MessagePeer*, SpaceShipServer::pointer> aShip : m_peerSpaceShips)
+            {
+                constructItMsg = aShip.second->creationMessage();
+                buddy->send(constructItMsg);
+            }
+            broadcastLocally(hisShip->creationMessage());
+            m_peerSpaceShips.insert(std::make_pair(buddy, hisShip));
 
-        GameMessage::pointer constructGameInfoMsg = m_gameInfo->creationMessage();
-        buddy->send(constructGameInfoMsg);
+            GameMessage::pointer constructGameInfoMsg = m_gameInfo->creationMessage();
+            buddy->send(constructGameInfoMsg);
 
-        GameMessage::pointer constructPlanetSystem = m_planetSystem->creationMessage();
-        buddy->send(constructPlanetSystem);
+            GameMessage::pointer constructPlanetSystem = m_planetSystem->creationMessage();
+            buddy->send(constructPlanetSystem);
 
-        if (m_peerSpaceShips.size() >= MINPLAYERS && m_waitingForPlayers)
-        {
-            m_waitingForPlayers = false;
-            newRound();
-        }
+            if (true) //if all players clicked "im ready"
+            {
+                m_gameInfo->setGameRunning(true);
+                m_currentRound = 0;
+                newRound();
+            }
 
-    });
+        });
+    }
+    else
+    {
+        //deny connection
+    }
 }
 
 void GameInstanceServer::newRound()
 {
+    m_currentRound++;
     // dispatch to the server thread if necessary
     m_eventService.dispatch([this]() {
 
@@ -140,6 +152,17 @@ void GameInstanceServer::newRound()
 
         }
     });
+}
+
+void GameInstanceServer::endGame()
+{
+    m_gameInfo->setGameRunning(false);
+    GameMessage::pointer msg = m_gameInfo->gameOverMessage();
+    for (std::map<MessagePeer*, SpaceShipServer::pointer>::iterator peerSpaceShip = m_peerSpaceShips.begin(); peerSpaceShip != m_peerSpaceShips.end(); ++peerSpaceShip)
+    {
+        MessagePeer* buddy = peerSpaceShip->first;
+        buddy->send(msg);
+    }
 }
 
 void GameInstanceServer::disconnectLocallyFrom(MessagePeer* buddy, bool recursive /*= true*/)
@@ -187,26 +210,26 @@ void GameInstanceServer::physicsTick(float timeInterval)
 
 void GameInstanceServer::checkForEndround()
 {
-    // Dispatch to the server thread
-    m_eventService.dispatch([this]() {
 
-        bool someShipEnteredFinishArea = false;
-        for (std::map<MessagePeer*, SpaceShipServer::pointer>::iterator peerSpaceShip = m_peerSpaceShips.begin(); peerSpaceShip != m_peerSpaceShips.end(); ++peerSpaceShip)
-        {
-            unsigned int physId = peerSpaceShip->second->getPhysicsId();
-            osg::Vec3f pos = m_physicsEngine->getShipPosition(physId);
-            if (m_gameInfo->shipInFinishArea(pos))
+    if (m_gameInfo->getGameRunning())
+    {
+        m_eventService.dispatch([this]() { // Dispatch to the server thread
+
+
+            for (std::map<MessagePeer*, SpaceShipServer::pointer>::iterator peerSpaceShip = m_peerSpaceShips.begin(); peerSpaceShip != m_peerSpaceShips.end(); ++peerSpaceShip)
             {
-                someShipEnteredFinishArea = true;
-                break;
+                unsigned int physId = peerSpaceShip->second->getPhysicsId();
+
+                osg::Vec3f pos = m_physicsEngine->getShipPosition(physId);
+                if (m_gameInfo->shipInFinishArea(pos))
+                {
+                    peerSpaceShip->second->incrementPlayerScore();
+                    m_currentRound >= m_gameLength ? endGame() : newRound();
+                    break;
+                }
             }
-        }
-        if (someShipEnteredFinishArea)
-        {
-            //todo. update the players scores
-            newRound();
-        }
-    });
+        });
+    }
 }
 
 GameInstanceServer::ChunkCoordinates GameInstanceServer::positionToChunk(const osg::Vec3f& pos)
@@ -231,9 +254,8 @@ bool GameInstanceServer::takeMessage(const NetMessage::const_pointer& msg, Messa
         // First look if we have it in our dictionary
         if (m_universe.count(chunkCoord) == 0)
         {
-            //answer with empty chunk. 
             ServerChunkData newChunk;
-            newChunk.m_asteroidField = std::make_shared<AsteroidFieldChunkServer>(40, chunksize, 2.2f, 9.0f, 0, chunkCoord, this, m_physicsEngine.get());
+            newChunk.m_asteroidField = std::make_shared<AsteroidFieldChunkServer>(50, chunksize, 2.2f, 9.0f, 0, chunkCoord, this, m_physicsEngine.get());
             m_universe.insert(std::make_pair(chunkCoord, newChunk));
         }
 

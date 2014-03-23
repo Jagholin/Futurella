@@ -20,7 +20,8 @@ GameObject(ownerId, ctx),
 m_acceleration(60.0f),
 m_steerability(0.4f),
 m_actor(nullptr),
-m_physicsId(0)
+m_physicsId(0),
+m_playerScore(0)
 {
     m_lastUpdate = std::chrono::steady_clock::now();
     for (unsigned int i = 0; i < 6; ++i) m_inputState[i] = false;
@@ -111,6 +112,16 @@ unsigned int SpaceShipServer::getPhysicsId()
 SpaceShipServer::~SpaceShipServer()
 {
     m_engine->removeVehicle(m_physicsId);
+}
+
+void SpaceShipServer::incrementPlayerScore()
+{   
+    m_playerScore++;
+}
+
+int SpaceShipServer::getPlayerScore()
+{
+    return m_playerScore;
 }
 
 REGISTER_GAMEMESSAGE(SpaceShipConstructionData)

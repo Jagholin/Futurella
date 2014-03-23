@@ -49,6 +49,7 @@ public:
     void physicsTick(float timeInterval);
 
     void newRound();
+    void endGame();
     void checkForEndround();
 
     typedef osg::Vec3i ChunkCoordinates;
@@ -71,6 +72,8 @@ public:
 
     friend class GameServerThread;
 protected:
+    int m_currentRound, m_gameLength;
+
     static const float chunksize;
     std::shared_ptr<PhysicsEngine> m_physicsEngine;
 

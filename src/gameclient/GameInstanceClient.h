@@ -46,6 +46,8 @@ public:
     void shipChangedPosition(const osg::Vec3f& pos, SpaceShipClient* ship);
     void gameInfoUpdated();
 
+    void setupGameOverScreen(int numOfPlayers, char** names, int* scores);
+
     // Scene graph manipulation functions, can be called by game objects
     // These methods are thread-safe
     void addNodeToScene(osg::Node* aNode);
@@ -59,8 +61,6 @@ protected:
     osg::ref_ptr<osgViewer::Viewer> m_viewer;
     osg::ref_ptr<ChaseCam> m_shipCamera;
     osg::ref_ptr<osg::TextureCubeMap> m_environmentMap;
-
-    osg::ref_ptr<osg::Uniform> m_planetRotationUniform;
 
     std::vector<SpaceShipClient::pointer> m_otherShips;
     SpaceShipClient::pointer m_myShip;
@@ -79,6 +79,7 @@ protected:
 
     void createTextureArrays();
     void setupPPPipeline();
+    osg::Group* createGameOverScreenText();
 
     virtual boost::asio::io_service* eventService();
 

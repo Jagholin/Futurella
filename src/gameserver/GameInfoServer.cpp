@@ -5,13 +5,18 @@ template <> MessageMetaData
 GameGameInfoConstructionDataMessage::base::m_metaData = MessageMetaData::createMetaData<GameGameInfoConstructionDataMessage>("ownerId");
 
 template <> MessageMetaData
-GameRoundDataMessage::base::m_metaData = MessageMetaData::createMetaData<GameRoundDataMessage>("finishAreaCenter\nfinishAreaRadius\nownerId");
+GameRoundDataMessage::base::m_metaData = MessageMetaData::createMetaData<GameRoundDataMessage>("finishAreaCenter\nfinishAreaRadius\nnumberOfPlayers\nownerId");
+
+template <> MessageMetaData
+GameEndGameMessage::base::m_metaData = MessageMetaData::createMetaData<GameEndGameMessage>("");
 
 REGISTER_GAMEMESSAGE(GameInfoConstructionData)
 REGISTER_GAMEMESSAGE(RoundData)
+REGISTER_GAMEMESSAGE(EndGame)
 
 GameInfoServer::GameInfoServer(uint32_t ownerId, GameInstanceServer* context) :
-GameObject(ownerId, context)
+GameObject(ownerId, context),
+m_gameRunning(true)
 {
 }
 
@@ -44,6 +49,13 @@ GameMessage::pointer GameInfoServer::objectiveMessage() const
     return msg;
 }
 
+GameMessage::pointer GameInfoServer::gameOverMessage() const
+{
+    GameEndGameMessage::pointer msg{ new GameEndGameMessage };
+    msg->objectId(m_myObjectId);
+    return msg;
+}
+
 GameMessage::pointer GameInfoServer::creationMessage() const
 {
     GameGameInfoConstructionDataMessage::pointer msg{ new GameGameInfoConstructionDataMessage };
@@ -56,3 +68,13 @@ GameInfoServer::~GameInfoServer()
 {
 }
 
+
+void GameInfoServer::setGameRunning(bool b)
+{
+    m_gameRunning = b;
+}
+
+bool GameInfoServer::getGameRunning()
+{
+    return m_gameRunning;
+}

@@ -15,6 +15,8 @@
 #include <osg/Geode>
 #include <osg/BlendFunc>
 #include <osgUtil/CullVisitor>
+#include <osgText/Font>
+#include <osgText/Text>
 #include <fmod.hpp>
 #include <fmod_errors.h>
 
@@ -156,6 +158,7 @@ m_orphaned(false)
 
     result = FMOD::System_Create(&soundSystem);     // Create the main system object.
     result = soundSystem->init(100, FMOD_INIT_NORMAL, 0);   // Initialize FMOD.
+
 
     soundSystem->createStream("music/ambience2.mp3", FMOD_DEFAULT, nullptr, &backgroundSound);
 
@@ -389,6 +392,20 @@ void GameInstanceClient::setupPPPipeline()
     m_viewer->getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
 }
 
+void GameInstanceClient::setupGameOverScreen(int numPlayers, char** names, int* scores)
+{
+    osg::ref_ptr<osg::Group> group = m_rootGraphicsGroup->getParent(0);
+    osg::Camera* camera = new osg::Camera;
+    camera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+    camera->setProjectionMatrixAsOrtho2D(0, 1280, 0, 1024);
+    camera->setViewMatrix(osg::Matrix::identity());
+    camera->setClearMask(GL_DEPTH_BUFFER_BIT);
+    camera->addChild(createGameOverScreenText());
+    camera->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    camera->setRenderOrder(osg::Camera::POST_RENDER, 100);
+}
+
+
 void GameInstanceClient::shipChangedPosition(const osg::Vec3f& pos, SpaceShipClient* ship)
 {
     if (ship != m_myShip.get())
@@ -582,3 +599,47 @@ void GameInstanceClient::onUpdatePhase()
     m_updateCallbackService.poll();
     m_updateCallbackService.reset();
 }
+
+
+osg::Group* GameInstanceClient::createGameOverScreenText()
+{
+
+    osg::Group* rootNode = new osg::Group;
+
+    osgText::Font* font = osgText::readFontFile("fonts/arial.ttf");
+
+    osg::Geode* geode = new osg::Geode;
+    rootNode->addChild(geode);
+
+    float windowHeight = 1024.0f;
+    float windowWidth = 1280.0f;
+    float margin = 50.0f;
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //    
+    // Examples of how to set up different text layout
+    //
+
+    osg::Vec4 layoutColor(1.0f, 1.0f, 0.0f, 1.0f);
+    float layoutCharacterSize = 20.0f;
+
+    {
+        osgText::Text* text = new osgText::Text;
+        text->setFont(font);
+        text->setColor(layoutColor);
+        text->setCharacterSize(layoutCharacterSize);
+        text->setPosition(osg::Vec3(margin, windowHeight - margin, 0.0f));
+
+        // the default layout is left to right, typically used in languages
+        // originating from europe such as English, French, German, Spanish etc..
+        text->setLayout(osgText::Text::LEFT_TO_RIGHT);
+
+        text->setText("text->setLayout(osgText::Text::LEFT_TO_RIGHT);");
+        geode->addDrawable(text);
+    }
+
+
+    return rootNode;
+}
+
