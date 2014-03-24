@@ -65,9 +65,13 @@ bool GameInfoClient::takeMessage(const GameMessage::const_pointer& msg, MessageP
     }
     else if (msg->gettype() == GameEndGameMessage::type)
     {
-        //((GameInstanceClient*)m_context)->showGameOverScreen();
-        //remove objective
         std::cout << "gameClient received game over message";
+        std::vector<std::string> names;
+        names.push_back("player 1");
+        names.push_back("player 2");
+        int scores[] = { 1, 2 };
+        ((GameInstanceClient*)m_context)->setupGameOverScreen(2, &names, scores);
+        //remove objective
     }
     return false;
 }

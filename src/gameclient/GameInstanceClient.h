@@ -46,7 +46,7 @@ public:
     void shipChangedPosition(const osg::Vec3f& pos, SpaceShipClient* ship);
     void gameInfoUpdated();
 
-    void setupGameOverScreen(int numOfPlayers, char** names, int* scores);
+    void setupGameOverScreen(int numOfPlayers, std::vector<std::string>* names, int* scores);
 
     // Scene graph manipulation functions, can be called by game objects
     // These methods are thread-safe
@@ -57,7 +57,8 @@ public:
     void onUpdatePhase();
 protected:
     addstd::signal<void()> m_clientOrphaned;
-    osg::ref_ptr<osg::Group> m_rootGraphicsGroup;
+    //rootgraphicsgroup is for planets/ships/... and m_realRoot is for prerender cameras and screenquads and rootgraphicsgroup
+    osg::ref_ptr<osg::Group> m_rootGraphicsGroup, m_realRoot;     
     osg::ref_ptr<osgViewer::Viewer> m_viewer;
     osg::ref_ptr<ChaseCam> m_shipCamera;
     osg::ref_ptr<osg::TextureCubeMap> m_environmentMap;

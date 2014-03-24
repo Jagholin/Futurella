@@ -31,7 +31,7 @@ GameInstanceServer::GameInstanceServer(const std::string &name) :
 //m_physicsEngine(new PhysicsEngine),
 m_name(name),
 m_serverThread(this),
-m_gameLength(3),
+m_gameLength(1),
 m_currentRound(0)
 {
     m_eventService.dispatch([this](){
