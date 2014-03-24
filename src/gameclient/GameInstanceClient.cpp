@@ -419,12 +419,12 @@ void GameInstanceClient::setupGameOverScreen()
     m_HUDCamera->setClearMask(GL_COLOR_BUFFER_BIT);
     //textrenderingspecific stuff
     m_HUDCamera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
-    m_HUDCamera->setProjectionMatrixAsOrtho2D(0, 2000, 0, 1000);
+    m_HUDCamera->setProjectionMatrixAsOrtho2D(0,1,0,1);
     m_HUDCamera->setViewMatrix(osg::Matrix::identity());
     m_HUDCamera->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
     m_HUDCamera->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
     //rtt
-    m_HUDCamera->attach(osg::Camera::COLOR_BUFFER3, textColorTexture);
+    m_HUDCamera->attach(osg::Camera::COLOR_BUFFER, textColorTexture);
 
     m_realRoot->addChild(m_HUDCamera);
 
@@ -447,11 +447,13 @@ void GameInstanceClient::setupGameOverScreen()
 
     screenQuad->addDrawable(drawableQuad);
     osg::StateSet* stateset = screenQuad->getOrCreateStateSet();
-    stateset->setTextureAttributeAndModes(3, textColorTexture, osg::StateAttribute::ON);
-    stateset->addUniform(new osg::Uniform("textColorTexture", 3));
+    stateset->setTextureAttributeAndModes(0, textColorTexture, osg::StateAttribute::ON);
+    stateset->addUniform(new osg::Uniform("textColorTexture", 0));
     stateset->setAttributeAndModes(screenQuadProgram);
-    stateset->setAttributeAndModes(new osg::BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
+    stateset->setAttributeAndModes(new osg::BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA), osg::StateAttribute::ON);
+    stateset->setMode(GL_BLEND, osg::StateAttribute::ON);
     stateset->setRenderingHint(osg::StateSet::RenderingHint::TRANSPARENT_BIN);
+    stateset->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
     screenQuad->setCullingActive(false);
 
     m_realRoot->addChild(screenQuad);   
@@ -460,7 +462,6 @@ void GameInstanceClient::setupGameOverScreen()
     std::cout << "finished to create overlay camera for game over screen\n";
     std::cout << "test to add content to hud\n";
 
-    createGameOverScreenText(0,NULL,NULL);
 }
 
 
@@ -659,45 +660,74 @@ void GameInstanceClient::onUpdatePhase()
 }
 
 
-void GameInstanceClient::createGameOverScreenText(int numPlayers, std::vector<std::string>* names, int* scores)
+std::multimap<int, std::string> GameInstanceClient::getPlayerScores()
 {
+    std::multimap<int, std::string> all;
+    all.insert(std::make_pair<int, std::string>(m_myShip->getPlayerScore(), m_myShip->getPlayerName()));
+    for (std::vector<SpaceShipClient::pointer>::iterator iter = m_otherShips.begin(); iter != m_otherShips.end(); iter++)
+        all.insert(std::make_pair<int, std::string>(iter->get()->getPlayerScore(), iter->get()->getPlayerName()));
+    return all;
+}
+
+void GameInstanceClient::createGameOverScreenText()
+{
+    std::multimap<int, std::string> values = getPlayerScores();
 
     osgText::Font* font = osgText::readFontFile("fonts/arial.ttf");
+    osgText::Font* fontbd = osgText::readFontFile("fonts/arialbd.ttf");
 
     osg::Geode* geode = new osg::Geode;
     geode->setCullingActive(false);
     geode->getOrCreateStateSet()->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
 
-    float windowHeight = 1000;
-    float windowWidth = 2000;
-    float margin = 50.0f;
-
-    osg::ref_ptr<osg::Shape> sphere = new osg::Sphere(osg::Vec3f(0, 0, 0), 1230);
-    osg::ref_ptr<osg::ShapeDrawable> s = new osg::ShapeDrawable(sphere);
-    s->setColor(osg::Vec4(0, 1, 1, 1));
-    geode->addDrawable(s);
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
     //    
     // Examples of how to set up different text layout
     //
+    float tableYOffset = 0.2f;
+    float tableRowSpacing = 0.015f;
+    float fontSize = 0.035f;
+    float playerNameXOffset = 0.1f;
 
-    osg::Vec4 layoutColor(1.0f, 1.0f, 0.0f, 1.0f);
-    float layoutCharacterSize = 20.0f;
+    osg::Vec4 layoutColor(0.6f, 0.8f, 1.0f, 0.7f);
 
+    osg::ref_ptr<osgText::Text> textPattern = new osgText::Text();
+    textPattern->setFont(font);
+    textPattern->setColor(layoutColor);
+    textPattern->setCharacterSize(fontSize);
+    textPattern->setFontResolution(32, 32);
+    textPattern->setLayout(osgText::Text::LEFT_TO_RIGHT);
+    textPattern->setAlignment(osgText::Text::CENTER_BASE_LINE);
+
+    std::multimap<int, std::string>::iterator iter;
+    int i = 0;
+    for (iter = values.begin(); iter != values.end(); ++iter)
     {
-        osgText::Text* text = new osgText::Text;
-        text->setFont(font);
-        text->setColor(layoutColor);
-        text->setCharacterSize(layoutCharacterSize);
-        text->setPosition(osg::Vec3(margin, 500, 0.0f));
+        i++;
+        osgText::Text *textPosition = static_cast<osgText::Text*>(textPattern->clone(osg::CopyOp::DEEP_COPY_ALL));
+        osgText::Text *textName = static_cast<osgText::Text*>(textPattern->clone(osg::CopyOp::DEEP_COPY_ALL));
+        osgText::Text *textScore = static_cast<osgText::Text*>(textPattern->clone(osg::CopyOp::DEEP_COPY_ALL));
 
-        text->setLayout(osgText::Text::LEFT_TO_RIGHT);
+        textPosition->setPosition(osg::Vec3(playerNameXOffset, (1 - tableYOffset) - i * (fontSize + tableRowSpacing), 0.0f));
+        textName->setPosition(osg::Vec3(playerNameXOffset + 0.2, (1 - tableYOffset) - i * (fontSize + tableRowSpacing), 0.0f));
+        textScore->setPosition(osg::Vec3(playerNameXOffset + 0.7, (1 - tableYOffset) - i * (fontSize + tableRowSpacing), 0.0f));
 
-        text->setText("Hello World lol apsiodfjaspdiojaspodijsapodjaspodijaspoijd");
-        geode->addDrawable(text);
+        if (i == -1)
+        {
+            textPosition->setText("Position");
+            textName->setText("Player Name");
+            textScore->setText("Score");
+        }
+        else
+        {
+            textPosition->setText(std::to_string(i).append("."));
+            textName->setText(iter->second);
+            textScore->setText(std::to_string(iter->first));
+        }
+        geode->addDrawable(textPosition);
+        geode->addDrawable(textName);
+        geode->addDrawable(textScore);
     }
-
 
     m_HUDCamera->addChild(geode);
 }

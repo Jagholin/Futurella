@@ -46,7 +46,9 @@ public:
     void shipChangedPosition(const osg::Vec3f& pos, SpaceShipClient* ship);
     void gameInfoUpdated();
 
-    void createGameOverScreenText(int numOfPlayers, std::vector<std::string>* names, int* scores);
+    void createGameOverScreenText();
+
+    std::multimap<int, std::string> getPlayerScores();
 
     // Scene graph manipulation functions, can be called by game objects
     // These methods are thread-safe
