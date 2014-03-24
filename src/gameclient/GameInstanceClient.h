@@ -46,7 +46,7 @@ public:
     void shipChangedPosition(const osg::Vec3f& pos, SpaceShipClient* ship);
     void gameInfoUpdated();
 
-    void setupGameOverScreen(int numOfPlayers, std::vector<std::string>* names, int* scores);
+    void createGameOverScreenText(int numOfPlayers, std::vector<std::string>* names, int* scores);
 
     // Scene graph manipulation functions, can be called by game objects
     // These methods are thread-safe
@@ -80,7 +80,9 @@ protected:
 
     void createTextureArrays();
     void setupPPPipeline();
-    osg::Group* createGameOverScreenText();
+
+    void setupGameOverScreen();
+    osg::ref_ptr<osg::Camera> m_HUDCamera;
 
     virtual boost::asio::io_service* eventService();
 

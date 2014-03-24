@@ -105,7 +105,7 @@ m_connected(false),
 m_orphaned(false)
 {
     setupPPPipeline();
-   // setupGameOverScreen(0,NULL,NULL);
+    setupGameOverScreen();
     m_fieldGoalUpdater = new TrackGameInfoUpdate(m_HUD);
 
     m_viewportSizeUniform = new osg::Uniform("viewportSize", osg::Vec2f(800, 600));
@@ -343,6 +343,7 @@ void GameInstanceClient::setupPPPipeline()
     sceneCamera->attach(osg::Camera::DEPTH_BUFFER, GL_DEPTH_COMPONENT16);
 
     m_realRoot->addChild(sceneCamera);
+    std::cout << "add pp camera to " << m_realRoot.get() << "\n";
 
     osg::ref_ptr<osg::Geode> screenQuad = new osg::Geode;
     osg::ref_ptr<osg::Geometry> drawableQuad = new osg::Geometry;
@@ -392,41 +393,43 @@ void GameInstanceClient::setupPPPipeline()
     m_viewer->getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
 }
 
-void GameInstanceClient::setupGameOverScreen(int numPlayers, std::vector<std::string>* names, int* scores)
+void GameInstanceClient::setupGameOverScreen()
 {
     std::cout << "trying to create overlay camera for game over screen\n";
 
     //Create rtt camera for renderring HUD content
-    osg::ref_ptr<osg::Texture2D> colorTexture;
-    colorTexture = new osg::Texture2D;
-    colorTexture->setTextureSize(
+    osg::ref_ptr<osg::Texture2D> textColorTexture = new osg::Texture2D;
+    textColorTexture->setTextureSize(
         m_viewer->getCamera()->getViewport()->width(),
         m_viewer->getCamera()->getViewport()->height());
-    colorTexture->setInternalFormat(GL_RGBA16F);
-    colorTexture->setSourceType(GL_FLOAT);
-    colorTexture->setSourceFormat(GL_RGBA);
-    colorTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
-    colorTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
-    colorTexture->setBorderWidth(0);
-    colorTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
-    colorTexture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
+    textColorTexture->setInternalFormat(GL_RGBA16F);
+    textColorTexture->setSourceType(GL_FLOAT);
+    textColorTexture->setSourceFormat(GL_RGBA);
+    textColorTexture->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+    textColorTexture->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
+    textColorTexture->setBorderWidth(0);
+    textColorTexture->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
+    textColorTexture->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
 
-    osg::ref_ptr<osg::Camera> camera = new osg::Camera;
-/*    camera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
-    camera->setProjectionMatrixAsOrtho2D(0, 2000, 0, 1000);
-    camera->setViewMatrix(osg::Matrix::identity());
-//    camera->addChild(createGameOverScreenText());
-    camera->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
-    camera->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
-    camera->setRenderOrder(osg::Camera::PRE_RENDER);
-    camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
-    camera->setClearColor(osg::Vec4(0, 0, 0, 0));
-    camera->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    camera->attach(osg::Camera::COLOR_BUFFER, colorTexture);*/
+    m_HUDCamera = new osg::Camera;
+    //rtt
+    m_HUDCamera->setRenderOrder(osg::Camera::PRE_RENDER);
+    m_HUDCamera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
+    m_HUDCamera->setClearColor(osg::Vec4(0, 0, 0, 0));
+    m_HUDCamera->setClearMask(GL_COLOR_BUFFER_BIT);
+    //textrenderingspecific stuff
+    m_HUDCamera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+    m_HUDCamera->setProjectionMatrixAsOrtho2D(0, 2000, 0, 1000);
+    m_HUDCamera->setViewMatrix(osg::Matrix::identity());
+    m_HUDCamera->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    m_HUDCamera->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
+    //rtt
+    m_HUDCamera->attach(osg::Camera::COLOR_BUFFER3, textColorTexture);
 
-    m_realRoot->addChild(camera);
+    m_realRoot->addChild(m_HUDCamera);
 
-    /*
+    std::cout << "add HUD camera to " << m_realRoot.get() << "\n";
+    
     //Create Screenquad drawing HUD texture
     osg::ref_ptr<osg::Geode> screenQuad = new osg::Geode;
     osg::ref_ptr<osg::Geometry> drawableQuad = new osg::Geometry;
@@ -440,21 +443,24 @@ void GameInstanceClient::setupGameOverScreen(int numPlayers, std::vector<std::st
 
     osg::ref_ptr<ShaderWrapper> screenQuadProgram = new ShaderWrapper;
     screenQuadProgram->load(osg::Shader::VERTEX, "shader/hudquad.vs.txt");
-    screenQuadProgram->load(osg::Shader::FRAGMENT, "shader/hudquad.vs.txt");
+    screenQuadProgram->load(osg::Shader::FRAGMENT, "shader/hudquad.fs.txt");
 
     screenQuad->addDrawable(drawableQuad);
     osg::StateSet* stateset = screenQuad->getOrCreateStateSet();
-    stateset->setTextureAttributeAndModes(0, colorTexture, osg::StateAttribute::ON);
-    stateset->addUniform(new osg::Uniform("texColor", 0));
+    stateset->setTextureAttributeAndModes(3, textColorTexture, osg::StateAttribute::ON);
+    stateset->addUniform(new osg::Uniform("textColorTexture", 3));
     stateset->setAttributeAndModes(screenQuadProgram);
     stateset->setAttributeAndModes(new osg::BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
     stateset->setRenderingHint(osg::StateSet::RenderingHint::TRANSPARENT_BIN);
     screenQuad->setCullingActive(false);
-    m_realRoot->addChild(screenQuad);   */
+
+    m_realRoot->addChild(screenQuad);   
 
 
     std::cout << "finished to create overlay camera for game over screen\n";
+    std::cout << "test to add content to hud\n";
 
+    createGameOverScreenText(0,NULL,NULL);
 }
 
 
@@ -653,24 +659,23 @@ void GameInstanceClient::onUpdatePhase()
 }
 
 
-osg::Group* GameInstanceClient::createGameOverScreenText()
+void GameInstanceClient::createGameOverScreenText(int numPlayers, std::vector<std::string>* names, int* scores)
 {
-
-    osg::Group* rootNode = new osg::Group;
 
     osgText::Font* font = osgText::readFontFile("fonts/arial.ttf");
 
     osg::Geode* geode = new osg::Geode;
-    rootNode->addChild(geode);
+    geode->setCullingActive(false);
+    geode->getOrCreateStateSet()->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
 
-    float windowHeight = 1024.0f;
-    float windowWidth = 1280.0f;
+    float windowHeight = 1000;
+    float windowWidth = 2000;
     float margin = 50.0f;
 
-    osg::ref_ptr<osg::Box> box = new osg::Box(osg::Vec3f(0,0,-100),95);
-    osg::ref_ptr<osg::ShapeDrawable> testGeom = new osg::ShapeDrawable(box);
-    
-    rootNode->addChild(geode);
+    osg::ref_ptr<osg::Shape> sphere = new osg::Sphere(osg::Vec3f(0, 0, 0), 1230);
+    osg::ref_ptr<osg::ShapeDrawable> s = new osg::ShapeDrawable(sphere);
+    s->setColor(osg::Vec4(0, 1, 1, 1));
+    geode->addDrawable(s);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
     //    
@@ -687,15 +692,13 @@ osg::Group* GameInstanceClient::createGameOverScreenText()
         text->setCharacterSize(layoutCharacterSize);
         text->setPosition(osg::Vec3(margin, 500, 0.0f));
 
-        // the default layout is left to right, typically used in languages
-        // originating from europe such as English, French, German, Spanish etc..
         text->setLayout(osgText::Text::LEFT_TO_RIGHT);
 
-        text->setText("text->setLayout(osgText::Text::LEFT_TO_RIGHT);");
+        text->setText("Hello World lol apsiodfjaspdiojaspodijsapodjaspodijaspoijd");
         geode->addDrawable(text);
     }
 
 
-    return rootNode;
+    m_HUDCamera->addChild(geode);
 }
 

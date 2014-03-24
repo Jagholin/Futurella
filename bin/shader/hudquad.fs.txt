@@ -6,8 +6,14 @@ layout(location = 0) out vec4 fragColor;
 
 uniform sampler2D texColor;
 
-
 void main()
 {    
-	fragColor = texture(texColor, texCoord); 	
+	if(mod(texCoord.y,2) <= 1) 
+	{	
+		fragColor = texture(texColor, texCoord);
+	}
+	else
+	{
+		fragColor = vec4(1,1,1,0.5f);
+	} 	
 }

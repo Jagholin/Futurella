@@ -70,7 +70,7 @@ bool GameInfoClient::takeMessage(const GameMessage::const_pointer& msg, MessageP
         names.push_back("player 1");
         names.push_back("player 2");
         int scores[] = { 1, 2 };
-        ((GameInstanceClient*)m_context)->setupGameOverScreen(2, &names, scores);
+        ((GameInstanceClient*)m_context)->createGameOverScreenText(2, &names, scores);
         //remove objective
     }
     return false;
