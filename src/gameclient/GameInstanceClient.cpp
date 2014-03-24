@@ -689,7 +689,13 @@ void GameInstanceClient::createGameOverScreenText()
     float fontSize = 0.035f;
     float playerNameXOffset = 0.1f;
 
-    osg::Vec4 layoutColor(0.6f, 0.8f, 1.0f, 0.7f);
+
+    osg::ref_ptr<osg::Box> box = new osg::Box(osg::Vec3f(0.5f, 0.5f, 0.5f), 1.f, 0.8f, 0.0f);
+    osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable(box);
+    sd->setColor(osg::Vec4(0.01f, 0.01f, 0.01f, 0.7f));
+    geode->addDrawable(sd);
+
+    osg::Vec4 layoutColor(0.6f, 0.8f, 1.0f, 0.85f);
 
     osg::ref_ptr<osgText::Text> textPattern = new osgText::Text();
     textPattern->setFont(font);
@@ -700,7 +706,31 @@ void GameInstanceClient::createGameOverScreenText()
     textPattern->setAlignment(osgText::Text::CENTER_BASE_LINE);
 
     std::multimap<int, std::string>::iterator iter;
-    int i = 0;
+    int i = -1;
+
+    osgText::Text *header = static_cast<osgText::Text*>(textPattern->clone(osg::CopyOp::DEEP_COPY_ALL));
+    osgText::Text *textPosition = static_cast<osgText::Text*>(textPattern->clone(osg::CopyOp::DEEP_COPY_ALL));
+    osgText::Text *textName = static_cast<osgText::Text*>(textPattern->clone(osg::CopyOp::DEEP_COPY_ALL));
+    osgText::Text *textScore = static_cast<osgText::Text*>(textPattern->clone(osg::CopyOp::DEEP_COPY_ALL));
+
+    header->setPosition(osg::Vec3f(0.5f, 0.13f, 0.f));
+    header->setFontResolution(64, 64);
+    header->setCharacterSize(0.07f);
+    textPosition->setPosition(osg::Vec3(playerNameXOffset, (1 - tableYOffset) - i * (fontSize + tableRowSpacing), 0.0f));
+    textName->setPosition(osg::Vec3(playerNameXOffset + 0.2, (1 - tableYOffset) - i * (fontSize + tableRowSpacing), 0.0f));
+    textScore->setPosition(osg::Vec3(playerNameXOffset + 0.7, (1 - tableYOffset) - i * (fontSize + tableRowSpacing), 0.0f));
+
+    header->setText("Game Over!");
+    textPosition->setText("Position");
+    textName->setText("Player Name");
+    textScore->setText("Score");
+    
+    geode->addDrawable(header);
+    geode->addDrawable(textPosition);
+    geode->addDrawable(textName);
+    geode->addDrawable(textScore);
+
+    i = 0;
     for (iter = values.begin(); iter != values.end(); ++iter)
     {
         i++;
