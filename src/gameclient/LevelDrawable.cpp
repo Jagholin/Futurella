@@ -47,6 +47,7 @@ osg::BoundingBox LevelDrawable::GLObjectsHolder::getBound()
         float y = m_owner.m_instanceRawData[i++];
         float z = m_owner.m_instanceRawData[i++];
         float w = m_owner.m_instanceRawData[i++];
+        i++; // Random number at the end of each instance raw data entry
 
         m_aabb.expandBy(osg::BoundingSphere(osg::Vec3f(x, y, z), w));
     }
