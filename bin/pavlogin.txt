@@ -1,0 +1,3 @@
+login pavel 12222
+game create hallo
+game join 0

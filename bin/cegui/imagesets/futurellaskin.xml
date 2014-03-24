@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<Imageset autoScaled="vertical" imagefile="Futurella.png" name="Futurella" nativeHorzRes="564" nativeVertRes="237" version="2">
+    <Image height="64" name="ClientBrush" width="64" xPos="384" yPos="32" />
+    <Image height="32" name="CreateServerBtn" width="176" xPos="0" yPos="0" />
+    <Image height="32" name="CreateServerBtnPressed" width="176" xPos="177" yPos="0" />
+    <Image height="32" name="DisconnectBtn" width="176" xPos="0" yPos="33" />
+    <Image height="32" name="DisconnectBtnPressed" width="176" xPos="177" yPos="33" />
+    <Image height="32" name="EndgameBtn" width="176" xPos="0" yPos="66" />
+    <Image height="32" name="EndgameBtnPressed" width="176" xPos="177" yPos="66" />
+    <Image height="32" name="ImreadyBtn" width="176" xPos="0" yPos="99" />
+    <Image height="32" name="ImreadyBtnPressed" width="176" xPos="177" yPos="99" />
+    <Image height="32" name="JoinGameBtn" width="176" xPos="0" yPos="132" />
+    <Image height="32" name="JoinGameBtnPressed" width="176" xPos="177" yPos="132" />
+    
+    
+    <Image height="8" name="LeftTopEdge" width="8" xPos="366" yPos="0" />
+    <Image height="8" name="RightTopEdge" width="8" xPos="536" yPos="0" />
+    <Image height="8" name="LeftBottomEdge" width="8" xPos="366" yPos="117" />
+    <Image height="8" name="RightBottomEdge" width="8" xPos="536" yPos="117" />
+    <Image height="10" name="LeftBorder" width="8" xPos="366" yPos="9" />
+    <Image height="10" name="RightBorder" width="8" xPos="536" yPos="9" />
+    <Image height="8" name="BottomBorder" width="10" xPos="375" yPos="117" />
+    <Image height="8" name="TopBorder" width="10" xPos="375" yPos="0" />
+</Imageset>

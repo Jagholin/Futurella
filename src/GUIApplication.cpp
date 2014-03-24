@@ -239,6 +239,10 @@ void GUIApplication::registerEvents()
     addEventHandler("console/input", Window::EventMouseClick, Event::Subscriber(&GUIApplication::onConsoleClicked, this));
     addEventHandler("console/output", Window::EventMouseClick, Event::Subscriber(&GUIApplication::onConsoleClicked, this));
     addEventHandler("console/input", Editbox::EventTextAccepted, Event::Subscriber(&GUIApplication::onConsoleInput, this));
+
+    addEventHandler("StartMenu/CreateSrvButton", Window::EventMouseClick, Event::Subscriber(&GUIApplication::onCreateServersAndJoinClicked, this));
+    addEventHandler("StartMenu/JoinSrvButton", Window::EventMouseClick, Event::Subscriber(&GUIApplication::onJoinClicked, this));
+    addEventHandler("StartMenu/EndButton", Window::EventMouseClick, Event::Subscriber(&GUIApplication::onQuitBtnClicked, this));
     m_shaderProvider->registerEvents(this);
 }
 
@@ -831,4 +835,18 @@ void GUIApplication::hideGoalCursor()
         Window* goal = m_guiContext->getRootWindow()->getChild("levelGoal");
         goal->hide();
     });
+}
+
+bool GUIApplication::onCreateServersAndJoinClicked(const CEGUI::EventArgs&)
+{
+    m_guiContext->getRootWindow()->getChild("StartMenu")->hide();
+    m_guiContext->getRootWindow()->getChild("CreateServer")->show();
+    return true;
+}
+
+bool GUIApplication::onJoinClicked(const CEGUI::EventArgs&)
+{
+    m_guiContext->getRootWindow()->getChild("StartMenu")->hide();
+    m_guiContext->getRootWindow()->getChild("JoinServer")->show();
+    return true;
 }

@@ -91,6 +91,56 @@
         </StateImagery>
     </WidgetLook>
 
+    <WidgetLook name="Generic/ImageFrame">
+        <PropertyDefinition redrawOnWrite="true" initialValue="tl:FFFFFFFF tr:FFFFFFFF bl:FFFFFFFF br:FFFFFFFF" type="ColourRect" name="ImageColours"/>
+        <PropertyDefinition redrawOnWrite="true" initialValue="Stretched" type="VerticalFormatting" name="VertFormatting"/>
+        <PropertyDefinition redrawOnWrite="true" initialValue="Stretched" type="HorizontalFormatting" name="HorzFormatting"/>
+        <Property name="Size" value="{{0, 128}, {0, 128}}" />
+
+        <ImagerySection name="imageSection">
+            <FrameComponent>
+                <Image component="TopLeftCorner" name="Futurella/LeftTopEdge" />
+                <Image component="TopRightCorner" name="Futurella/RightTopEdge" />
+                <Image component="BottomLeftCorner" name="Futurella/LeftBottomEdge" />
+                <Image component="BottomRightCorner" name="Futurella/RightBottomEdge" />
+                <Image component="LeftEdge" name="Futurella/LeftBorder" />
+                <Image component="RightEdge" name="Futurella/RightBorder" />
+                <Image component="BottomEdge" name="Futurella/BottomBorder" />
+                <Image component="TopEdge" name="Futurella/TopBorder" />
+            </FrameComponent>
+            <ImageryComponent>
+                <Area>
+                    <Dim type="LeftEdge">
+                        <AbsoluteDim value="0"/>
+                    </Dim>
+                    <Dim type="TopEdge">
+                        <AbsoluteDim value="0"/>
+                    </Dim>
+                    <Dim type="RightEdge">
+                        <UnifiedDim scale="1.0" type="RightEdge"/>
+                    </Dim>
+                    <Dim type="BottomEdge">
+                        <UnifiedDim scale="1.0" type="BottomEdge"/>
+                    </Dim>
+                </Area>
+                <Image name="Futurella/ClientBrush"/>
+                <ColourRectProperty name="ImageColours"/>
+                <VertFormatProperty name="VertFormatting"/>
+                <HorzFormatProperty name="HorzFormatting"/>
+            </ImageryComponent>
+        </ImagerySection>
+        <StateImagery name="Enabled">
+            <Layer>
+                <Section section="imageSection"/>
+            </Layer>
+        </StateImagery>
+        <StateImagery name="Disabled">
+            <Layer>
+                <Section section="imageSection"/>
+            </Layer>
+        </StateImagery>
+    </WidgetLook>
+
     <WidgetLook name="Generic/ImageButton">
         <PropertyDefinition redrawOnWrite="true" initialValue="" type="Image" name="NormalImage"/>
         <PropertyDefinition redrawOnWrite="true" initialValue="" type="Image" name="HoverImage"/>

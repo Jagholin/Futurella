@@ -1,10 +1,19 @@
 <?xml version="1.0" ?>
 <GUIScheme version="5" name="Generic">
+    <Imageset filename="futurellaskin.xml" />
+    <Imageset filename="figures.imageset" />
+	<Imageset filename="TaharezLook.imageset" />
+	<Imageset filename="WindowsLook.imageset" />
+	<Font filename="Jura-10.font" />
+	<Font filename="DejaVuSans-12.font" />
 	<LookNFeel filename="Generic.looknfeel" />
+	<LookNFeel filename="WindowsLook.looknfeel" />
 	<WindowRendererSet filename="CEGUICoreWindowRendererSet" />
 
 	<FalagardMapping windowType="Generic/Label" targetType="DefaultWindow" renderer="Core/Default" lookNFeel="Generic/Label" />
     <FalagardMapping windowType="Generic/Image" targetType="DefaultWindow" renderer="Core/Default" lookNFeel="Generic/Image" />
+    <FalagardMapping windowType="Generic/ImageFrame" targetType="DefaultWindow" renderer="Core/Default" lookNFeel="Generic/ImageFrame" />
     <FalagardMapping windowType="Generic/ImageButton" targetType="CEGUI/PushButton" renderer="Core/Button" lookNFeel="Generic/ImageButton" />
+	<FalagardMapping windowType="WindowsLook/Editbox"          targetType="CEGUI/Editbox"          renderer="Core/Editbox"          lookNFeel="WindowsLook/Editbox" />
     
 </GUIScheme>

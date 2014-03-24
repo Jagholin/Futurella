@@ -288,17 +288,17 @@ void CeguiDrawable::init() const
     CEGUI::WindowManager::setDefaultResourceGroup("layouts");
     CEGUI::AnimationManager::setDefaultResourceGroup("anims");
 
-    CEGUI::SchemeManager::getSingleton().createFromFile("TaharezLook.scheme");
+    CEGUI::SchemeManager::getSingleton().createFromFile("Generic.scheme");
 
     CEGUI::System::getSingleton().getDefaultGUIContext().getMouseCursor().setDefaultImage("TaharezLook/MouseArrow");
-    CEGUI::System::getSingleton().getDefaultGUIContext().setDefaultFont("DejaVuSans-12");
-    CEGUI::System::getSingleton().getDefaultGUIContext().setDefaultTooltipType("TaharezLook/Tooltip");
+    //CEGUI::System::getSingleton().getDefaultGUIContext().setDefaultFont("DejaVuSans-12");
+    //CEGUI::System::getSingleton().getDefaultGUIContext().setDefaultTooltipType("TaharezLook/Tooltip");
 
     using namespace CEGUI;
-    Window* myRoot = WindowManager::getSingleton().loadLayoutFromFile("test.layout");
+    Window* myRoot = WindowManager::getSingleton().loadLayoutFromFile("futurella.xml");
     System::getSingleton().getDefaultGUIContext().setRootWindow(myRoot);
 
-    AnimationManager::getSingleton().loadAnimationsFromXML("example.anims");
+    //AnimationManager::getSingleton().loadAnimationsFromXML("example.anims");
 
     /// HACKS, hacks hacks all around...
     // well, what else can you do here, i have no idea.

@@ -81,6 +81,8 @@ public:
     bool onSendBtnClicked(const CEGUI::EventArgs&);
     bool onConsoleClicked(const CEGUI::EventArgs&);
     bool onConsoleInput(const CEGUI::EventArgs&);
+    bool onCreateServersAndJoinClicked(const CEGUI::EventArgs&);
+    bool onJoinClicked(const CEGUI::EventArgs&);
 
     // network-related events
     // peermanager: newly connected peer

@@ -1,6 +1,6 @@
-<?xml version="1.0" ?>
 <GUILayout version = "4">
-    <Window type="DefaultWindow" name="root">
+    <Window type="DefaultWindow" name="root"><?xml version="1.0" ?>
+
         <!-- Chat window follows
         -->
         <Window type="TaharezLook/FrameWindow" name="chatWindow">

@@ -1,0 +1,147 @@
+<?xml version="1.0" ?>
+<GUILayout version = "4">
+    <Window type="DefaultWindow" name="root">
+
+        <Window type="Generic/ImageFrame" name="StartMenu">
+            <Property name="Position" value="{{0.5, -180}, {0.5, -128}}" />
+            <Property name="Size" value="{{0, 360}, {0, 256}}" />
+            <Window type="Generic/Label" name="title" >
+                <Property name="Area" value="{{0, 10}, {0, 10}, {1, -10}, {0, 90}}" />
+                <Property name="Text" value="Start" />
+            </Window>
+            
+            <Window type="Generic/ImageButton" name="CreateSrvButton">
+                <Property name="Position" value="{{0.5, -88}, {0, 92}}" />
+                <Property name="Size" value="{{0, 176}, {0, 32}}" />
+                <Property name="NormalImage" value="Futurella/CreateServerBtn" />
+                <Property name="HoverImage" value="Futurella/CreateServerBtn" />
+                <Property name="PushedImage" value="Futurella/CreateServerBtnPressed" />
+                <Property name="DisabledImage" value="Futurella/CreateServerBtn" />
+            </Window>
+            
+            <Window type="Generic/ImageButton" name="JoinSrvButton">
+                <Property name="Position" value="{{0.5, -88}, {0, 126}}" />
+                <Property name="Size" value="{{0, 176}, {0, 32}}" />
+                <Property name="NormalImage" value="Futurella/JoinGameBtn" />
+                <Property name="HoverImage" value="Futurella/JoinGameBtn" />
+                <Property name="PushedImage" value="Futurella/JoinGameBtnPressed" />
+                <Property name="DisabledImage" value="Futurella/JoinGameBtn" />
+            </Window>
+            
+            <Window type="Generic/ImageButton" name="EndButton">
+                <Property name="Position" value="{{0.5, -88}, {0, 160}}" />
+                <Property name="Size" value="{{0, 176}, {0, 32}}" />
+                <Property name="NormalImage" value="Futurella/EndgameBtn" />
+                <Property name="HoverImage" value="Futurella/EndgameBtn" />
+                <Property name="PushedImage" value="Futurella/EndgameBtnPressed" />
+                <Property name="DisabledImage" value="Futurella/EndgameBtn" />
+            </Window>
+        </Window>
+        
+        <Window type="Generic/ImageFrame" name="CreateServer">
+            <Property name="Position" value="{{0.5, -180}, {0.5, -145}}" />
+            <Property name="Size" value="{{0, 360}, {0, 290}}" />
+            <Property name="Visible" value="False" />
+            <Window type="Generic/Label" name="title" >
+                <Property name="Area" value="{{0, 10}, {0, 10}, {1, -10}, {0, 90}}" />
+                <Property name="Text" value="Create new Game" />
+            </Window>
+            
+            <Window type="WindowsLook/Editbox" name="serverName">
+                <Property name="Position" value="{{0.5, -88}, {0, 92}}" />
+                <Property name="Size" value="{{0, 176}, {0, 32}}" />
+                <Property name="Text" value="Server name" />
+            </Window>
+            <Window type="WindowsLook/Editbox" name="levelSize">
+                <Property name="Position" value="{{0.5, -88}, {0, 126}}" />
+                <Property name="Size" value="{{0, 176}, {0, 32}}" />
+                <Property name="Text" value="Level size" />
+            </Window>
+            <Window type="WindowsLook/Editbox" name="trackLength">
+                <Property name="Position" value="{{0.5, -88}, {0, 160}}" />
+                <Property name="Size" value="{{0, 176}, {0, 32}}" />
+                <Property name="Text" value="Track length" />
+            </Window>
+            
+            <Window type="Generic/ImageButton" name="JoinSrvButton">
+                <Property name="Position" value="{{0.5, -88}, {0, 194}}" />
+                <Property name="Size" value="{{0, 176}, {0, 32}}" />
+                <Property name="NormalImage" value="Futurella/JoinGameBtn" />
+                <Property name="HoverImage" value="Futurella/JoinGameBtn" />
+                <Property name="PushedImage" value="Futurella/JoinGameBtnPressed" />
+                <Property name="DisabledImage" value="Futurella/JoinGameBtn" />
+            </Window>
+        </Window>
+        
+        <Window type="Generic/ImageFrame" name="JoinServer">
+            <Property name="Position" value="{{0.5, -180}, {0.5, -145}}" />
+            <Property name="Size" value="{{0, 360}, {0, 290}}" />
+            <Property name="Visible" value="False" />
+            <Window type="Generic/Label" name="title" >
+                <Property name="Area" value="{{0, 10}, {0, 10}, {1, -10}, {0, 90}}" />
+                <Property name="Text" value="Join existing game" />
+            </Window>
+            
+            <Window type="WindowsLook/Editbox" name="playerName">
+                <Property name="Position" value="{{0.5, -88}, {0, 92}}" />
+                <Property name="Size" value="{{0, 176}, {0, 32}}" />
+                <Property name="Text" value="Player name" />
+            </Window>
+            <Window type="WindowsLook/Editbox" name="serverIp">
+                <Property name="Position" value="{{0.5, -88}, {0, 126}}" />
+                <Property name="Size" value="{{0, 176}, {0, 32}}" />
+                <Property name="Text" value="server DNS name or IP" />
+            </Window>
+            
+            <Window type="Generic/ImageButton" name="JoinSrvButton">
+                <Property name="Position" value="{{0.5, -88}, {0, 160}}" />
+                <Property name="Size" value="{{0, 176}, {0, 32}}" />
+                <Property name="NormalImage" value="Futurella/JoinGameBtn" />
+                <Property name="HoverImage" value="Futurella/JoinGameBtn" />
+                <Property name="PushedImage" value="Futurella/JoinGameBtnPressed" />
+                <Property name="DisabledImage" value="Futurella/JoinGameBtn" />
+            </Window>
+        </Window>
+        
+        
+        <Window type="Generic/ImageFrame" name="IngameMenu">
+            <Property name="Position" value="{{0.5, -180}, {0.5, -145}}" />
+            <Property name="Size" value="{{0, 360}, {0, 290}}" />
+            <Property name="Visible" value="False" />
+            <Window type="Generic/Label" name="title" >
+                <Property name="Area" value="{{0, 10}, {0, 10}, {1, -10}, {0, 90}}" />
+                <Property name="Text" value="Create new Game" />
+            </Window>
+            
+            <Window type="WindowsLook/Editbox" name="serverName">
+                <Property name="Position" value="{{0.5, -88}, {0, 92}}" />
+                <Property name="Size" value="{{0, 176}, {0, 32}}" />
+                <Property name="Text" value="Server name" />
+            </Window>
+            <Window type="WindowsLook/Editbox" name="levelSize">
+                <Property name="Position" value="{{0.5, -88}, {0, 126}}" />
+                <Property name="Size" value="{{0, 176}, {0, 32}}" />
+                <Property name="Text" value="Level size" />
+            </Window>
+            <Window type="WindowsLook/Editbox" name="trackLength">
+                <Property name="Position" value="{{0.5, -88}, {0, 160}}" />
+                <Property name="Size" value="{{0, 176}, {0, 32}}" />
+                <Property name="Text" value="Track length" />
+            </Window>
+            
+            <Window type="Generic/ImageButton" name="JoinSrvButton">
+                <Property name="Position" value="{{0.5, -88}, {0, 194}}" />
+                <Property name="Size" value="{{0, 176}, {0, 32}}" />
+                <Property name="NormalImage" value="Futurella/JoinGameBtn" />
+                <Property name="HoverImage" value="Futurella/JoinGameBtn" />
+                <Property name="PushedImage" value="Futurella/JoinGameBtnPressed" />
+                <Property name="DisabledImage" value="Futurella/JoinGameBtn" />
+            </Window>
+        </Window>
+        <Window type ="Generic/Image" name="levelGoal">
+            <Property name="Image" value="Figures/green_square"></Property>
+            <Property name="Visible" value="false"></Property>
+            <Property name="Size" value="{{0, 32}, {0, 32}}" />
+        </Window>
+    </Window>
+</GUILayout>
