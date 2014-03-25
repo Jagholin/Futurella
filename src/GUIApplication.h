@@ -84,6 +84,9 @@ public:
     bool onCreateServersAndJoinClicked(const CEGUI::EventArgs&);
     bool onJoinClicked(const CEGUI::EventArgs&);
 
+    bool onCreateServerClicked(const CEGUI::EventArgs&);
+    bool onJoinServerClicked(const CEGUI::EventArgs&);
+
     // network-related events
     // peermanager: newly connected peer
     void onNewFuturellaPeer(const RemoteMessagePeer::pointer& peer);

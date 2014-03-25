@@ -14,6 +14,16 @@
     <FalagardMapping windowType="Generic/Image" targetType="DefaultWindow" renderer="Core/Default" lookNFeel="Generic/Image" />
     <FalagardMapping windowType="Generic/ImageFrame" targetType="DefaultWindow" renderer="Core/Default" lookNFeel="Generic/ImageFrame" />
     <FalagardMapping windowType="Generic/ImageButton" targetType="CEGUI/PushButton" renderer="Core/Button" lookNFeel="Generic/ImageButton" />
+	<FalagardMapping windowType="WindowsLook/Titlebar"     targetType="CEGUI/Titlebar"    renderer="Core/Titlebar"     lookNFeel="WindowsLook/Titlebar" />
+	<FalagardMapping windowType="WindowsLook/SystemButton" targetType="CEGUI/PushButton"  renderer="Core/Button" lookNFeel="WindowsLook/SystemButton" />
+	<FalagardMapping windowType="WindowsLook/VerticalScrollbar"   targetType="CEGUI/Scrollbar" renderer="Core/Scrollbar" lookNFeel="WindowsLook/VerticalScrollbar" />
+	<FalagardMapping windowType="WindowsLook/HorizontalScrollbar" targetType="CEGUI/Scrollbar" renderer="Core/Scrollbar" lookNFeel="WindowsLook/HorizontalScrollbar" />
+	<FalagardMapping windowType="WindowsLook/VerticalScrollbarThumb"   targetType="CEGUI/Thumb" renderer="Core/Button" lookNFeel="WindowsLook/VerticalScrollbarThumb" />
+	<FalagardMapping windowType="WindowsLook/HorizontalScrollbarThumb" targetType="CEGUI/Thumb" renderer="Core/Button" lookNFeel="WindowsLook/HorizontalScrollbarThumb" />
+	<FalagardMapping windowType="WindowsLook/IconButton"  targetType="CEGUI/PushButton"  renderer="Core/Button"       lookNFeel="WindowsLook/IconButton" />
 	<FalagardMapping windowType="WindowsLook/Editbox"          targetType="CEGUI/Editbox"          renderer="Core/Editbox"          lookNFeel="WindowsLook/Editbox" />
+	<FalagardMapping windowType="WindowsLook/FrameWindow"  targetType="CEGUI/FrameWindow" renderer="Core/FrameWindow"  lookNFeel="WindowsLook/FrameWindow" />
+	<FalagardMapping windowType="WindowsLook/Editbox"          targetType="CEGUI/Editbox"          renderer="Core/Editbox"          lookNFeel="WindowsLook/Editbox" />
+	<FalagardMapping windowType="WindowsLook/StaticText"  targetType="DefaultWindow" renderer="Core/StaticText"  lookNFeel="WindowsLook/StaticText" />
     
 </GUIScheme>

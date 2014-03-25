@@ -143,5 +143,40 @@
             <Property name="Visible" value="false"></Property>
             <Property name="Size" value="{{0, 32}, {0, 32}}" />
         </Window>
+        
+        <Window type="WindowsLook/FrameWindow" name="console">
+            <Window type="WindowsLook/StaticText" name="output">
+                <Property name="Area" value="{{0, 4}, {0, 4}, {1, -4}, {1, -40}}" />
+                <Property name="VertFormatting" value="BottomAligned" />
+                <Property name="Font" value="Jura-10" />
+                <Property name="Text">Welcome.
+To see the list of available commands, try "help".</Property>
+            </Window>
+            <Window type="WindowsLook/Editbox" name="input">
+                <Property name="Area" value="{{0, 4}, {1, -40}, {1, -4}, {1, -4}}" /> 
+                <Property name="Font" value="Jura-10" />
+            </Window>
+            <Property name="Text" value="Console" />
+            <Property name="Area" value="{{0, 0}, {0, 0}, {1, 0}, {0.6, 0}}" />
+            <Property name="Visible" value="False" />
+        </Window>
+        
+        <Window type="WindowsLook/FrameWindow" name="chatWindow">
+            <Property name="Text" value="Chat" />
+            <Property name="Size" value="{{0, 210}, {0, 450}}" />
+            <Property name="MinSize" value="{{0, 200}, {0, 450}}" />
+            
+            <Window type="WindowsLook/Editbox" name="output">
+                <Property name="Area" value="{{0,0},{0,0},{1,0},{0.8,0}}" />
+                <Property name="Font" value="Jura-10" />
+            </Window>
+            
+            <Window type="WindowsLook/Editbox" name="input">
+                <Property name="Area" value="{{0,0},{0.81,0},{1,0},{0.81,30}}" />
+                <Property name="TooltipText" value="Enter something here" />
+            </Window>
+            
+            <Property name="Visible" value="false" />
+        </Window>
     </Window>
 </GUILayout>

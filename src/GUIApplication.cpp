@@ -233,9 +233,6 @@ void GUIApplication::registerEvents()
     addEventHandler("chatWindow/sendBtn", PushButton::EventClicked, Event::Subscriber(&GUIApplication::onSendBtnClicked, this));
     addEventHandler("chatWindow/input", Editbox::EventTextAccepted, Event::Subscriber(&GUIApplication::onSendBtnClicked, this));
 
-    //addEventHandler("networkSettings/connectBtn", PushButton::EventClicked, Event::Subscriber(&GUIApplication::onConnectBtnClicked, this));
-    //addEventHandler("networkSettings/listenBtn", PushButton::EventClicked, Event::Subscriber(&GUIApplication::onListenBtnClicked, this));
-
     addEventHandler("console/input", Window::EventMouseClick, Event::Subscriber(&GUIApplication::onConsoleClicked, this));
     addEventHandler("console/output", Window::EventMouseClick, Event::Subscriber(&GUIApplication::onConsoleClicked, this));
     addEventHandler("console/input", Editbox::EventTextAccepted, Event::Subscriber(&GUIApplication::onConsoleInput, this));
@@ -243,6 +240,9 @@ void GUIApplication::registerEvents()
     addEventHandler("StartMenu/CreateSrvButton", Window::EventMouseClick, Event::Subscriber(&GUIApplication::onCreateServersAndJoinClicked, this));
     addEventHandler("StartMenu/JoinSrvButton", Window::EventMouseClick, Event::Subscriber(&GUIApplication::onJoinClicked, this));
     addEventHandler("StartMenu/EndButton", Window::EventMouseClick, Event::Subscriber(&GUIApplication::onQuitBtnClicked, this));
+
+    addEventHandler("CreateServer/JoinSrvButton", Window::EventMouseClick, Event::Subscriber(&GUIApplication::onCreateServerClicked, this));
+    addEventHandler("JoinServer/JoinSrvButton", Window::EventMouseClick, Event::Subscriber(&GUIApplication::onJoinServerClicked, this));
     m_shaderProvider->registerEvents(this);
 }
 
@@ -357,6 +357,25 @@ void GUIApplication::onNetworkMessage(NetMessage::const_pointer msg, RemoteMessa
             NetGameServerAvailableMessage::const_pointer realMsg{ msg->as<NetGameServerAvailableMessage>() };
             m_availableGameServers.push_back(std::make_tuple(std::get<0>(realMsg->m_values), sender));
             console->appendText(String("\nNew Game server available: \\[") + boost::lexical_cast<std::string>(m_availableGameServers.size() - 1) + "]: " + std::get<0>(realMsg->m_values));
+
+            // connect to the server
+
+            m_gameClient = new GameInstanceClient(m_rootGroup, m_osgApp, this);
+            m_gameClient->onClientOrphaned(m_renderThreadService->wrap([this](){
+                // No server is connected to the game client, so we may just drop it
+                delete m_gameClient;
+                m_gameClient = nullptr;
+                Window* consoleOut = m_guiContext->getRootWindow()->getChild("console/output");
+                consoleOut->appendText("\nGame client lost connection, and was automatically deleted.");
+            }), this);
+
+            //MessagePeer* gameServer = std::get<1>(m_availableGameServers[0]);
+            m_gameClient->connectLocallyTo(sender);
+
+            NetGameConnectRequestMessage::pointer msg{ new NetGameConnectRequestMessage };
+            sender->send(msg);
+
+            m_guiContext->getRootWindow()->getChild("JoinServer")->hide();
         });
     }
     else if (msg->gettype() == NetGameConnectRequestMessage::type)
@@ -759,6 +778,7 @@ void GUIApplication::consoleMacroCommand(const std::vector<String>& params, Stri
 
 void GUIApplication::hudLostFocus()
 {
+    return;
     // Hide all windows in Root
     Window *targets[] = {
         m_guiContext->getRootWindow()->getChild("console"),
@@ -848,5 +868,76 @@ bool GUIApplication::onJoinClicked(const CEGUI::EventArgs&)
 {
     m_guiContext->getRootWindow()->getChild("StartMenu")->hide();
     m_guiContext->getRootWindow()->getChild("JoinServer")->show();
+    return true;
+}
+
+bool GUIApplication::onCreateServerClicked(const CEGUI::EventArgs&)
+{
+    String serverName = m_guiContext->getRootWindow()->getChild("CreateServer/serverName")->getText();
+
+    m_userName = serverName;
+    m_userListensUdpPort = 11223;
+    m_userCreated = true;
+
+    RemotePeersManager::getManager()->setMyName(m_userName.c_str());
+    RemotePeersManager::getManager()->setMyUdpPort(m_userListensUdpPort);
+    // TODO: start listening at given UDP port.
+    std::string errStr;
+    if (!m_networkThread.startUdpListener(m_userListensUdpPort, errStr))
+    {
+        return true;
+    }
+
+    m_gameServer = new GameInstanceServer(serverName.c_str());
+    NetGameServerAvailableMessage::pointer msg{ new NetGameServerAvailableMessage };
+    std::get<0>(msg->m_values) = serverName.c_str();
+    RemotePeersManager::getManager()->broadcast(msg);
+
+    m_availableGameServers.push_back(std::make_tuple(serverName.c_str(), m_gameServer));
+    m_networkThread.createAndStartNetServer(1778, m_userListensUdpPort, errStr);
+
+    m_gameClient = new GameInstanceClient(m_rootGroup, m_osgApp, this);
+    m_gameClient->onClientOrphaned(m_renderThreadService->wrap([this](){
+        // No server is connected to the game client, so we may just drop it
+        delete m_gameClient;
+        m_gameClient = nullptr;
+        Window* consoleOut = m_guiContext->getRootWindow()->getChild("console/output");
+        consoleOut->appendText("\nGame client lost connection, and was automatically deleted.");
+    }), this);
+
+    //MessagePeer* gameServer = std::get<1>(m_availableGameServers[0]);
+    m_gameClient->connectLocallyTo(m_gameServer);
+    m_guiContext->getRootWindow()->getChild("CreateServer")->hide();
+
+    NetGameConnectRequestMessage::pointer msg2{ new NetGameConnectRequestMessage };
+    m_gameServer->send(msg2);
+    return true;
+}
+
+bool GUIApplication::onJoinServerClicked(const CEGUI::EventArgs&)
+{
+    String playerName = m_guiContext->getRootWindow()->getChild("JoinServer/playerName")->getText();
+    String serverIp = m_guiContext->getRootWindow()->getChild("JoinServer/serverIp")->getText();
+
+    m_userName = playerName;
+    m_userListensUdpPort = 11223;
+    m_userCreated = true;
+
+    RemotePeersManager::getManager()->setMyName(m_userName.c_str());
+    RemotePeersManager::getManager()->setMyUdpPort(m_userListensUdpPort);
+    // TODO: start listening at given UDP port.
+    std::string errStr;
+    if (!m_networkThread.startUdpListener(m_userListensUdpPort, errStr))
+    {
+        return true;
+    }
+
+    NetConnection* newConnection = new NetConnection(*m_networkService);
+    RemoteMessagePeer* myPeer = new RemoteMessagePeer(newConnection, false, *m_networkService);
+
+    newConnection->connectTo(serverIp.c_str(), 1778);
+    if (!m_networkThread.isRunning())
+        m_networkThread.start();
+
     return true;
 }
