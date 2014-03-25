@@ -35,7 +35,7 @@ protected:
 class GameInstanceServer : public GameMessagePeer
 {
 public:
-    GameInstanceServer(const std::string &name);
+    GameInstanceServer(const std::string &name, int tracklength);
     virtual ~GameInstanceServer();
 
     std::string name() const;

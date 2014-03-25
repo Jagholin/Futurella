@@ -686,7 +686,7 @@ void GUIApplication::consoleStartGameServer(const std::vector<String>& params, S
         return;
     }
 
-    m_gameServer = new GameInstanceServer(params[2].c_str());
+    m_gameServer = new GameInstanceServer(params[2].c_str(), 3);
     NetGameServerAvailableMessage::pointer msg{ new NetGameServerAvailableMessage };
     std::get<0>(msg->m_values) = params[2].c_str();
     RemotePeersManager::getManager()->broadcast(msg);
@@ -874,6 +874,7 @@ bool GUIApplication::onJoinClicked(const CEGUI::EventArgs&)
 bool GUIApplication::onCreateServerClicked(const CEGUI::EventArgs&)
 {
     String serverName = m_guiContext->getRootWindow()->getChild("CreateServer/serverName")->getText();
+    String trackLength = m_guiContext->getRootWindow()->getChild("CreateServer/trackLength")->getText();
 
     m_userName = serverName;
     m_userListensUdpPort = 11223;
@@ -888,7 +889,7 @@ bool GUIApplication::onCreateServerClicked(const CEGUI::EventArgs&)
         return true;
     }
 
-    m_gameServer = new GameInstanceServer(serverName.c_str());
+    m_gameServer = new GameInstanceServer(serverName.c_str(), boost::lexical_cast<int>(trackLength));
     NetGameServerAvailableMessage::pointer msg{ new NetGameServerAvailableMessage };
     std::get<0>(msg->m_values) = serverName.c_str();
     RemotePeersManager::getManager()->broadcast(msg);

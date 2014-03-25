@@ -27,11 +27,11 @@ NetStopChunkTrackingMessage::m_metaData = MessageMetaData::createMetaData<NetSto
 template<> MessageMetaData
 NetPlayerScoreInfoMessage::m_metaData = MessageMetaData::createMetaData<NetPlayerScoreInfoMessage>("playerName\nscore");
 
-GameInstanceServer::GameInstanceServer(const std::string &name) :
+GameInstanceServer::GameInstanceServer(const std::string &name, int trackLength) :
 //m_physicsEngine(new PhysicsEngine),
 m_name(name),
 m_serverThread(this),
-m_gameLength(1),
+m_gameLength(trackLength),
 m_currentRound(0)
 {
     m_eventService.dispatch([this](){
