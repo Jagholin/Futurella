@@ -16,7 +16,7 @@ template <> MessageMetaData
 GameSpaceShipCollisionMessage::base::m_metaData = MessageMetaData::createMetaData<GameSpaceShipCollisionMessage>("", NetMessage::MESSAGE_PREFERS_UDP);
 
 template <> MessageMetaData
-GameScoreUpdateMessage::base::m_metaData = MessageMetaData::createMetaData<GameSpaceShipCollisionMessage>("score");
+GameScoreUpdateMessage::base::m_metaData = MessageMetaData::createMetaData<GameScoreUpdateMessage>("score");
 
 SpaceShipServer::SpaceShipServer(std::string name, osg::Vec3f startPos, osg::Quat orient, uint32_t ownerId, GameInstanceServer* ctx, const std::shared_ptr<PhysicsEngine>& eng):
 GameObject(ownerId, ctx),
@@ -139,3 +139,4 @@ REGISTER_GAMEMESSAGE(SpaceShipConstructionData)
 REGISTER_GAMEMESSAGE(SpaceShipControl)
 REGISTER_GAMEMESSAGE(SpaceShipPhysicsUpdate)
 REGISTER_GAMEMESSAGE(SpaceShipCollision)
+REGISTER_GAMEMESSAGE(ScoreUpdate)
