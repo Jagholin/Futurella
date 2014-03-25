@@ -4,10 +4,11 @@
 #include <osg/Quat>
 #include <chrono>
 
-typedef GenericGameMessage<5002, osg::Vec3f, osg::Vec4f, uint32_t> GameSpaceShipConstructionDataMessage; // varNames: "pos", "orient", "ownerId"
+typedef GenericGameMessage<5002, osg::Vec3f, osg::Vec4f, uint32_t, std::string> GameSpaceShipConstructionDataMessage; // varNames: "pos", "orient", "ownerId", "playerName"
 typedef GenericGameMessage<5003, uint16_t, bool> GameSpaceShipControlMessage; // varNames: "inputType", "isOn"
 typedef GenericGameMessage<5004, osg::Vec3f, osg::Vec4f, osg::Vec3f> GameSpaceShipPhysicsUpdateMessage; // varNames: "pos", "orient", "velocity"
 typedef GenericGameMessage<5005> GameSpaceShipCollisionMessage; // varNames:
+typedef GenericGameMessage<5015, uint32_t> GameScoreUpdateMessage; // varNames: "score" (and object id)
 
 class GameInstanceServer;
 class PhysicsEngine;
@@ -27,7 +28,7 @@ public:
         BACK
     };
 
-    SpaceShipServer(osg::Vec3f startPos, osg::Quat orient, uint32_t ownerId, GameInstanceServer* context, const std::shared_ptr<PhysicsEngine>& eng);
+    SpaceShipServer(std::string playerName, osg::Vec3f startPos, osg::Quat orient, uint32_t ownerId, GameInstanceServer* context, const std::shared_ptr<PhysicsEngine>& eng);
     virtual ~SpaceShipServer();
 
     virtual bool takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender);
@@ -40,6 +41,8 @@ public:
     GameMessage::pointer creationMessage() const;
 
 protected:
+    std::string playerName;
+
     float m_acceleration;
     float m_steerability;
 

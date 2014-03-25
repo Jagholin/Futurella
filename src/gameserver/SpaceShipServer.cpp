@@ -4,7 +4,7 @@
 #include "../gamecommon/ShipPhysicsActor.h"
 
 template <> MessageMetaData
-GameSpaceShipConstructionDataMessage::base::m_metaData = MessageMetaData::createMetaData<GameSpaceShipConstructionDataMessage>("pos\norient\nownerId");
+GameSpaceShipConstructionDataMessage::base::m_metaData = MessageMetaData::createMetaData<GameSpaceShipConstructionDataMessage>("pos\norient\nownerId\nplayerName");
 
 template <> MessageMetaData
 GameSpaceShipControlMessage::base::m_metaData = MessageMetaData::createMetaData<GameSpaceShipControlMessage>("inputType\nisOn", NetMessage::MESSAGE_PREFERS_UDP | NetMessage::MESSAGE_HIGH_PRIORITY);
@@ -15,7 +15,10 @@ GameSpaceShipPhysicsUpdateMessage::base::m_metaData = MessageMetaData::createMet
 template <> MessageMetaData
 GameSpaceShipCollisionMessage::base::m_metaData = MessageMetaData::createMetaData<GameSpaceShipCollisionMessage>("", NetMessage::MESSAGE_PREFERS_UDP);
 
-SpaceShipServer::SpaceShipServer(osg::Vec3f startPos, osg::Quat orient, uint32_t ownerId, GameInstanceServer* ctx, const std::shared_ptr<PhysicsEngine>& eng):
+template <> MessageMetaData
+GameScoreUpdateMessage::base::m_metaData = MessageMetaData::createMetaData<GameScoreUpdateMessage>("score");
+
+SpaceShipServer::SpaceShipServer(std::string name, osg::Vec3f startPos, osg::Quat orient, uint32_t ownerId, GameInstanceServer* ctx, const std::shared_ptr<PhysicsEngine>& eng):
 GameObject(ownerId, ctx),
 m_acceleration(60.0f),
 m_steerability(0.4f),
@@ -23,6 +26,7 @@ m_actor(nullptr),
 m_physicsId(0),
 m_playerScore(0)
 {
+    playerName = name;
     m_lastUpdate = std::chrono::steady_clock::now();
     for (unsigned int i = 0; i < 6; ++i) m_inputState[i] = false;
 
@@ -78,6 +82,7 @@ GameMessage::pointer SpaceShipServer::creationMessage() const
     btVector3 translate(trans.getOrigin());
     btQuaternion rotate(trans.getRotation());
 
+    msg->get<std::string>("playerName") = playerName;
     msg->get<osg::Vec3f>("pos").set(translate.x(), translate.y(), translate.z());
     msg->get<osg::Vec4f>("orient").set(rotate.x(), rotate.y(), rotate.z(), rotate.w());
     msg->get<uint16_t>("objectId") = m_myObjectId;
@@ -116,7 +121,13 @@ SpaceShipServer::~SpaceShipServer()
 
 void SpaceShipServer::incrementPlayerScore()
 {   
+    std::cout << "incrementing score for ship " << this->getObjectId() << "score = " << m_playerScore << "\n";
     m_playerScore++;
+
+    GameScoreUpdateMessage::pointer msg{ new GameScoreUpdateMessage };
+    msg->get<uint32_t>("score") = m_playerScore;
+    msg->objectId(m_myObjectId);
+    messageToPartner(msg);
 }
 
 int SpaceShipServer::getPlayerScore()
@@ -128,3 +139,4 @@ REGISTER_GAMEMESSAGE(SpaceShipConstructionData)
 REGISTER_GAMEMESSAGE(SpaceShipControl)
 REGISTER_GAMEMESSAGE(SpaceShipPhysicsUpdate)
 REGISTER_GAMEMESSAGE(SpaceShipCollision)
+REGISTER_GAMEMESSAGE(ScoreUpdate)

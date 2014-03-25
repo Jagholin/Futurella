@@ -29,8 +29,10 @@ public:
     }
 };
 
-SpaceShipClient::SpaceShipClient(osg::Vec3f pos, osg::Vec4f orient, uint16_t objId, uint32_t ownerId, GameInstanceClient* ctx):
-GameObject(objId, ownerId, ctx)
+SpaceShipClient::SpaceShipClient(std::string name, osg::Vec3f pos, osg::Vec4f orient, uint16_t objId, uint32_t ownerId, GameInstanceClient* ctx):
+GameObject(objId, ownerId, ctx),
+m_playerName(name),
+m_score(0)
 {
     m_rootGroup = ctx->sceneGraphRoot();
 
@@ -64,7 +66,7 @@ SpaceShipClient::pointer SpaceShipClient::createFromGameMessage(const GameMessag
 {
     GameSpaceShipConstructionDataMessage::const_pointer realMsg = msg->as<GameSpaceShipConstructionDataMessage>();
     GameInstanceClient* context = static_cast<GameInstanceClient*>(ctx);
-    SpaceShipClient::pointer newShip{ new SpaceShipClient(realMsg->get<osg::Vec3f>("pos"), realMsg->get<osg::Vec4f>("orient"), realMsg->get<uint16_t>("objectId"), realMsg->get<uint32_t>("ownerId"), context) };
+    SpaceShipClient::pointer newShip{ new SpaceShipClient(realMsg->get<std::string>("playerName"), realMsg->get<osg::Vec3f>("pos"), realMsg->get<osg::Vec4f>("orient"), realMsg->get<uint16_t>("objectId"), realMsg->get<uint32_t>("ownerId"), context) };
 
     context->addExternalSpaceShip(newShip);
 
@@ -82,7 +84,14 @@ bool SpaceShipClient::takeMessage(const GameMessage::const_pointer& msg, Message
         GameInstanceClient* context = static_cast<GameInstanceClient*>(m_context);
         context->shipChangedPosition(realMsg->get<osg::Vec3f>("pos"), this);
         m_projVelocity = realMsg->get<osg::Vec3f>("velocity");
+        
         return true;
+    }
+    else if (msg->gettype() == GameScoreUpdateMessage::type)
+    {
+        GameScoreUpdateMessage::const_pointer realMsg = msg->as<GameScoreUpdateMessage>();
+        m_score = realMsg->get<uint32_t>("score");
+        std::cout << "Score received on client side: " << m_score << "\n"; // it seems like SCORE is sent but OBJECTID is understood as Store here!! i've got no clue why
     }
     return false;
 }
@@ -126,4 +135,14 @@ osg::Quat SpaceShipClient::getOrientation()
 osg::Vec3f SpaceShipClient::getPivotLocation()
 {
     return m_lastPosition;
+}
+
+std::string SpaceShipClient::getPlayerName()
+{
+    return m_playerName;
+}
+
+int SpaceShipClient::getPlayerScore()
+{
+    return m_score;
 }

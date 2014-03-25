@@ -77,7 +77,7 @@ void GameInstanceServer::connectLocallyTo(MessagePeer* buddy, bool recursive /*=
         m_eventService.dispatch([this, buddy](){
 
             SpaceShipServer::pointer hisShip{
-            new SpaceShipServer(osg::Vec3f(), osg::Quat(0, osg::Vec3f(1, 0, 0)), RemotePeersManager::getManager()->getPeersId(buddy), this, m_physicsEngine) };
+                new SpaceShipServer(buddy->name(), osg::Vec3f(), osg::Quat(0, osg::Vec3f(1, 0, 0)), RemotePeersManager::getManager()->getPeersId(buddy), this, m_physicsEngine) };
 
             //GameMessage::pointer constructItMsg = m_asteroidField->creationMessage();
             //buddy->send(constructItMsg);
@@ -223,7 +223,8 @@ void GameInstanceServer::checkForEndround()
                 osg::Vec3f pos = m_physicsEngine->getShipPosition(physId);
                 if (m_gameInfo->shipInFinishArea(pos))
                 {
-                    peerSpaceShip->second->incrementPlayerScore();
+                    peerSpaceShip->second->incrementPlayerScore(); //broadcasts update automatically
+                    GameMessage::pointer msg = m_gameInfo->objectiveMessage();
                     m_currentRound >= m_gameLength ? endGame() : newRound();
                     break;
                 }
