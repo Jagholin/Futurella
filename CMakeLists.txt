@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 project(Futurella)
 
@@ -20,20 +20,23 @@ endif()
 
 set(BULLET_ROOT $ENV{BULLET_ROOT})
 
-find_package(OpenThreads REQUIRED)
-find_package(osg REQUIRED)
-find_package(osgDB REQUIRED)
-find_package(osgUtil REQUIRED)
-find_package(osgViewer REQUIRED)
-find_package(osgGA REQUIRED)
-find_package(osgText REQUIRED)
+# find_package(OpenThreads REQUIRED)
+# find_package(osg REQUIRED)
+# find_package(osgDB REQUIRED)
+# find_package(osgUtil REQUIRED)
+# find_package(osgViewer REQUIRED)
+# find_package(osgGA REQUIRED)
+# find_package(osgText REQUIRED)
 find_package(CEGUI REQUIRED)
-find_package(OpenGL REQUIRED)
+# find_package(OpenGL REQUIRED)
 find_package(Bullet REQUIRED)
 find_package(FMOD REQUIRED)
+find_package(Magnum REQUIRED MeshTools Primitives Shaders Sdl2Application)
 
 find_package(BOOST 1.54.0 REQUIRED COMPONENTS system asio)
 # add_definitions(-DBOOST_ASIO_ENABLE_HANDLER_TRACKING)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CORRADE_CXX_FLAGS}")
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
@@ -52,6 +55,9 @@ macro(add_lib PROJNAME LIBNAME)
 endmacro()
 
 link_directories(${Boost_LIBRARY_DIRS}) # for Boost dynamic linking
+
+set(MAGNUM_INCLUDE_DIR "${MAGNUM_INCLUDE_DIRS}")
+set(MAGNUM_APPLICATION_INCLUDE_DIR "${MAGNUM_APPLICATION_INCLUDE_DIRS}")
 
 add_executable(Futurella
     src/networking/networking.cpp
@@ -114,15 +120,15 @@ add_executable(Futurella
     src/LargeScaleCoords.cpp
     )
 
-add_lib(Futurella OPENTHREADS)
-add_lib(Futurella OSG)
-add_lib(Futurella OSGDB)
-add_lib(Futurella OSGUTIL)
-add_lib(Futurella OSGVIEWER)
-add_lib(Futurella OSGGA)
-add_lib(Futurella OSGTEXT)
+add_lib(Futurella MAGNUM)
+add_lib(Futurella MAGNUM_APPLICATION)
 add_lib(Futurella CEGUI)
 add_lib(Futurella Boost)
 add_lib(Futurella OPENGL)
 add_lib(Futurella BULLET)
 add_lib(Futurella FMOD)
+
+target_link_libraries(Futurella 
+    ${MAGNUM_MESHTOOLS_LIBRARIES}
+    ${MAGNUM_PRIMITIVES_LIBRARIES}
+    ${MAGNUM_SHADERS_LIBRARIES})
