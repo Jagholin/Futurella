@@ -1,12 +1,12 @@
 #include "Asteroid.h"
 
-Asteroid::Asteroid(osg::Vec3f pos, float r)
+Asteroid::Asteroid(Vector3 pos, float r)
 {
     m_position = pos;
     m_radius = r;
 }
 
-osg::Vec3f
+Vector3
 Asteroid::getPosition()
 {
     return m_position;

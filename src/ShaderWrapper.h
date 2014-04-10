@@ -1,7 +1,11 @@
 #pragma once
 
-#include <osg/Program>
+//#include <osg/Program>
+#include <Magnum/AbstractShaderProgram.h>
+#include <Magnum/Shader.h>
 #include <map>
+
+using namespace Magnum;
 
 class ShaderProvider;
 class GUIApplication;
@@ -12,16 +16,17 @@ namespace CEGUI {
 using CEGUI::String;
 using CEGUI::EventArgs;
 
-class ShaderWrapper : public osg::Program
+class ShaderWrapper : public AbstractShaderProgram
 {
 public:
     ShaderWrapper();
     virtual ~ShaderWrapper();
 
-    void load(osg::Shader::Type type, const std::string& fileName);
+    void load(Shader::Type type, const std::string& fileName);
+    void linkit();
 
     static void setDefaultShaderProvider(ShaderProvider*);
-    virtual void compileGLObjects(osg::State& state) const override;
+    //virtual void compileGLObjects(osg::State& state) const override;
     void addTransformFeedbackVarying(const std::string& varName);
 
 protected:
@@ -32,7 +37,7 @@ protected:
 
     static ShaderProvider* s_defaultProvider;
     ShaderProvider* m_shaderProvider;
-    std::vector<osg::ref_ptr<osg::Shader>> m_shaders;
+    std::vector<Shader*> m_shaders;
     std::vector<std::string> m_feedback;
 };
 

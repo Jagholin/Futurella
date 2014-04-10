@@ -3,8 +3,8 @@
 #include "LevelDrawable.h"
 #include "../ShaderWrapper.h"
 
-#include <osg/ShapeDrawable>
-#include <osg/MatrixTransform>
+//#include <osg/ShapeDrawable>
+//#include <osg/MatrixTransform>
 
 REGISTER_GAMEOBJECT_TYPE(AsteroidFieldChunkClient, 5001);
 
@@ -12,27 +12,29 @@ AsteroidFieldChunkClient::AsteroidFieldChunkClient(const GameAsteroidFieldDataMe
 GameObject(objId, ownId, ctx)
 {
     m_rootGroup = ctx->sceneGraphRoot();
-    m_chunkCoord = createMessage->get<osg::Vec3i>("chunkCoord");
-    m_asteroidsGroup = new osg::MatrixTransform(osg::Matrix::translate(GameInstanceServer::chunkToPosition(m_chunkCoord)));
-    osg::Geode * asteroidsGeode = new osg::Geode;
-    LevelDrawable* myLevel = new LevelDrawable;
-    asteroidsGeode->addDrawable(myLevel);
-    m_asteroidsGroup->addChild(asteroidsGeode);
+    m_chunkCoord = createMessage->get<Vector3i>("chunkCoord");
+    //m_asteroidsGroup = new osg::MatrixTransform(osg::Matrix::translate(GameInstanceServer::chunkToPosition(m_chunkCoord)));
+    m_asteroids = new LevelDrawable;
+    m_asteroids->translate(GameInstanceServer::chunkToPosition(m_chunkCoord));
+    //osg::Geode * asteroidsGeode = new osg::Geode;
+    //LevelDrawable* myLevel = new LevelDrawable;
+    //asteroidsGeode->addDrawable(myLevel);
+    //m_asteroidsGroup->addChild(asteroidsGeode);
 
-    auto const& posVector = createMessage->get<std::vector<osg::Vec3f>>("position");
+    auto const& posVector = createMessage->get<std::vector<Vector3>>("position");
     auto const& radVector = createMessage->get<std::vector<float>>("radius");
     for (int i = 0; i < posVector.size(); i++)
     {
-        myLevel->addAsteroid(posVector.at(i), radVector.at(i));
+        m_asteroids->addAsteroid(posVector.at(i), radVector.at(i));
     }
     //m_rootGroup->addChild(m_asteroidsGroup);
-    ctx->addNodeToScene(m_asteroidsGroup);
+    ctx->addNodeToScene(m_asteroids);
 }
 
 AsteroidFieldChunkClient::~AsteroidFieldChunkClient()
 {
     //m_rootGroup->removeChild(m_asteroidsGroup);
-    static_cast<GameInstanceClient*>(m_context)->removeNodeFromScene(m_asteroidsGroup);
+    static_cast<GameInstanceClient*>(m_context)->removeNodeFromScene(m_asteroids);
 }
 
 AsteroidFieldChunkClient::pointer AsteroidFieldChunkClient::createFromGameMessage(const GameMessage::const_pointer& msg, GameMessagePeer* ctx)

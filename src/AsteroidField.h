@@ -1,5 +1,5 @@
 #pragma once
-#include <osg/Vec3>
+#include <Magnum/Magnum.h>
 #include <vector>
 #include <list>
 
@@ -12,15 +12,15 @@ class AsteroidField
 public:
     AsteroidField();
     ~AsteroidField();
-    Asteroid* addAsteroid(osg::Vec3f pos, float radius);
+    Asteroid* addAsteroid(Vector3 pos, float radius);
     Asteroid* getAsteroid(int id);
     unsigned int getLength();
-    std::list<Asteroid*> getAsteroidsInBlock(osg::Vec3f blockCenter, osg::Vec3f blockWidth);
+    std::list<Asteroid*> getAsteroidsInBlock(Vector3 blockCenter, Vector3 blockWidth);
 private:
     Node* treeAddAsteroid(Asteroid *asteroid, Node* node);
     char inLowerOrHigher(float a, float bottom, float top);
     void deleteSubtreeStructure(Node* node);
-    void treeSearchAsteroids(Node* node, osg::Vec3f* boundingBoxBottomCorner, osg::Vec3f* boundingBoxTopCorner, std::list<Asteroid*> *resultList);
+    void treeSearchAsteroids(Node* node, const Vector3& boundingBoxBottomCorner, const Vector3& boundingBoxTopCorner, std::list<Asteroid*> &resultList);
     Node *m_root;
     std::vector<Asteroid*> m_asteroidIndex;
 };

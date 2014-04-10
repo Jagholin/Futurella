@@ -1,12 +1,12 @@
 #pragma once
 
 #include "../gamecommon/GameObject.h"
-#include <osg/Quat>
+#include <Magnum/Math/Quaternion.h>
 #include <chrono>
 
-typedef GenericGameMessage<5002, osg::Vec3f, osg::Vec4f, uint32_t, std::string> GameSpaceShipConstructionDataMessage; // varNames: "pos", "orient", "ownerId", "playerName"
+typedef GenericGameMessage<5002, Vector3, Quaternion, uint32_t, std::string> GameSpaceShipConstructionDataMessage; // varNames: "pos", "orient", "ownerId", "playerName"
 typedef GenericGameMessage<5003, uint16_t, bool> GameSpaceShipControlMessage; // varNames: "inputType", "isOn"
-typedef GenericGameMessage<5004, osg::Vec3f, osg::Vec4f, osg::Vec3f> GameSpaceShipPhysicsUpdateMessage; // varNames: "pos", "orient", "velocity"
+typedef GenericGameMessage<5004, Vector3, Quaternion, Vector3> GameSpaceShipPhysicsUpdateMessage; // varNames: "pos", "orient", "velocity"
 typedef GenericGameMessage<5005> GameSpaceShipCollisionMessage; // varNames:
 typedef GenericGameMessage<5015, uint32_t> GameScoreUpdateMessage; // varNames: "score" (and object id)
 
@@ -28,7 +28,7 @@ public:
         BACK
     };
 
-    SpaceShipServer(std::string playerName, osg::Vec3f startPos, osg::Quat orient, uint32_t ownerId, GameInstanceServer* context, const std::shared_ptr<PhysicsEngine>& eng);
+    SpaceShipServer(std::string playerName, Vector3 startPos, Quaternion orient, uint32_t ownerId, GameInstanceServer* context, const std::shared_ptr<PhysicsEngine>& eng);
     virtual ~SpaceShipServer();
 
     virtual bool takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender);
@@ -56,5 +56,5 @@ protected:
 
     // event related functions
     void onControlMessage(uint16_t inputType, bool on);
-    void onPhysicsUpdate(const osg::Vec3f& newPos, const osg::Quat& newRot);
+    void onPhysicsUpdate(const Vector3& newPos, const Quaternion& newRot);
 };

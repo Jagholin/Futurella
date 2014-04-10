@@ -1,16 +1,15 @@
 #pragma once
 
-#include <osg/Vec3f>
-#include <osg/Quat>
+#include <Magnum/Magnum.h>
+#include <Magnum/Math/Vector3.h>
+#include <Magnum/Math/Quaternion.h>
 #include <functional>
 #include <map>
 #include <btBulletDynamicsCommon.h>
+#include <thread>
 
+using namespace Magnum;
 class ShipPhysicsActor;
-
-namespace OpenThreads{
-    class Thread;
-};
 
 class PhysicsEngine
 {
@@ -19,20 +18,20 @@ public:
     PhysicsEngine();
     virtual ~PhysicsEngine();
 
-    typedef std::function<void(const osg::Vec3f&, const osg::Quat&)> t_motionFunc;
+    typedef std::function<void(const Vector3&, const Quaternion&)> t_motionFunc;
 
     void physicsInit();
 
-    unsigned int addCollisionSphere(osg::Vec3f pos, float radius, float mass = 0.f);
+    unsigned int addCollisionSphere(Vector3 pos, float radius, float mass = 0.f);
     void removeCollisionSphere(unsigned int id);
-    unsigned int addUserVehicle(const osg::Vec3f& pos, const osg::Vec3f& sizes, const osg::Quat& orient, float mass);
+    unsigned int addUserVehicle(const Vector3& pos, const Vector3& sizes, const Quaternion& orient, float mass);
     void removeVehicle(unsigned int id);
     btRigidBody* getBodyById(unsigned int);
     ShipPhysicsActor* getActorById(unsigned int);
     void addMotionCallback(unsigned int, const t_motionFunc& cb);
 
     void setShipTransformation(unsigned int shipId, btTransform transformation);
-    osg::Vec3f getShipPosition(unsigned int shipId);
+    Vector3 getShipPosition(unsigned int shipId);
     
 
     void physicsTick(float msDelta);
@@ -61,5 +60,5 @@ protected:
     std::map<unsigned int, ShipPhysicsActor*> m_actors;
     unsigned int    m_nextUsedId;
 
-    const OpenThreads::Thread* m_physicsThread;
+    const std::thread m_physicsThread;
 };

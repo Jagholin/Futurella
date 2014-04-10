@@ -8,8 +8,6 @@
 #include <deque>
 #include <memory>
 #include <type_traits>
-#include <osg/ref_ptr>
-#include <osg/observer_ptr>
 
 // !Debug
 #include <iostream>
@@ -50,16 +48,16 @@ public:
         bool isValid() { return ! funcOwner.expired(); }
     };
 
-    template <typename OwnerType>
-    struct t_slotRefPtr : public t_slot
-    {
-        osg::observer_ptr<const OwnerType> funcOwner;
-
-        t_slotRefPtr(const t_funcHolder& f, const OwnerType* o) :
-            t_slot(f), funcOwner(o) {}
-
-        bool isValid() { return funcOwner.valid(); }
-    };
+//     template <typename OwnerType>
+//     struct t_slotRefPtr : public t_slot
+//     {
+//         osg::observer_ptr<const OwnerType> funcOwner;
+// 
+//         t_slotRefPtr(const t_funcHolder& f, const OwnerType* o) :
+//             t_slot(f), funcOwner(o) {}
+// 
+//         bool isValid() { return funcOwner.valid(); }
+//     };
 
     //template <typename OwnerSignalType>
     struct t_slotSignalledDelete : public t_slot, public std::enable_shared_from_this<t_slotSignalledDelete>
@@ -83,10 +81,10 @@ public:
 
     signal_base(std::string const& signalName): m_name(signalName) {}
 
-    void connect(const t_funcHolder& f, osg::Referenced* owner)
-    {
-        m_slots.push_back(std::make_shared<t_slotRefPtr<osg::Referenced>>(f, owner));
-    }
+//     void connect(const t_funcHolder& f, osg::Referenced* owner)
+//     {
+//         m_slots.push_back(std::make_shared<t_slotRefPtr<osg::Referenced>>(f, owner));
+//     }
 
     template <typename OwnerType>
     void connect(const t_funcHolder& f, const std::shared_ptr<OwnerType> &p)

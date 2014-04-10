@@ -3,9 +3,14 @@
 #include "../gameserver/AsteroidFieldChunkServer.h"
 #include "../gamecommon/GameObject.h"
 
-#include <osg/Group>
+#include <Magnum/Magnum.h>
+#include <Magnum/SceneGraph/SceneGraph.h>
+#include <Magnum/SceneGraph/Object.h>
+using namespace Magnum;
+typedef SceneGraph::Object<SceneGraph::RigidMatrixTransformation3D> Object3D;
 
 class GameInstanceClient;
+class LevelDrawable;
 
 class AsteroidFieldChunkClient : public GameObject
 {
@@ -22,8 +27,9 @@ public:
     void setUseTesselation(bool on);
 
 protected:
-    osg::ref_ptr<osg::Group> m_asteroidsGroup;
-    osg::ref_ptr<osg::Group> m_rootGroup;
-    osg::Vec3i m_chunkCoord;
+    //osg::ref_ptr<osg::Group> m_asteroidsGroup;
+    LevelDrawable *m_asteroids;
+    Object3D *m_rootGroup;
+    Vector3i m_chunkCoord;
     static int m_dummy;
 };

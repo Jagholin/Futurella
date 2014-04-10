@@ -1,5 +1,7 @@
 #pragma once
-#include <osg/Vec3>
+#include <Magnum/Magnum.h>
+#include <Magnum/Math/Vector3.h>
+using namespace Magnum;
 
 class Asteroid;
 
@@ -8,9 +10,9 @@ class Node
 public:
     Node(Asteroid* asteroid);
 
-    Node* getNextChild(osg::Vec3f *vector);
+    Node* getNextChild(Vector3 *vector);
     Node** getChildren();
-    int getContainingChildIndex(osg::Vec3f *vector);
+    int getContainingChildIndex(Vector3 *vector);
 
     void addAsteroid(Asteroid *asteroid);
     Asteroid* getAsteroid();

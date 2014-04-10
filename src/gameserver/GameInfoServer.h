@@ -1,7 +1,11 @@
 #pragma once
 
 #include "../gamecommon/GameObject.h"
-#include <osg/Quat>
+#include <Magnum/Magnum.h>
+#include <Magnum/Math/Quaternion.h>
+#include <Magnum/Math/Vector4.h>
+
+using namespace Magnum;
 
 // BEGIN_DECLGAMEMESSAGE(GameInfoConstructionData, 5006, false)
 // uint32_t ownerId;
@@ -15,7 +19,7 @@
 // END_DECLGAMEMESSAGE()
 
 typedef GenericGameMessage<5006, uint32_t> GameGameInfoConstructionDataMessage; // varNames: "ownerId"
-typedef GenericGameMessage<5007, osg::Vec3f, float, uint32_t, uint32_t> GameRoundDataMessage; // varNames: "finishAreaCenter", "finishAreaRadius", "numberOfPlayers", "ownerId"
+typedef GenericGameMessage<5007, Vector3, float, uint32_t, uint32_t> GameRoundDataMessage; // varNames: "finishAreaCenter", "finishAreaRadius", "numberOfPlayers", "ownerId"
 typedef GenericGameMessage<5008> GameEndGameMessage; // maybe sent information like game time,...
 
 class GameInstanceServer;
@@ -34,8 +38,8 @@ public:
     GameMessage::pointer creationMessage() const;
     GameMessage::pointer gameOverMessage() const;
 
-    bool shipInFinishArea(osg::Vec3f shipPosition);
-    void setObjective(osg::Vec3f finish, float finishRadius);
+    bool shipInFinishArea(Vector3 shipPosition);
+    void setObjective(Vector3 finish, float finishRadius);
 
     void setGameRunning(bool b);
     bool getGameRunning();
@@ -43,10 +47,10 @@ public:
 protected:
     bool m_gameRunning;
 
-    osg::Vec3f m_finishArea;
+    Vector3 m_finishArea;
     float m_finishAreaSize;
 
     // event related functions
     void onControlMessage(uint16_t inputType, bool on);
-    void onPhysicsUpdate(const osg::Vec3f& newPos, const osg::Quat& newRot);
+    void onPhysicsUpdate(const Vector3& newPos, const Quaternion& newRot);
 };

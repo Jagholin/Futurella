@@ -1,7 +1,8 @@
 #pragma once
 
-#include <osg/Vec3>
-#include <osg/Vec3d>
+#include <Magnum/Magnum.h>
+#include <Magnum/Math/Vector3.h>
+using namespace Magnum;
 
 // 2-Level 3d space coordinate
 // This class defines a small-scale coordinate system within a large-scale one.
@@ -13,10 +14,10 @@ class LargeScaleCoord
 public:
 
     LargeScaleCoord();
-    LargeScaleCoord(const osg::Vec3f& largeScale, const osg::Vec3f& smallScale);
-    LargeScaleCoord(const osg::Vec3d& realCoord);
+    LargeScaleCoord(const Vector3& largeScale, const Vector3& smallScale);
+    LargeScaleCoord(const Vector3d& realCoord);
 
-    osg::Vec3d realCoordinate() const;
+    Vector3d realCoordinate() const;
 
     // This function tries to change m_largeScale and m_smallScale components 
     // of this object, so that it has the same large-scale offset as the argument.
@@ -26,14 +27,14 @@ public:
     // It will return false, if the coordinates are too far away from each other.
     bool changeLargeScale(const LargeScaleCoord&);
 
-    osg::Vec3f smallScale() const;
-    osg::Vec3f largeScale() const;
+    Vector3 smallScale() const;
+    Vector3 largeScale() const;
 
-    void smallScale(const osg::Vec3f&);
-    void largeScale(const osg::Vec3f&);
+    void smallScale(const Vector3&);
+    void largeScale(const Vector3&);
 
     static const double sizeFactor;
 protected:
-    osg::Vec3f m_smallScale;
-    osg::Vec3f m_largeScale;
+    Vector3 m_smallScale;
+    Vector3 m_largeScale;
 };

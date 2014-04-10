@@ -1,8 +1,9 @@
 #pragma once
 
 #include "../networking/messages.h"
-#include <OpenThreads/ScopedLock>
-#include <OpenThreads/Mutex>
+//#include <OpenThreads/ScopedLock>
+//#include <OpenThreads/Mutex>
+#include <mutex>
 
 struct GameMessage : public NetMessage
 {
@@ -79,5 +80,5 @@ protected:
     uint16_t m_lastObjectId;
     std::deque<MessagePeer::workPair> m_highPriorityQueue;
 
-    OpenThreads::Mutex m_messageQueueMutex;
+    std::mutex m_messageQueueMutex;
 };

@@ -3,12 +3,18 @@
 #include <CEGUI/String.h>
 #include <CEGUI/Event.h>
 #include <CEGUI/GUIContext.h>
-#include <OpenThreads/Thread>
+//#include <OpenThreads/Thread>
+#include <thread>
 
-#include <osgViewer/Viewer>
+//#include <osgViewer/Viewer>
 
 #include <boost/asio.hpp>
 #include <memory>
+
+#include <Magnum/Platform/Sdl2Application.h>
+#include <Magnum/SceneGraph/Object.h>
+using namespace Magnum;
+typedef SceneGraph::Object<SceneGraph::RigidMatrixTransformation3D> Object3D;
 
 #include "networking/networking.h"
 #include "networking/peermanager.h"
@@ -20,7 +26,7 @@ class GameInstanceServer;
 class GameInstanceClient;
 class ShaderProvider;
 
-class AsioThread : public OpenThreads::Thread
+class AsioThread
 {
 public:
     AsioThread();
@@ -28,7 +34,7 @@ public:
 
     void setService(const std::shared_ptr<boost::asio::io_service>& service);
     void setGuiService(const std::shared_ptr<boost::asio::io_service>& service);
-    virtual void run();
+    void run();
 
     bool createAndStartNetServer(unsigned int portNumberTCP, unsigned int portNumberUDP, std::string& errStr);
     bool startUdpListener(unsigned int portUDP, std::string& errStr);
@@ -45,11 +51,11 @@ protected:
     addstd::signal<void()> m_destructionSignal;
 };
 
-class GUIApplication : public osg::Referenced
+class GUIApplication : public Platform::Application
 {
 public:
-    GUIApplication(osgViewer::Viewer* osgApp, osg::Group* rootGroup);
-
+    GUIApplication(/*osgViewer::Viewer* osgApp, osg::Group* rootGroup*/const Arguments&);
+    virtual ~GUIApplication();
     // register event handlers in CEGUI
     void registerEvents();
 
@@ -94,9 +100,17 @@ public:
     void onNetworkMessage(NetMessage::const_pointer msg, RemoteMessagePeer* sender);
 
 protected:
+    void drawEvent() override;
+    void viewportEvent(const Vector2i& size) override;
+    void keyPressEvent(KeyEvent& event) override;
+    void keyReleaseEvent(KeyEvent& event) override;
+    void mousePressEvent(MouseEvent& event) override;
+    void mouseReleaseEvent(MouseEvent& event) override;
+    void mouseMoveEvent(MouseMoveEvent& event) override;
+
     CEGUI::GUIContext* m_guiContext;
-    osgViewer::Viewer* m_osgApp;
-    osg::ref_ptr<osg::Group> m_rootGroup;
+    //osgViewer::Viewer* m_osgApp;
+    Object3D* m_rootGroup;
 
     // perhaps this has to be moved somewhere else
     std::shared_ptr<boost::asio::io_service> m_networkService;

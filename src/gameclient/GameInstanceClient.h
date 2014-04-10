@@ -6,8 +6,10 @@
 #include "AsteroidFieldChunkClient.h"
 #include "GameInfoClient.h"
 #include "../ChaseCam.h"
+#include <Magnum/CubeMapTexture.h>
+#include <Magnum/Resource.h>
 
-#include <osgViewer/Viewer>
+//#include <osgViewer/Viewer>
 #include <boost/asio/io_service.hpp>
 
 class GUIApplication;
@@ -23,7 +25,7 @@ class GameInstanceClient : public GameMessagePeer
 public:
     typedef GameInstanceServer::ChunkCoordinates ChunkCoordinates;
 
-    GameInstanceClient(osg::Group* rootGroup, osgViewer::Viewer* viewer, GUIApplication* app);
+    GameInstanceClient(Object3D* rootGroup,/* osgViewer::Viewer* viewer,*/ GUIApplication* app);
     virtual ~GameInstanceClient();
     //...
 
@@ -39,11 +41,11 @@ public:
     void addExternalSpaceShip(SpaceShipClient::pointer ship);
     void addAsteroidFieldChunk(ChunkCoordinates coord, AsteroidFieldChunkClient::pointer asts);
     void setGameInfo(GameInfoClient::pointer gameInfo);
-    osg::Group* sceneGraphRoot();
-    void createEnvironmentCamera(osg::Group* parentGroup);
+    Object3D* sceneGraphRoot();
+    void createEnvironmentCamera(Object3D* parentGroup);
 
     virtual bool takeMessage(const NetMessage::const_pointer&, MessagePeer*);
-    void shipChangedPosition(const osg::Vec3f& pos, SpaceShipClient* ship);
+    void shipChangedPosition(const Vector3& pos, SpaceShipClient* ship);
     void gameInfoUpdated();
 
     void createGameOverScreenText();
@@ -52,18 +54,18 @@ public:
 
     // Scene graph manipulation functions, can be called by game objects
     // These methods are thread-safe
-    void addNodeToScene(osg::Node* aNode);
-    void removeNodeFromScene(osg::Node* aNode);
+    void addNodeToScene(Object3D* aNode);
+    void removeNodeFromScene(Object3D* aNode);
 
     // Function called once during an update callback
     void onUpdatePhase();
 protected:
     addstd::signal<void()> m_clientOrphaned;
     //rootgraphicsgroup is for planets/ships/... and m_realRoot is for prerender cameras and screenquads and rootgraphicsgroup
-    osg::ref_ptr<osg::Group> m_rootGraphicsGroup, m_realRoot;     
-    osg::ref_ptr<osgViewer::Viewer> m_viewer;
-    osg::ref_ptr<ChaseCam> m_shipCamera;
-    osg::ref_ptr<osg::TextureCubeMap> m_environmentMap;
+    Object3D* m_rootGraphicsGroup, m_realRoot;     
+    //osg::ref_ptr<osgViewer::Viewer> m_viewer;
+    std::shared_ptr<ChaseCam> m_shipCamera;
+    Resource<CubeMapTexture> m_environmentMap;
 
     std::vector<SpaceShipClient::pointer> m_otherShips;
     SpaceShipClient::pointer m_myShip;
@@ -71,7 +73,8 @@ protected:
     ChunkCoordinates m_oldCoords;
     GameInfoClient::pointer m_myGameInfo;
 
-    osg::ref_ptr<osg::Uniform> m_viewportSizeUniform;
+    // TODO: there is no direct Magnum equivalent for osg::Uniform
+    //osg::ref_ptr<osg::Uniform> m_viewportSizeUniform;
     GUIApplication* m_HUD;
     TrackGameInfoUpdate* m_fieldGoalUpdater;
 
@@ -84,7 +87,7 @@ protected:
     void setupPPPipeline();
 
     void setupGameOverScreen();
-    osg::ref_ptr<osg::Camera> m_HUDCamera;
+    Object3D* m_HUDCamera;
 
     virtual boost::asio::io_service* eventService();
 

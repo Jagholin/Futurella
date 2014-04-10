@@ -1,6 +1,8 @@
 #pragma once
 #include <btBulletDynamicsCommon.h>
-#include <osg/Vec3f>
+#include <Magnum/Magnum.h>
+#include <Magnum/Math/Vector3.h>
+using namespace Magnum;
 
 class ShipPhysicsActor : public btActionInterface
 {
@@ -12,8 +14,8 @@ public:
 
     virtual void debugDraw(btIDebugDraw* debugDrawer);
 
-    void setForceVector(const osg::Vec3f&);
-    void setRotationAxis(const osg::Vec3f&);
+    void setForceVector(const Vector3&);
+    void setRotationAxis(const Vector3&);
     
 protected:
     btRigidBody* m_slaveBody;

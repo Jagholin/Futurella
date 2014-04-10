@@ -3,7 +3,13 @@
 #include "../gamecommon/GameObject.h"
 #include "../gameserver/GameInfoServer.h"
 
-#include <osg/Group>
+#include <Magnum/Magnum.h>
+#include <Magnum/Math/Vector3.h>
+#include <Magnum/Math/Matrix4.h>
+#include <Magnum/SceneGraph/Object.h>
+
+using namespace Magnum;
+typedef SceneGraph::Object<SceneGraph::RigidMatrixTransformation3D> Object3D;
 
 class GameInstanceClient;
 
@@ -18,16 +24,16 @@ public:
     static pointer createFromGameMessage(const GameMessage::const_pointer& msg, GameMessagePeer* ctx);
 
     virtual bool takeMessage(const GameMessage::const_pointer& msg, MessagePeer* sender);
-    osg::Vec3f finishArea() const;
+    Vector3 finishArea() const;
 
 protected:
 
-    osg::ref_ptr<osg::Group> m_rootGroup;
-    osg::ref_ptr<osg::Node> m_finishAreaNode;
+    Object3D* m_rootGroup;
+    Object3D* m_finishAreaNode;
 
-    osg::ref_ptr<osg::MatrixTransform> m_transformGroup;
+    Matrix4 m_transformGroup;
 
-    osg::Vec3f m_finishArea;
+    Vector3 m_finishArea;
     float m_finishAreaSize;
 
     static int m_dummy;

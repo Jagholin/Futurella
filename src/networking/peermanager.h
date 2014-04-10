@@ -10,7 +10,7 @@ Copyright (C) 2009 - 2014 Belskiy Pavel, github.com/Jagholin
 #include <atomic>
 #include <boost/asio.hpp>
 
-#include <osg/Referenced>
+//#include <osg/Referenced>
 #include "sigslot.h"
 class NetConnection;
 

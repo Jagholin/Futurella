@@ -942,3 +942,33 @@ bool GUIApplication::onJoinServerClicked(const CEGUI::EventArgs&)
 
     return true;
 }
+
+void GUIApplication::viewportEvent(const Vector2i& size)
+{
+    throw std::exception("The method or operation is not implemented.");
+}
+
+void GUIApplication::keyPressEvent(KeyEvent& event)
+{
+    throw std::exception("The method or operation is not implemented.");
+}
+
+void GUIApplication::keyReleaseEvent(KeyEvent& event)
+{
+    throw std::exception("The method or operation is not implemented.");
+}
+
+void GUIApplication::mousePressEvent(MouseEvent& event)
+{
+    throw std::exception("The method or operation is not implemented.");
+}
+
+void GUIApplication::mouseReleaseEvent(MouseEvent& event)
+{
+    throw std::exception("The method or operation is not implemented.");
+}
+
+void GUIApplication::mouseMoveEvent(MouseMoveEvent& event)
+{
+    throw std::exception("The method or operation is not implemented.");
+}

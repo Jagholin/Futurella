@@ -1,14 +1,17 @@
 #pragma once
-#include <osg/Vec3>
+
+#include <Magnum/Magnum.h>
+#include <Magnum/Math/Vector3.h>
+using namespace Magnum;
 
 class Asteroid
 {
 public:
-    Asteroid(osg::Vec3f position, float radius);
-    osg::Vec3f getPosition();
+    Asteroid(Vector3 position, float radius);
+    Vector3 getPosition();
     float getRadius();
 private:
-    osg::Vec3f m_position;
+    Vector3 m_position;
     float m_radius;
 };
 

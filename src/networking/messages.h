@@ -9,9 +9,12 @@
 #include <memory>
 #include <sstream>
 #include "networking.h"
-#include <osg/Vec3>
-#include <osg/Vec4>
+#include <Magnum/Math/Vector3.h>
+#include <Magnum/Math/Vector4.h>
+#include <Magnum/Magnum.h>
 #include <typeindex>
+
+using namespace Magnum;
 
 class NetMessage : public std::enable_shared_from_this<NetMessage>
 {
@@ -77,12 +80,12 @@ public:
         return operator<<(std::string(val));
     }
 
-    binaryStream& operator<<(const osg::Vec3f &val){
+    binaryStream& operator<<(const Vector3 &val){
         (*this) << val.x() << val.y() << val.z();
         return *this;
     }
 
-    binaryStream& operator<<(const osg::Vec4f &val){
+    binaryStream& operator<<(const Vector4 &val){
         (*this) << val.x() << val.y() << val.z() << val.w();
         return (*this);
     }
@@ -140,17 +143,16 @@ public:
         return *this;
     }
 
-    binaryStream& operator>>(osg::Vec3f& val){
-        osg::Vec3f::value_type x, y, z;
-        (*this) >> x >> y >> z;
-        val.set(x, y, z);
+    binaryStream& operator>>(Vector3& val){
+        (*this) >> val.x() >> val.y() >> val.z();
+        //val.set(x, y, z);
         return (*this);
     }
 
-    binaryStream& operator>>(osg::Vec4f& val){
-        osg::Vec4f::value_type x, y, z, w;
-        (*this) >> x >> y >> z >> w;
-        val.set(x, y, z, w);
+    binaryStream& operator>>(Vector4& val){
+        //osg::Vec4f::value_type x, y, z, w;
+        (*this) >> val.x() >> val.y() >> val.z() >> val.w();
+        //val.set(x, y, z, w);
         return (*this);
     }
 
