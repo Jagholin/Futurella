@@ -9,8 +9,7 @@
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Buffer.h>
 #include "../ShaderWrapper.h"
-using namespace Magnum;
-typedef SceneGraph::Object<SceneGraph::RigidMatrixTransformation3D> Object3D;
+#include "magnumdefs.h"
 
 const unsigned int cFeedbackBuffers = 27; // 3*3*3
 

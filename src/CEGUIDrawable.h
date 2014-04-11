@@ -13,25 +13,24 @@
 #include <deque>
 
 #include <boost/asio.hpp>
-
-using namespace Magnum;
-typedef SceneGraph::Object<SceneGraph::RigidMatrixTransformation3D> Object3D;
+#include "magnumdefs.h"
 
 class GUIApplication;
 
 class CeguiDrawable: public Object3D, public SceneGraph::Drawable3D
 {
 public:
-    CeguiDrawable();
+    CeguiDrawable(GUIApplication* app, Object3D* parent = nullptr, SceneGraph::DrawableGroup3D* dgroup = nullptr);
     CeguiDrawable(const CeguiDrawable& rhs) = delete;
 
     // We should initialize GUIApplication somewhere after CEGUI itself is initialized,
     // which is udoable from main() function.
-    void setGuiApplication(GUIApplication *app);
-    void init() const;
+    CeguiDrawable& init();
 
     //void addEvent(const osgGA::GUIEventAdapter&);
-    void passEvent(const Platform::Sdl2Application::InputEvent&) const;
+    void passEvent(const Platform::Application::KeyEvent&, bool pressed);
+    void passEvent(const Platform::Application::MouseEvent&, bool pressed);
+    void passEvent(const Platform::Application::MouseMoveEvent&);
 protected:
     //virtual void drawImplementation( osg::RenderInfo& renderInfo ) const;
     virtual void draw(const Matrix4& transformationMatrix, SceneGraph::AbstractCamera3D& camera) override;
@@ -40,9 +39,9 @@ protected:
     mutable bool m_initDone;
     static bool m_exists;
     //osg::ref_ptr<osg::Texture2D> m_tex;
-    Resource<Texture2D> m_tex;
+    //Resource<Texture2D> m_tex;
     //osg::ref_ptr<osg::Program> m_pr;
-    Resource<AbstractShaderProgram> m_pr;
+    //Resource<AbstractShaderProgram> m_pr;
     //osg::ref_ptr<osg::StateSet> m_state;
 
     //mutable std::deque<osg::ref_ptr<osgGA::GUIEventAdapter> > m_eventQueue;
@@ -51,7 +50,7 @@ protected:
     mutable unsigned int m_skipCounter;
 
     GUIApplication* m_guiApp;
-    std::shared_ptr<boost::asio::io_service> m_renderThreadService;
+    //std::shared_ptr<boost::asio::io_service> m_renderThreadService;
 
     std::map<int, CEGUI::Key::Scan> m_keyboardMap;
 };

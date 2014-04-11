@@ -11,7 +11,7 @@ GameAsteroidFieldDataMessage::base::m_metaData = MessageMetaData::createMetaData
 
 REGISTER_GAMEMESSAGE(AsteroidFieldData)
 
-AsteroidFieldChunkServer::AsteroidFieldChunkServer(int asteroidNumber, float chunkSideLength, float astMinSize, float astMaxSize, uint32_t ownerId, osg::Vec3i chunk, GameInstanceServer* ctx, PhysicsEngine* engine) :
+AsteroidFieldChunkServer::AsteroidFieldChunkServer(int asteroidNumber, float chunkSideLength, float astMinSize, float astMaxSize, uint32_t ownerId, const Vector3i& chunk, GameInstanceServer* ctx, PhysicsEngine* engine) :
 GameObject(ownerId, ctx)
 {
     m_chunkCoord = chunk;
@@ -24,38 +24,37 @@ GameObject(ownerId, ctx)
     float astSizeDif = astMaxSize - astMinSize;
     float asteroidCubeMaxSidelength = astMaxSize * 2;
     float radius;
-    osg::Vec3f pos;
+    Vector3 pos;
     for (int i = 0; i < asteroidNumber; i++)
     {
-        pos.set(
+        pos = {
             randDevice()*1.0f / randDevice.max() * chunkSideLength,
             randDevice()*1.0f / randDevice.max() * chunkSideLength,
-            randDevice()*1.0f / randDevice.max() * chunkSideLength);
+            randDevice()*1.0f / randDevice.max() * chunkSideLength };
         radius = ( ( randDevice() * 1.0f / randDevice.max() ) * ( randDevice() * 1.0f / randDevice.max() ) * astSizeDif + astMinSize ) * 0.5f;
         m_asteroids->addAsteroid(pos, radius);
     }
 
     //step 2: move asteroids to avoid overlappings (heuristic). save to Level::asteroidField
     int accuracy = 10; //how often d'you wanna apply heuristic?
-    for (int iterations = 0; iterations < accuracy; iterations++)
+    for (int iterations = 0; iterations < accuracy; ++iterations)
     {
         std::shared_ptr<AsteroidField> previousScattering = m_asteroids;
         m_asteroids = std::make_shared<AsteroidField>();
-        for (int i = 0; i < asteroidNumber; i++)
+        for (int i = 0; i < asteroidNumber; ++i)
         {
             float favoredDistance = (asteroidCubeMaxSidelength - astMaxSize) / 2 + previousScattering->getAsteroid(i)->getRadius();
             float boundingBoxRadius = favoredDistance + astMaxSize / 2;
-            std::list<Asteroid*> candidates = previousScattering->getAsteroidsInBlock(previousScattering->getAsteroid(i)->getPosition(), osg::Vec3f(boundingBoxRadius, boundingBoxRadius, boundingBoxRadius));
-            osg::Vec3f shift(0, 0, 0);
+            std::list<Asteroid*> candidates = previousScattering->getAsteroidsInBlock(previousScattering->getAsteroid(i)->getPosition(), Vector3(boundingBoxRadius));
+            Vector3 shift(0, 0, 0);
             int numberOfCloseAsteroids = 0;
             for (std::list<Asteroid*>::iterator it = candidates.begin(); it != candidates.end(); it++) {
                 if (*it != previousScattering->getAsteroid(i)) {
-                    osg::Vec3f d = previousScattering->getAsteroid(i)->getPosition() - (*it)->getPosition();
+                    Vector3 d = previousScattering->getAsteroid(i)->getPosition() - (*it)->getPosition();
                     float scale = -((d.length() - (*it)->getRadius()) - favoredDistance);
                     if (scale > 0) {
-                        d.normalize();
-                        shift += shift + (d * scale *0.5f); //push away from other close asteroids
-                        numberOfCloseAsteroids++;
+                        shift += shift + (d.normalized() * scale *0.5f); //push away from other close asteroids
+                        ++numberOfCloseAsteroids;
                     }
                 }
             }
@@ -81,7 +80,7 @@ AsteroidFieldChunkServer::~AsteroidFieldChunkServer()
 GameMessage::pointer AsteroidFieldChunkServer::creationMessage() const
 {
     GameAsteroidFieldDataMessage::pointer msg{ new GameAsteroidFieldDataMessage };
-    auto &posVector = msg->get<std::vector<osg::Vec3f>>("position");
+    auto &posVector = msg->get<std::vector<Vector3>>("position");
     auto &radVector = msg->get<std::vector<float>>("radius");
     for (unsigned int i = 0; i < m_asteroids->getLength(); ++i)
     {
@@ -90,7 +89,7 @@ GameMessage::pointer AsteroidFieldChunkServer::creationMessage() const
     }
     msg->objectId(m_myObjectId);
     msg->get<uint32_t>("ownerId") = m_myOwnerId;
-    msg->get<osg::Vec3i>("chunkCoord") = m_chunkCoord;
+    msg->get<Vector3i>("chunkCoord") = m_chunkCoord;
     return msg;
 }
 

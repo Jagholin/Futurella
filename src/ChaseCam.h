@@ -10,9 +10,7 @@
 
 #include <Magnum/Platform/Platform.h>
 #include <Magnum/Platform/Sdl2Application.h>
-
-using namespace Magnum;
-typedef SceneGraph::Object<SceneGraph::RigidMatrixTransformation3D> Object3D;
+#include "magnumdefs.h"
 
 //#include "SpaceShip.h"
 #include "gameclient/SpaceShipClient.h"

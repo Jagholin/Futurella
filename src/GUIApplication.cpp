@@ -5,12 +5,11 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include "networking/networking.h"
-#include "networking/peermanager.h"
 #include "gameclient/GameInstanceClient.h"
 #include "gameserver/GameInstanceServer.h"
 
 #include "ShaderWrapper.h"
+#include "CEGUIDrawable.h"
 
 using namespace CEGUI;
 
@@ -35,19 +34,21 @@ template<> MessageMetaData
 NetGameConnectDeniedMessage::m_metaData = MessageMetaData::createMetaData<NetGameConnectDeniedMessage>("reason");
 
 AsioThread::AsioThread() :
-m_destructionSignal("AsioThread::destructionSignal")
+m_destructionSignal("AsioThread::destructionSignal"),
+m_finished(true)
 {
-    // nop
+    // Thread object is not created until a call to start has been issued.
 }
 
 AsioThread::~AsioThread()
 {
-    if (isRunning())
+    if (m_threadObj && m_threadObj->joinable())
     {
         if (m_serverObject)
             m_serverObject->stop();
         m_servicePoint->stop();
-        join();
+        m_threadObj->join();
+        // m_threadObj deleted automatically
     }
     m_destructionSignal();
 }
@@ -64,45 +65,54 @@ void AsioThread::setGuiService(const std::shared_ptr<boost::asio::io_service>& s
 
 void AsioThread::run()
 {
-    m_guiService->post([](){
-        GUIContext& gui = System::getSingleton().getDefaultGUIContext();
-        Window* window = gui.getRootWindow()->getChild("console/output");
-
-        if (window)
-        {
-            window->appendText("\n Network service thread is about to start...");
-        }
-    });
-
-    try 
+    if (m_threadObj && m_threadObj->joinable())
     {
-        m_servicePoint->run();
-        m_servicePoint->reset();
+        m_threadObj->join();
     }
-    catch (const boost::system::system_error &err)
-    {
-        m_guiService->post([err](){
+    m_finished = false;
+    m_threadObj.reset(new std::thread([this]() {
+        m_guiService->post([](){
             GUIContext& gui = System::getSingleton().getDefaultGUIContext();
             Window* window = gui.getRootWindow()->getChild("console/output");
 
             if (window)
             {
-                window->appendText(String("\n") + err.what());
+                window->appendText("\n Network service thread is about to start...");
             }
         });
-    }
-    catch (...)
-    { }
 
-    m_guiService->post([](){
-        GUIContext& gui = System::getSingleton().getDefaultGUIContext();
-        Window* window = gui.getRootWindow()->getChild("console/output");
-
-        if (window)
+        try 
         {
-            window->appendText("\n Network service thread stops. Further communication is impossible.");
+            m_servicePoint->run();
+            m_servicePoint->reset();
         }
-    });
+        catch (const boost::system::system_error &err)
+        {
+            m_guiService->post([err](){
+                GUIContext& gui = System::getSingleton().getDefaultGUIContext();
+                Window* window = gui.getRootWindow()->getChild("console/output");
+
+                if (window)
+                {
+                    window->appendText(String("\n") + err.what());
+                }
+            });
+        }
+        catch (...)
+        { }
+
+        m_guiService->post([](){
+            GUIContext& gui = System::getSingleton().getDefaultGUIContext();
+            Window* window = gui.getRootWindow()->getChild("console/output");
+
+            if (window)
+            {
+                window->appendText("\n Network service thread stops. Further communication is impossible.");
+            }
+        });
+
+        m_finished = true;
+    }));
 }
 
 bool AsioThread::createAndStartNetServer(unsigned int portNumber, unsigned int portNumberUDP, std::string& errStr)
@@ -128,8 +138,11 @@ bool AsioThread::createAndStartNetServer(unsigned int portNumber, unsigned int p
     bool res = m_serverObject->listen(portNumber, portNumberUDP, errStr);
     if (res)
     {
-        if (!isRunning())
-            res = (start() == 0);
+        if (m_finished)
+        {
+            // Start the thread if it's finished
+            run();
+        }
         m_guiService->post([portNumber, portNumberUDP](){
             GUIContext& gui = System::getSingleton().getDefaultGUIContext();
             Window* window = gui.getRootWindow()->getChild("console/output");
@@ -196,26 +209,51 @@ bool AsioThread::startUdpListener(unsigned int portUDP, std::string& errStr)
     bool res = m_serverObject->listenUdp(portUDP, errStr);
     if (res)
     {
-        if (!isRunning())
-            res = (start() == 0);
+        if (m_finished)
+            run();
     }
     return res;
 }
 
-GUIApplication::GUIApplication(osgViewer::Viewer* osgApp, osg::Group* rootGroup)
+GUIApplication::GUIApplication(const Arguments&)
 {
     m_guiContext = nullptr;
-    m_osgApp = osgApp;
+    //m_osgApp = osgApp;
+    m_rootGroup.reset(new Scene3D);
     m_networkService = std::make_shared<boost::asio::io_service>();
     m_networkThread.setService(m_networkService);
-    //m_currentLevel = nullptr;
-    m_rootGroup = rootGroup;
-    m_userCreated = false;
-    m_gameClient = nullptr;
     m_gameServer = nullptr;
+    m_gameClient = nullptr;
+    //m_currentLevel = nullptr;
     m_shaderProvider = std::make_shared<ShaderProvider>();
+    m_userCreated = false;
+    m_userListensUdpPort = 0;
     ShaderWrapper::setDefaultShaderProvider(m_shaderProvider.get());
     RemotePeersManager::getManager()->onNewPeerRegistration(std::bind(&GUIApplication::onNewFuturellaPeer, this, std::placeholders::_1), this);
+
+    // Now create some more objects, from main.cpp
+    std::srand(std::chrono::system_clock::now().time_since_epoch().count());
+// setup CEGUI as drawable object
+    m_ceguiSurface = &(new CeguiDrawable(this, m_rootGroup.get()))
+        ->init();
+
+//     osg::ref_ptr<osg::Camera> postCamera = new osg::Camera;
+//     postCamera->setCullingActive(false);
+//     postCamera->setRenderOrder(osg::Camera::POST_RENDER);
+//     postCamera->setClearMask(GL_DEPTH_BUFFER_BIT);
+//     postCamera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER);
+// 
+//     postCamera->addChild(ceguiNode);
+// 
+//     root->addChild(postCamera);
+// 
+//     viewer->setSceneData(root.get());
+//     viewer->realize();
+//     viewer->getCamera()->getGraphicsContext()->getState()->setUseModelViewAndProjectionUniforms(true);
+// 
+//     osgViewer::ViewerBase::Windows windowList;
+//     viewer->getWindows(windowList);
+//     windowList[0]->useCursor(false);
 }
 
 /*void GUIApplication::setCurrentLevel(Level* levelData)

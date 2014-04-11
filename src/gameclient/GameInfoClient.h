@@ -7,9 +7,7 @@
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Math/Matrix4.h>
 #include <Magnum/SceneGraph/Object.h>
-
-using namespace Magnum;
-typedef SceneGraph::Object<SceneGraph::RigidMatrixTransformation3D> Object3D;
+#include "magnumdefs.h"
 
 class GameInstanceClient;
 

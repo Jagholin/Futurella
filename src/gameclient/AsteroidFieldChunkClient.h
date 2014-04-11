@@ -6,8 +6,7 @@
 #include <Magnum/Magnum.h>
 #include <Magnum/SceneGraph/SceneGraph.h>
 #include <Magnum/SceneGraph/Object.h>
-using namespace Magnum;
-typedef SceneGraph::Object<SceneGraph::RigidMatrixTransformation3D> Object3D;
+#include "../magnumdefs.h"
 
 class GameInstanceClient;
 class LevelDrawable;
@@ -29,7 +28,7 @@ public:
 protected:
     //osg::ref_ptr<osg::Group> m_asteroidsGroup;
     LevelDrawable *m_asteroids;
-    Object3D *m_rootGroup;
+    //Object3D *m_rootGroup;
     Vector3i m_chunkCoord;
     static int m_dummy;
 };

@@ -32,6 +32,7 @@ find_package(CEGUI REQUIRED)
 find_package(Bullet REQUIRED)
 find_package(FMOD REQUIRED)
 find_package(Magnum REQUIRED MeshTools Primitives Shaders Sdl2Application)
+find_package(Lua52 REQUIRED)
 
 find_package(BOOST 1.54.0 REQUIRED COMPONENTS system asio)
 # add_definitions(-DBOOST_ASIO_ENABLE_HANDLER_TRACKING)
@@ -97,6 +98,7 @@ add_executable(Futurella
     src/gameclient/GameInfoClient.cpp
     src/gameclient/PlanetarySystemClient.h
     src/gameclient/PlanetarySystemClient.cpp
+    src/magnumdefs.h
     src/CEGUIDrawable.h
     src/CEGUIDrawable.cpp
     src/GUIApplication.h
@@ -110,10 +112,10 @@ add_executable(Futurella
     src/Node.h
     src/NodeCallbackService.h
     src/NodeCallbackService.cpp
+    src/ResourceManager.h
+    src/ResourceManager.cpp
     src/ChaseCam.cpp
     src/ChaseCam.h
-    src/glincludes.h
-    src/glincludes.cpp
     src/ShaderWrapper.h
     src/ShaderWrapper.cpp
     src/LargeScaleCoords.h
@@ -127,6 +129,7 @@ add_lib(Futurella Boost)
 add_lib(Futurella OPENGL)
 add_lib(Futurella BULLET)
 add_lib(Futurella FMOD)
+add_lib(Futurella Lua52)
 
 target_link_libraries(Futurella 
     ${MAGNUM_MESHTOOLS_LIBRARIES}

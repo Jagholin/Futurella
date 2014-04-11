@@ -15,7 +15,7 @@ class AsteroidFieldChunkServer : public GameObject
 public:
     typedef std::shared_ptr<AsteroidFieldChunkServer> pointer;
 
-    AsteroidFieldChunkServer(int numOfAsteroids, float fieldSideLength, float astMinSize, float astMaxSize, uint32_t ownerId, Vector3i chunkCoord, GameInstanceServer* ctx, PhysicsEngine* engine);
+    AsteroidFieldChunkServer(int numOfAsteroids, float fieldSideLength, float astMinSize, float astMaxSize, uint32_t ownerId, const Vector3i& chunkCoord, GameInstanceServer* ctx, PhysicsEngine* engine);
     virtual ~AsteroidFieldChunkServer();
 
     GameMessage::pointer creationMessage() const;

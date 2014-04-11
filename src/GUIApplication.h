@@ -13,12 +13,13 @@
 
 #include <Magnum/Platform/Sdl2Application.h>
 #include <Magnum/SceneGraph/Object.h>
-using namespace Magnum;
-typedef SceneGraph::Object<SceneGraph::RigidMatrixTransformation3D> Object3D;
+#include <Magnum/SceneGraph/Scene.h>
 
 #include "networking/networking.h"
 #include "networking/peermanager.h"
 #include "gamecommon/PhysicsEngine.h"
+
+#include "magnumdefs.h"
 
 using CEGUI::String;
 using CEGUI::Window;
@@ -49,6 +50,10 @@ protected:
     std::shared_ptr<NetServer> m_serverObject;
 
     addstd::signal<void()> m_destructionSignal;
+
+    std::unique_ptr<std::thread> m_threadObj;
+
+    mutable bool m_finished;
 };
 
 class GUIApplication : public Platform::Application
@@ -110,7 +115,8 @@ protected:
 
     CEGUI::GUIContext* m_guiContext;
     //osgViewer::Viewer* m_osgApp;
-    Object3D* m_rootGroup;
+    std::unique_ptr<Scene3D> m_rootGroup;
+    CeguiDrawable* m_ceguiSurface; // memory managed by Magnum SceneGraph
 
     // perhaps this has to be moved somewhere else
     std::shared_ptr<boost::asio::io_service> m_networkService;

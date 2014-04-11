@@ -11,7 +11,7 @@ REGISTER_GAMEOBJECT_TYPE(AsteroidFieldChunkClient, 5001);
 AsteroidFieldChunkClient::AsteroidFieldChunkClient(const GameAsteroidFieldDataMessage::const_pointer& createMessage, uint16_t objId, uint32_t ownId, GameInstanceClient* ctx):
 GameObject(objId, ownId, ctx)
 {
-    m_rootGroup = ctx->sceneGraphRoot();
+    //m_rootGroup = ctx->sceneGraphRoot();
     m_chunkCoord = createMessage->get<Vector3i>("chunkCoord");
     //m_asteroidsGroup = new osg::MatrixTransform(osg::Matrix::translate(GameInstanceServer::chunkToPosition(m_chunkCoord)));
     m_asteroids = new LevelDrawable;
@@ -43,7 +43,7 @@ AsteroidFieldChunkClient::pointer AsteroidFieldChunkClient::createFromGameMessag
     GameInstanceClient* context = static_cast<GameInstanceClient*>(ctx);
     AsteroidFieldChunkClient::pointer result{ new AsteroidFieldChunkClient(realMsg, realMsg->objectId(), realMsg->get<uint32_t>("ownerId"), context) };
 
-    context->addAsteroidFieldChunk(realMsg->get<osg::Vec3i>("chunkCoord"), result);
+    context->addAsteroidFieldChunk(realMsg->get<Vector3i>("chunkCoord"), result);
     return result;
 }
 
@@ -54,11 +54,12 @@ bool AsteroidFieldChunkClient::takeMessage(const GameMessage::const_pointer& msg
 
 void AsteroidFieldChunkClient::setUseTesselation(bool on)
 {
-    unsigned int childCount = m_asteroidsGroup->getNumChildren();
-    for (unsigned int i = 0; i < childCount; ++i)
-    {
-        osg::Geode* child = m_asteroidsGroup->getChild(i)->asGeode();
-        LevelDrawable* chunk = static_cast<LevelDrawable*>(child->getDrawable(0));
-        chunk->setUseTesselation(on);
-    }
+    //unsigned int childCount = m_asteroidsGroup->getNumChildren();
+    //for (unsigned int i = 0; i < childCount; ++i)
+    //{
+    //    osg::Geode* child = m_asteroidsGroup->getChild(i)->asGeode();
+    //    LevelDrawable* chunk = static_cast<LevelDrawable*>(child->getDrawable(0));
+    //    chunk->setUseTesselation(on);
+    //}
+    m_asteroids->setUseTesselation(on);
 }

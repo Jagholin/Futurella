@@ -1,17 +1,17 @@
 #include <algorithm>
 #include <atomic>
-#include "glincludes.h"
+//#include "glincludes.h"
 #include "CEGUIDrawable.h"
 #include "GUIApplication.h"
 
 #include <CEGUI/RendererModules/OpenGL/GL3Renderer.h>
-#include <osg/Texture2D>
-#include <osgGA/GUIEventHandler>
-#include <osg/GLExtensions>
-#include <osg/Timer>
-#include <osg/Depth>
+//#include <osg/Texture2D>
+//#include <osgGA/GUIEventHandler>
+//#include <osg/GLExtensions>
+//#include <osg/Timer>
+//#include <osg/Depth>
 
-class GlobalEventHandler : public osgGA::GUIEventHandler
+/*class GlobalEventHandler : public osgGA::GUIEventHandler
 {
     std::atomic_bool m_guiHandlesEvents;
     GUIApplication* m_guiApp;
@@ -72,9 +72,9 @@ public:
         m_guiApp->hudLostFocus();
         return true;
     }
-};
+};*/
 
-class TickEvents : public osg::Drawable::UpdateCallback
+/*class TickEvents : public osg::Drawable::UpdateCallback
 {
 protected:
     osg::Timer_t m_lastTick;
@@ -92,13 +92,12 @@ public:
         CEGUI::System::getSingleton().injectTimePulse(msPast/1000.0);
         m_lastTick = newTick;
     }
-};
+};*/
 
 bool CeguiDrawable::m_exists = false;
 
-
-CeguiDrawable::CeguiDrawable() :
-    m_initDone(false), m_guiApp(nullptr)
+CeguiDrawable::CeguiDrawable(GUIApplication* app, Object3D* parent, SceneGraph::DrawableGroup3D* dgroup) :
+    Object3D(parent), SceneGraph::Drawable3D(*this, dgroup), m_initDone(false), m_guiApp(app)
 {
     if (m_exists)
         throw std::logic_error("No other instances of CeguiDrawable allowed");
@@ -106,83 +105,62 @@ CeguiDrawable::CeguiDrawable() :
     {
         m_exists = true;
     }
-    setUseDisplayList(false);
-    setSupportsDisplayList(false);
-    m_tex = new osg::Texture2D;
-    m_pr = new osg::Program;
-    m_state = new osg::StateSet;
+    //setUseDisplayList(false);
+    //setSupportsDisplayList(false);
+    //m_tex = new osg::Texture2D;
+    //m_pr = new osg::Program;
+    //m_state = new osg::StateSet;
 
-    m_state->setTextureAttributeAndModes(0, m_tex, osg::StateAttribute::PROTECTED | osg::StateAttribute::OFF);
-    m_state->setAttributeAndModes(m_pr, osg::StateAttribute::PROTECTED | osg::StateAttribute::OFF);
-    m_state->setAttributeAndModes(new osg::Depth, osg::StateAttribute::PROTECTED | osg::StateAttribute::OFF);
+    //m_state->setTextureAttributeAndModes(0, m_tex, osg::StateAttribute::PROTECTED | osg::StateAttribute::OFF);
+    //m_state->setAttributeAndModes(m_pr, osg::StateAttribute::PROTECTED | osg::StateAttribute::OFF);
+    //m_state->setAttributeAndModes(new osg::Depth, osg::StateAttribute::PROTECTED | osg::StateAttribute::OFF);
 
-    m_renderThreadService = std::make_shared<boost::asio::io_service>();
+    //m_renderThreadService = std::make_shared<boost::asio::io_service>();
 
-    m_keyboardMap = std::map<int, CEGUI::Key::Scan> { { osgGA::GUIEventAdapter::KEY_Return, CEGUI::Key::Return },
-    { osgGA::GUIEventAdapter::KEY_BackSpace, CEGUI::Key::Backspace },
-    { osgGA::GUIEventAdapter::KEY_Left, CEGUI::Key::ArrowLeft },
-    { osgGA::GUIEventAdapter::KEY_Up, CEGUI::Key::ArrowUp },
-    { osgGA::GUIEventAdapter::KEY_Down, CEGUI::Key::ArrowDown },
-    { osgGA::GUIEventAdapter::KEY_Right, CEGUI::Key::ArrowRight },
-    { osgGA::GUIEventAdapter::KEY_Tab, CEGUI::Key::Tab } };
+    m_keyboardMap = std::map<int, CEGUI::Key::Scan> { { SDLK_RETURN, CEGUI::Key::Return },
+    { SDLK_BACKSPACE, CEGUI::Key::Backspace },
+    { SDLK_LEFT, CEGUI::Key::ArrowLeft },
+    { SDLK_UP, CEGUI::Key::ArrowUp },
+    { SDLK_DOWN, CEGUI::Key::ArrowDown },
+    { SDLK_RIGHT, CEGUI::Key::ArrowRight },
+    { SDLK_TAB, CEGUI::Key::Tab } };
+
+    init();
 }
 
-void CeguiDrawable::setGuiApplication(GUIApplication* app)
-{
-    m_guiApp = app;
-    m_guiApp->setGuiService(m_renderThreadService);
-}
-
-void CeguiDrawable::addEvent(const osgGA::GUIEventAdapter& e)
-{
-    /*if (e.getEventType() & (osgGA::GUIEventAdapter::RELEASE | osgGA::GUIEventAdapter::PUSH))
-    {
-        passEvent(e);
-        return;
-    }*/
-    // Yep OSG does multi threaded render by default in my case.
-    // So this sync is vital.
-    m_eventMutex.lock();
-    m_eventQueue.push_back(static_cast<osgGA::GUIEventAdapter*>(e.clone(osg::CopyOp::DEEP_COPY_ALL)));
-    m_eventMutex.unlock();
-}
-
-void CeguiDrawable::passEvent(const osgGA::GUIEventAdapter& ea) const
+void CeguiDrawable::passEvent(const Platform::Application::MouseEvent& ea, bool pressed)
 {
     using namespace CEGUI;
 
-    osgGA::GUIEventAdapter::EventType etype = ea.getEventType();
+    MouseButton mbutton;
+    mbutton = (ea.button() == Platform::Application::MouseEvent::Button::Left) ? LeftButton : RightButton;
+    GUIContext & gui = System::getSingleton().getDefaultGUIContext();
+    if (pressed)
+    {
+        gui.injectMouseButtonDown(mbutton);
+    }
+    else
+    {
+        gui.injectMouseButtonUp(mbutton);
+    }
+}
 
-    if (etype & (osgGA::GUIEventAdapter::RELEASE | osgGA::GUIEventAdapter::PUSH))
+void CeguiDrawable::passEvent(const Platform::Application::MouseMoveEvent& ea)
+{
+    using namespace CEGUI;
+
+    GUIContext & gui = System::getSingleton().getDefaultGUIContext();
+    gui.injectMousePosition(ea.position().x() /* - ea.getXmin()*/, /*ea.getYmax() -*/ ea.position().y() /*+ ea.getYmin()*/);
+    //gui.injectMousePosition(ea.getX(), ea.getY());
+}
+
+void CeguiDrawable::passEvent(const Platform::Application::KeyEvent& ea, bool pressed)
+{
+    using namespace CEGUI;
+    if (pressed)
     {
-        MouseButton mbutton;
-        mbutton = ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON ? LeftButton : RightButton;
-        GUIContext & gui = System::getSingleton().getDefaultGUIContext();
-        if (ea.getEventType() == osgGA::GUIEventAdapter::PUSH)
-        {
-            gui.injectMouseButtonDown(mbutton);
-        }
-        else
-        {
-            gui.injectMouseButtonUp(mbutton);
-        }
-    }
-    else if (etype & osgGA::GUIEventAdapter::MOVE)
-    {
-        GUIContext & gui = System::getSingleton().getDefaultGUIContext();
-        gui.injectMousePosition(ea.getX() - ea.getXmin(), ea.getYmax() - ea.getY() + ea.getYmin());
-        //gui.injectMousePosition(ea.getX(), ea.getY());
-    }
-    else if (etype & osgGA::GUIEventAdapter::DRAG)
-    {
-        GUIContext & gui = System::getSingleton().getDefaultGUIContext();
-        gui.injectMousePosition(ea.getX() - ea.getXmin(), ea.getYmax() - ea.getY() + ea.getYmin());
-        //gui.injectMousePosition(ea.getX(), ea.getY());
-    }
-    else if (etype & (osgGA::GUIEventAdapter::KEYDOWN))
-    {
-        int keyCode = ea.getKey();
-        if (keyCode == osgGA::GUIEventAdapter::KEY_F7)
+        int keyCode = static_cast<int>(ea.key());
+        if (keyCode == (int)Platform::Application::KeyEvent::Key::F7)
         {
             // Special key: reload HUD layout
             WindowManager& win = WindowManager::getSingleton();
@@ -266,7 +244,7 @@ void CeguiDrawable::drawImplementation( osg::RenderInfo& renderInfo ) const
 #endif
 }
 
-void CeguiDrawable::init() const
+CeguiDrawable& CeguiDrawable::init()
 {
     if (m_initDone)
         return;
@@ -300,13 +278,9 @@ void CeguiDrawable::init() const
 
     //AnimationManager::getSingleton().loadAnimationsFromXML("example.anims");
 
-    /// HACKS, hacks hacks all around...
-    // well, what else can you do here, i have no idea.
-
-    CeguiDrawable* self = const_cast<CeguiDrawable*>(this);
-    self->setEventCallback(new GlobalEventHandler(m_guiApp));
-    self->setUpdateCallback(new TickEvents);
-    self->m_guiApp->registerEvents();
+    m_guiApp->registerEvents();
 
     m_initDone = true;
+
+    return *this;
 }
