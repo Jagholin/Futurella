@@ -19,6 +19,7 @@
 #include "networking/peermanager.h"
 #include "gamecommon/PhysicsEngine.h"
 
+#include "ResourceManager.h"
 #include "magnumdefs.h"
 
 using CEGUI::String;
@@ -72,7 +73,6 @@ public:
     // and how long it takes.
     void addEventHandler(const String& windowName, const String& eventName, const CEGUI::Event::Subscriber& function);
 
-    void setGuiService(const std::shared_ptr<boost::asio::io_service>& service);
     void timeTick(float dt);
 
     // These Functions are called when CEGUI surface loses or regains input focus
@@ -134,6 +134,11 @@ protected:
     bool m_userCreated;
     String m_userName;
     unsigned int m_userListensUdpPort;
+
+    FuturellaResourceManager m_resourceManager;
+
+    SceneGraph::DrawableGroup3D m_nearDrawables, m_farDrawables, m_uiDrawables;
+
 
     void doConsoleCommand(const String& command);
     // Functions replying on console commands

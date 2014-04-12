@@ -13,11 +13,12 @@
 #include <deque>
 
 #include <boost/asio.hpp>
+#include "UserInputFeature.h"
 #include "magnumdefs.h"
 
 class GUIApplication;
 
-class CeguiDrawable: public Object3D, public SceneGraph::Drawable3D
+class CeguiDrawable: public Object3D, public SceneGraph::Drawable3D, public UserInputFeature
 {
 public:
     CeguiDrawable(GUIApplication* app, Object3D* parent = nullptr, SceneGraph::DrawableGroup3D* dgroup = nullptr);
@@ -35,6 +36,11 @@ protected:
     //virtual void drawImplementation( osg::RenderInfo& renderInfo ) const;
     virtual void draw(const Matrix4& transformationMatrix, SceneGraph::AbstractCamera3D& camera) override;
 
+    virtual void handleMouseMove(Platform::Sdl2Application::MouseMoveEvent&) override;
+    virtual void handleMousePress(Platform::Sdl2Application::MouseEvent&) override;
+    virtual void handleMouseRelease(Platform::Sdl2Application::MouseEvent&) override;
+    virtual void handleKeyDown(Platform::Sdl2Application::KeyEvent&) override;
+    virtual void handleKeyUp(Platform::Sdl2Application::KeyEvent&) override;
 protected:
     mutable bool m_initDone;
     static bool m_exists;

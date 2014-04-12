@@ -1,4 +1,4 @@
-#include "../glincludes.h"
+//#include "../glincludes.h"
 #include "GameInstanceClient.h"
 #include "../gamecommon/GameObject.h"
 #include "../networking/peermanager.h"
@@ -6,17 +6,17 @@
 #include "../GUIApplication.h"
 #include "../NodeCallbackService.h"
 
-#include <osgGA/TrackballManipulator>
-#include <osg/TextureCubeMap>
-#include <osg/Texture2DArray>
-#include <osg/Texture2D>
-#include <osgDB/ReadFile>
-#include <osg/ShapeDrawable>
-#include <osg/Geode>
-#include <osg/BlendFunc>
-#include <osgUtil/CullVisitor>
-#include <osgText/Font>
-#include <osgText/Text>
+//#include <osgGA/TrackballManipulator>
+//#include <osg/TextureCubeMap>
+//#include <osg/Texture2DArray>
+//#include <osg/Texture2D>
+//#include <osgDB/ReadFile>
+//#include <osg/ShapeDrawable>
+//#include <osg/Geode>
+//#include <osg/BlendFunc>
+//#include <osgUtil/CullVisitor>
+//#include <osgText/Font>
+//#include <osgText/Text>
 #include <fmod.hpp>
 #include <fmod_errors.h>
 

@@ -215,13 +215,15 @@ bool AsioThread::startUdpListener(unsigned int portUDP, std::string& errStr)
     return res;
 }
 
-GUIApplication::GUIApplication(const Arguments&)
+GUIApplication::GUIApplication(const Arguments& args) : Platform::Application(args)
 {
     m_guiContext = nullptr;
     //m_osgApp = osgApp;
     m_rootGroup.reset(new Scene3D);
     m_networkService = std::make_shared<boost::asio::io_service>();
+    m_renderThreadService = std::make_shared<boost::asio::io_service>();
     m_networkThread.setService(m_networkService);
+    m_networkThread.setGuiService(m_renderThreadService);
     m_gameServer = nullptr;
     m_gameClient = nullptr;
     //m_currentLevel = nullptr;
@@ -234,26 +236,12 @@ GUIApplication::GUIApplication(const Arguments&)
     // Now create some more objects, from main.cpp
     std::srand(std::chrono::system_clock::now().time_since_epoch().count());
 // setup CEGUI as drawable object
-    m_ceguiSurface = &(new CeguiDrawable(this, m_rootGroup.get()))
-        ->init();
+    m_ceguiSurface = new CeguiDrawable(this, m_rootGroup.get(), &m_uiDrawables);
 
-//     osg::ref_ptr<osg::Camera> postCamera = new osg::Camera;
-//     postCamera->setCullingActive(false);
-//     postCamera->setRenderOrder(osg::Camera::POST_RENDER);
-//     postCamera->setClearMask(GL_DEPTH_BUFFER_BIT);
-//     postCamera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER);
-// 
-//     postCamera->addChild(ceguiNode);
-// 
-//     root->addChild(postCamera);
-// 
-//     viewer->setSceneData(root.get());
-//     viewer->realize();
-//     viewer->getCamera()->getGraphicsContext()->getState()->setUseModelViewAndProjectionUniforms(true);
-// 
-//     osgViewer::ViewerBase::Windows windowList;
-//     viewer->getWindows(windowList);
-//     windowList[0]->useCursor(false);
+    m_resourceManager.setLoader(new MeshLoader)
+        .setLoader(new TextureLoader)
+        .setLoader(new CubeMapLoader)
+        .setLoader(new ShaderLoader);
 }
 
 /*void GUIApplication::setCurrentLevel(Level* levelData)
@@ -284,12 +272,6 @@ void GUIApplication::registerEvents()
     m_shaderProvider->registerEvents(this);
 }
 
-void GUIApplication::setGuiService(const std::shared_ptr<boost::asio::io_service>& service)
-{
-    m_renderThreadService = service;
-    m_networkThread.setGuiService(service);
-}
-
 void GUIApplication::addEventHandler(const String& windowName, const String& eventName, const CEGUI::Event::Subscriber& callback)
 {
     Window* wRoot = m_guiContext->getRootWindow();
@@ -303,7 +285,7 @@ void GUIApplication::addEventHandler(const String& windowName, const String& eve
 
 bool GUIApplication::onQuitBtnClicked(const EventArgs& args)
 {
-    m_osgApp->setDone(true);
+    exit();
     return true;
 }
 
@@ -398,7 +380,7 @@ void GUIApplication::onNetworkMessage(NetMessage::const_pointer msg, RemoteMessa
 
             // connect to the server
 
-            m_gameClient = new GameInstanceClient(m_rootGroup, m_osgApp, this);
+            m_gameClient = new GameInstanceClient(m_rootGroup, this);
             m_gameClient->onClientOrphaned(m_renderThreadService->wrap([this](){
                 // No server is connected to the game client, so we may just drop it
                 delete m_gameClient;
@@ -597,8 +579,8 @@ void GUIApplication::consoleConnect(const std::vector<String>& params, String& o
     RemoteMessagePeer* myPeer = new RemoteMessagePeer(newConnection, false, *m_networkService);
 
     newConnection->connectTo(params[1].c_str(), tcpPort);
-    if (!m_networkThread.isRunning())
-        m_networkThread.start();
+    //if (!m_networkThread.isRunning())
+    //    m_networkThread.run();
     output = "\ncommand accepted.";
 }
 
@@ -773,7 +755,7 @@ void GUIApplication::consoleConnectGameServer(const std::vector<String>& params,
         return;
     }
 
-    m_gameClient = new GameInstanceClient(m_rootGroup, m_osgApp, this);
+    m_gameClient = new GameInstanceClient(m_rootGroup, this);
     m_gameClient->onClientOrphaned(m_renderThreadService->wrap([this](){
         // No server is connected to the game client, so we may just drop it
         delete m_gameClient;
@@ -935,7 +917,7 @@ bool GUIApplication::onCreateServerClicked(const CEGUI::EventArgs&)
     m_availableGameServers.push_back(std::make_tuple(serverName.c_str(), m_gameServer));
     m_networkThread.createAndStartNetServer(1778, m_userListensUdpPort, errStr);
 
-    m_gameClient = new GameInstanceClient(m_rootGroup, m_osgApp, this);
+    m_gameClient = new GameInstanceClient(m_rootGroup, this);
     m_gameClient->onClientOrphaned(m_renderThreadService->wrap([this](){
         // No server is connected to the game client, so we may just drop it
         delete m_gameClient;
@@ -975,10 +957,16 @@ bool GUIApplication::onJoinServerClicked(const CEGUI::EventArgs&)
     RemoteMessagePeer* myPeer = new RemoteMessagePeer(newConnection, false, *m_networkService);
 
     newConnection->connectTo(serverIp.c_str(), 1778);
-    if (!m_networkThread.isRunning())
-        m_networkThread.start();
+    //if (!m_networkThread.isRunning())
+    //    m_networkThread.start();
 
     return true;
+}
+
+void GUIApplication::drawEvent()
+{
+    // update tick
+    // render
 }
 
 void GUIApplication::viewportEvent(const Vector2i& size)
@@ -988,25 +976,60 @@ void GUIApplication::viewportEvent(const Vector2i& size)
 
 void GUIApplication::keyPressEvent(KeyEvent& event)
 {
-    throw std::exception("The method or operation is not implemented.");
+    auto& uiGroup = UserInputFeature::globalFeatureList();
+    size_t count = uiGroup.size();
+    for (size_t i = 0; i < count; ++i)
+    {
+        uiGroup[i].handleKeyDown(event);
+        if (event.isAccepted())
+            return;
+    }
 }
 
 void GUIApplication::keyReleaseEvent(KeyEvent& event)
 {
-    throw std::exception("The method or operation is not implemented.");
+    auto& uiGroup = UserInputFeature::globalFeatureList();
+    size_t count = uiGroup.size();
+    for (size_t i = 0; i < count; ++i)
+    {
+        uiGroup[i].handleKeyUp(event);
+        if (event.isAccepted())
+            return;
+    }
 }
 
 void GUIApplication::mousePressEvent(MouseEvent& event)
 {
-    throw std::exception("The method or operation is not implemented.");
+    auto& uiGroup = UserInputFeature::globalFeatureList();
+    size_t count = uiGroup.size();
+    for (size_t i = 0; i < count; ++i)
+    {
+        uiGroup[i].handleMousePress(event);
+        if (event.isAccepted())
+            return;
+    }
 }
 
 void GUIApplication::mouseReleaseEvent(MouseEvent& event)
 {
-    throw std::exception("The method or operation is not implemented.");
+    auto& uiGroup = UserInputFeature::globalFeatureList();
+    size_t count = uiGroup.size();
+    for (size_t i = 0; i < count; ++i)
+    {
+        uiGroup[i].handleMouseRelease(event);
+        if (event.isAccepted())
+            return;
+    }
 }
 
 void GUIApplication::mouseMoveEvent(MouseMoveEvent& event)
 {
-    throw std::exception("The method or operation is not implemented.");
+    auto& uiGroup = UserInputFeature::globalFeatureList();
+    size_t count = uiGroup.size();
+    for (size_t i = 0; i < count; ++i)
+    {
+        uiGroup[i].handleMouseMove(event);
+        if (event.isAccepted())
+            return;
+    }
 }

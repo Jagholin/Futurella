@@ -120,6 +120,8 @@ add_executable(Futurella
     src/ShaderWrapper.cpp
     src/LargeScaleCoords.h
     src/LargeScaleCoords.cpp
+    src/UserInputFeature.h
+    src/UserInputFeature.cpp
     )
 
 add_lib(Futurella MAGNUM)

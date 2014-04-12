@@ -97,7 +97,7 @@ public:
 bool CeguiDrawable::m_exists = false;
 
 CeguiDrawable::CeguiDrawable(GUIApplication* app, Object3D* parent, SceneGraph::DrawableGroup3D* dgroup) :
-    Object3D(parent), SceneGraph::Drawable3D(*this, dgroup), m_initDone(false), m_guiApp(app)
+    Object3D(parent), SceneGraph::Drawable3D(*this, dgroup), UserInputFeature(*this), m_initDone(false), m_guiApp(app)
 {
     if (m_exists)
         throw std::logic_error("No other instances of CeguiDrawable allowed");
@@ -283,4 +283,29 @@ CeguiDrawable& CeguiDrawable::init()
     m_initDone = true;
 
     return *this;
+}
+
+void CeguiDrawable::handleMouseMove(Platform::Sdl2Application::MouseMoveEvent& e)
+{
+    passEvent(e);
+}
+
+void CeguiDrawable::handleMousePress(Platform::Sdl2Application::MouseEvent& e)
+{
+    passEvent(e, true);
+}
+
+void CeguiDrawable::handleMouseRelease(Platform::Sdl2Application::MouseEvent& e)
+{
+    passEvent(e, false);
+}
+
+void CeguiDrawable::handleKeyDown(Platform::Sdl2Application::KeyEvent& e)
+{
+    passEvent(e, true);
+}
+
+void CeguiDrawable::handleKeyUp(Platform::Sdl2Application::KeyEvent& e)
+{
+    passEvent(e, false);
 }
